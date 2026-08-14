@@ -4,6 +4,26 @@ All notable changes to Nyanbin are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-08-14
+
+### Added
+
+- Leave-confirm dialog that warns before abandoning an unsaved note.
+- Kawaii red, green, and pink accent themes alongside the original blue, with a theme-aware hero title.
+- Short expiry presets: 1, 5, and 30 minutes.
+- Instance version reported by `GET /api/status` and displayed as a footer badge beside the GitHub source link.
+
+### Changed
+
+- "How the sealed envelope works" is now a proper card with an end-aligned chevron and a divided body.
+- Footer version badge and submit help text received breathing room; README points at the bin.oh.rip reference instance.
+
+### Fixed
+
+- System-dark color scheme now uses the same shadows as the explicit dark theme.
+
+## [1.0.0] - 2026-08-14
+
 ### Added
 
 - Nyanbin v1 authenticated AES-256-GCM envelope shared by the browser and Node.js CLI.

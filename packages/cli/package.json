@@ -1,6 +1,6 @@
 {
   "name": "nyanbin",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Nyanbin encrypted paste and file sharing CLI and browser-safe protocol",
   "license": "MIT",
   "type": "module",

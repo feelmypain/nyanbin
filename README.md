@@ -10,7 +10,7 @@ Nyanbin is a self-hostable, client-side-encrypted paste and file-sharing service
 
 Nyanbin is designed so that a correctly operating server stores and returns an authenticated encrypted envelope without receiving the link secret, optional password, plaintext, filenames, or file bytes in plaintext. This is a focused security property—not a claim of anonymity, audited security, or protection from a malicious web server.
 
-The official instance runs at [nyan.ist](https://nyan.ist) ([bin.oh.rip](https://bin.oh.rip) serves as a mirror). Self-hosting is fully supported; configure the web client or CLI to use an instance you trust.
+The official instance runs at [nyan.ist](https://nyan.ist). Self-hosting is fully supported; configure the web client or CLI to use an instance you trust.
 
 ## Features
 

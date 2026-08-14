@@ -11,7 +11,7 @@ import { parseDuration, parseFile, parseFormat, parsePositiveInteger, parseURL }
 import { getStdin } from './utils/stdin.js'
 import { checkConstraints, errorMessage, exit } from './utils/utils.js'
 
-const defaultServer = process.env['NYANBIN_SERVER'] || 'http://localhost:8000'
+const defaultServer = process.env['NYANBIN_SERVER'] || 'https://nyan.ist'
 const server = new Option('-s, --server <url>', 'Nyanbin server URL').default(defaultServer)
 const expires = new Option('-e, --expires <duration>', 'lifetime in seconds or with s/m/h/d suffix').argParser(parseDuration)
 const maxReads = new Option('-r, --max-reads <number>', 'maximum successful reveals').argParser(parsePositiveInteger)

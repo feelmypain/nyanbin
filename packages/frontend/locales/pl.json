@@ -1,61 +1,187 @@
 {
 	"common": {
-		"note": "notatka",
-		"file": "plik",
-		"advanced": "zaawansowane",
-		"create": "utwórz",
-		"loading": "ładowanie",
-		"mode": "tryb",
-		"views": "{n, plural, =0 {wyświetleń} =1 {1 wyświetlenie} other {{n} wyświetleń}}",
-		"minutes": "{n, plural, =0 {minut} =1 {1 minuta} other {{n} minuty}}",
-		"max": "maks.",
-		"share_link": "link udostępniania",
-		"copy_clipboard": "kopiuj do schowka",
-		"copied_to_clipboard": "skopiowano do schowka",
-		"encrypting": "szyfrowanie",
-		"decrypting": "odszyfrowywanie",
-		"uploading": "wysyłanie",
-		"downloading": "pobieranie",
-		"qr_code": "kod QR",
-		"password": "hasło"
+		"loading": "Wczytywanie…",
+		"password": "Hasło",
+		"show": "Pokaż",
+		"hide": "Ukryj",
+		"show_password": "Pokaż hasło",
+		"hide_password": "Ukryj hasło",
+		"retry": "Spróbuj ponownie",
+		"working": "Przetwarzanie…"
 	},
-	"home": {
-		"intro": "Łatwo wysyłaj <i>w pełni zaszyfrowane</i>, bezpieczne notatki lub pliki jednym kliknięciem. Po prostu utwórz notatkę i udostępnij link.",
-		"explanation": "notatka wygaśnie i zostanie zniszczona po {type}.",
-		"new_note": "nowa notatka",
-		"new_note_notice": "<b>dostępność:</b><br />nie ma gwarancji, że notatka będzie przechowywana, ponieważ wszystko jest przechowywane w pamięci RAM, jeśli się zapełni, najstarsze notatki zostaną usunięte.<br />(prawdopodobnie nic się nie stanie, ale warto ostrzec.)",
+	"nav": {
+		"label": "Główna nawigacja",
+		"home": "Strona główna Nyanbin",
+		"about": "O aplikacji",
+		"skip": "Przejdź do treści"
+	},
+	"locale": {
+		"label": "Język"
+	},
+	"theme": {
+		"label": "Motyw kolorystyczny",
+		"system": "Systemowy",
+		"light": "Jasny",
+		"dark": "Ciemny"
+	},
+	"footer": {
+		"label": "Nawigacja w stopce",
+		"local_only": "Szyfrowanie i generowanie kodu QR odbywa się lokalnie w Twojej przeglądarce."
+	},
+	"formats": {
+		"plain": "Zwykły tekst",
+		"source": "Kod źródłowy",
+		"markdown": "Markdown"
+	},
+	"expiry": {
+		"3600": "1 godzina",
+		"21600": "6 godzin",
+		"86400": "1 dzień",
+		"604800": "7 dni",
+		"minutes": "{count, plural, =1 {1 min} other {# min}}",
+		"hours": "{count, plural, =1 {1 godz.} other {# godz.}}",
+		"days": "{count, plural, =1 {1 dzień} other {# dni}}"
+	},
+	"create": {
+		"eyebrow": "Prywatne udostępnianie bez komplikacji",
+		"title": "Schowaj notatkę w niebieskim pudełku.",
+		"intro": "Napisz wiadomość, dodaj załączniki i zaszyfruj je w tej przeglądarce. Serwer otrzyma wyłącznie uwierzytelnioną, zaszyfrowaną kopertę oraz informacje o czasie jej ważności.",
+		"format": "Format tekstu",
+		"edit": "Edytuj",
+		"preview": "Podgląd",
+		"preview_empty": "Tutaj pojawi się podgląd.",
+		"text_label": "Notatka",
+		"text_help": "Tekst, wybrany sposób formatowania i informacje o załącznikach są szyfrowane razem.",
+		"placeholder": "Napisz coś, czym warto się podzielić…",
+		"local_title": "Szyfrowane tutaj.",
+		"local_body": "Sekret z łącza ani opcjonalne hasło nigdy nie są przesyłane.",
+		"expiry": "Wygasa po",
+		"expiry_help": "Serwer przelicza ten okres na dokładny termin ważności używany podczas szyfrowania.",
+		"read_cap": "Ogranicz liczbę odczytów",
+		"read_cap_help": "Jeden odczyt oznacza usunięcie po przeczytaniu. Odczyt jest zużywany przed lokalnym odszyfrowaniem.",
+		"max_reads": "Maksymalna liczba odczytów",
+		"password_toggle": "Wymagaj dodatkowego hasła",
+		"password_help": "Losowy sekret z łącza nadal jest wymagany. Hasło przekaż osobno.",
+		"how_title": "Jak działa zapieczętowana koperta",
+		"how_body": "Nyanbin rezerwuje identyfikator i dokładny okres ważności, szyfruje dane lokalnie za pomocą AES-256-GCM, wiąże te publiczne zasady jako dane uwierzytelnione, a następnie przesyła kopertę. Każda osoba mająca pełne łącze i hasło może ją odczytać.",
+		"files_count": "załączniki",
+		"bytes": "bajty lokalne",
+		"envelope_size": "Zaszyfrowana koperta: {bytes} bajtów",
+		"limit": "Limit koperty na serwerze: {bytes} bajtów",
+		"over_limit": "Przekroczono o {overage} bajtów. Największy element: {name}.",
+		"note_content": "treść notatki",
+		"submit": "Zaszyfruj i utwórz łącze",
+		"add_something": "Dodaj tekst lub co najmniej jeden załącznik do zaszyfrowania.",
+		"phase": {
+			"reserving": "Rezerwowanie…",
+			"encrypting": "Szyfrowanie lokalne…",
+			"uploading": "Przesyłanie koperty…"
+		},
 		"errors": {
-			"note_too_big": "nie można utworzyć notatki. notatka jest za duża",
-			"note_error": "nie można utworzyć notatki. spróbuj ponownie.",
-			"max": "maks.: {n}",
-			"empty_content": "notatka jest pusta."
+			"empty": "Najpierw dodaj tekst lub załącznik.",
+			"status": "Ta instancja Nyanbin jest niedostępna. Wersja robocza pozostaje w tej przeglądarce.",
+			"expiry": "Wybierz termin ważności mieszczący się w limicie tej instancji.",
+			"reads": "Wybierz liczbę odczytów mieszczącą się w limicie tej instancji.",
+			"too_large": "Zaszyfrowana koperta przekracza rozmiar dozwolony przez tę instancję. Usuń załącznik lub skróć notatkę.",
+			"too_large_detail": "Zaszyfrowana koperta przekracza limit serwera o {overage} bajtów. Największy element: {name}.",
+			"network": "Nie udało się połączyć z serwerem. Wersja robocza pozostaje tutaj — spróbuj ponownie.",
+			"failed": "Nie udało się utworzyć notatki. Wersja robocza nie została wyczyszczona.",
+			"password": "Wprowadź niepuste dodatkowe hasło.",
+			"file_name": "Nazwa załącznika jest nieprawidłowa. Zmień nazwę pliku i dodaj go ponownie.",
+			"duplicate_files": "Nazwy załączników muszą być unikalne. Usuń duplikat „{name}” lub zmień jego nazwę."
 		},
-		"messages": {
-			"note_created": "notatka utworzona."
-		},
-		"advanced": {
-			"explanation": "Domyślnie dla każdej notatki używane jest bezpiecznie wygenerowane hasło. Możesz jednak wybrać własne hasło, które nie jest uwzględnione w linku.",
-			"custom_password": "własne hasło"
-		},
-		"pasting": "Wklejanie...",
-		"pasted_files": "Wklejone pliki",
-		"remove": "Usuń"
+		"page_title": "Utwórz zaszyfrowaną notatkę",
+		"meta_description": "Udostępniaj zaszyfrowane notatki i załączniki za pomocą wygasającego tajnego łącza.",
+		"password_required": "Wprowadź dodatkowe hasło albo wyłącz tę opcję.",
+		"loading_instance": "Wczytywanie limitów i możliwości tej instancji…"
+	},
+	"files": {
+		"add": "Dodaj załączniki",
+		"drop_help": "Wybierz pliki, przeciągnij je tutaj lub wklej w dowolnym miejscu edytora.",
+		"selected": "Załączniki",
+		"unknown_type": "nieznany typ",
+		"unnamed": "załącznik bez nazwy",
+		"remove_named": "Usuń {name}"
+	},
+	"result": {
+		"step": "Zapieczętowane i gotowe",
+		"title": "Tajne łącze jest gotowe.",
+		"bearer_warning": "Ten pełny adres URL jest sekretem dającym dostęp jego posiadaczowi. Każda osoba, która go ma, może zużyć odczyt i spróbować odszyfrować notatkę.",
+		"share_link": "Pełne tajne łącze",
+		"copy": "Kopiuj łącze",
+		"copied": "Skopiowano",
+		"copy_failed": "Brak dostępu do schowka. Zaznacz i skopiuj pełne łącze ręcznie.",
+		"open": "Otwórz stronę odczytu",
+		"qr_label": "Kod QR zawierający pełne tajne łącze",
+		"qr_caption": "Wygenerowano lokalnie. Kod QR zawiera ten sam sekret dający dostęp co łącze.",
+		"expires": "Wygasa",
+		"reads": "Limit odczytów",
+		"unlimited_reads": "Bez limitu odczytów",
+		"revoke_summary": "Ustawienia twórcy",
+		"revoke_help": "Ta przeglądarka nadal przechowuje jednorazowe uprawnienie do usunięcia notatki. Nie znajduje się ono w udostępnianym łączu ani nie jest wyświetlane na ekranie.",
+		"revoke": "Unieważnij tę notatkę",
+		"revoke_failed": "Nie udało się unieważnić notatki. Mogła już zniknąć albo serwer jest niedostępny.",
+		"revoked_title": "Notatka unieważniona.",
+		"revoked_body": "Zaszyfrowana koperta nie jest już dostępna na serwerze.",
+		"create_another": "Utwórz kolejną notatkę"
 	},
 	"show": {
+		"page_title": "Odczytaj notatkę",
+		"eyebrow": "Znaleziono zapieczętowaną notatkę",
+		"gate_title": "Otwórz, kiedy zechcesz.",
+		"consume_warning": "Odczyt jest zużywany, zanim ta przeglądarka odszyfruje notatkę. Błędne hasło, uszkodzone łącze lub zamknięcie karty także może go zużyć.",
+		"expires": "Wygasa",
+		"remaining": "Pozostałe odczyty",
+		"password_optional": "Dodatkowe hasło, jeśli zostało ustawione przez nadawcę",
+		"password_help": "Pozostaw puste, jeśli nadawca nie ustawił hasła.",
+		"reveal": "Zużyj jeden odczyt i odszyfruj",
+		"revealing": "Zużywanie jednego odczytu…",
+		"decrypting": "Odszyfrowywanie lokalne…",
+		"fragment_help": "Sekret z łącza pozostaje po znaku # w adresie tej strony i nie jest wysyłany w zwykłych żądaniach HTTP.",
+		"missing_title": "Ta notatka śpi gdzieś indziej.",
+		"missing_body": "Mogła wygasnąć, zostać odczytana, unieważniona albo nigdy nie istnieć.",
+		"invalid_title": "To tajne łącze jest niekompletne.",
+		"invalid_body": "Poproś nadawcę o pełny adres URL wraz z fragmentem po znaku #.",
+		"error_title": "Nie udało się otworzyć notatki.",
+		"consumed_error_title": "Odczyt został zużyty, ale odszyfrowanie się nie powiodło.",
+		"retry_info": "Ponownie sprawdź informacje o notatce",
+		"retry_consumed_help": "Jeśli nadawca zezwolił na więcej niż jeden odczyt, przed świadomą ponowną próbą sprawdź dostępność notatki. Kolejna próba zużyje następny odczyt.",
+		"retry_reveal": "Sprawdź dostępność przed ponowną próbą",
+		"create_new": "Utwórz nową zaszyfrowaną notatkę",
+		"decrypted": "Odszyfrowano w tej przeglądarce",
+		"title": "Twoja notatka",
+		"copy_text": "Kopiuj tekst",
+		"copy_failed": "Brak dostępu do schowka. Zaznacz i skopiuj tekst notatki ręcznie.",
+		"attachments": "Załączniki ({count})",
+		"preview": "Podgląd",
+		"close_preview": "Zamknij podgląd",
+		"download": "Pobierz",
 		"errors": {
-			"not_found": "notatka nie została znaleziona lub została już usunięta.",
-			"decryption_failed": "błędne hasło. nie można odszyfrować. prawdopodobnie uszkodzony link. notatka została zniszczona.",
-			"unsupported_type": "nieobsługiwany typ notatki."
-		},
-		"explanation": "kliknij poniżej, aby wyświetlić i usunąć notatkę, jeśli licznik osiągnie swój limit",
-		"show_note": "pokaż notatkę",
-		"warning_will_not_see_again": "<b>nie będziesz mieć</b> możliwości ponownego zobaczenia notatki.",
-		"download_all": "pobierz wszystko",
-		"links_found": "linki znalezione w notatce:"
+			"info": "Nie udało się wczytać informacji o notatce. Nie zużyto żadnego odczytu.",
+			"decrypt_consumed": "Nie udało się uwierzytelnić koperty. Ten odczyt został już zużyty — sprawdź z nadawcą hasło lub pełne łącze.",
+			"consumed": "Notatka nie jest już dostępna. Mogła wygasnąć, zostać unieważniona lub osiągnąć limit odczytów.",
+			"network": "Podczas odczytu wystąpił błąd sieci. Serwer mógł już zużyć odczyt; przed ponowną próbą otwarcia jednorazowej notatki skontaktuj się z nadawcą.",
+			"reveal_consumed": "Odczyt nie powiódł się i mógł zostać zużyty. Przed świadomą ponowną próbą sprawdź dostępność notatki.",
+			"reveal": "Serwer nie mógł udostępnić tej notatki."
+		}
 	},
-	"file_upload": {
-		"selected_files": "Wybrane pliki",
-		"no_files_selected": "Nie wybrano plików",
-		"clear": "Wyczyść"
+	"about": {
+		"eyebrow": "Małe niebieskie narzędzie do ochrony prywatności",
+		"title": "O Nyanbin",
+		"lead": "Nyanbin udostępnia tekst i pliki jako uwierzytelnione, zaszyfrowane koperty o ograniczonym czasie ważności.",
+		"how_title": "Co widzi serwer",
+		"how_body": "Przeglądarka szyfruje notatkę, format, nazwy plików, wskazówki MIME, rozmiary i bajty. Serwer widzi identyfikator notatki, wersję protokołu, długość zaszyfrowanych danych, termin ważności i opcjonalny limit odczytów. Sekret z łącza pozostaje we fragmencie adresu URL.",
+		"limits_title": "Ważne ograniczenia",
+		"limits_body": "Każda osoba mająca pełne łącze i opcjonalne hasło może odczytać notatkę. Złośliwy serwer mógłby podmienić aplikację internetową, a czas przesyłania i długość szyfrogramu pozostają widoczne. Korzystaj z HTTPS i zaufanego wdrożenia.",
+		"origin_title": "Otwarty rodowód projektu",
+		"origin_body": "Nyanbin powstał na fundamencie Cryptgeon udostępnionym na licencji MIT i na nowo realizuje wybrane rozwiązania dotyczące prywatności i produktu, przeanalizowane w PrivateBin. Interfejs i kocie ilustracje są oryginalne.",
+		"instance_title": "Ta instancja",
+		"instance_default": "To samodzielnie hostowana instancja Nyanbin."
+	},
+	"imprint": {
+		"title": "Nota prawna",
+		"external": "Ta instancja publikuje notę prawną pod osobnym adresem.",
+		"open": "Otwórz notę prawną",
+		"unavailable": "Dla tej instancji nie skonfigurowano adresu noty prawnej."
 	}
 }

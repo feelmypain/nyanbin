@@ -1,61 +1,187 @@
 {
 	"common": {
-		"note": "note",
-		"file": "file",
-		"advanced": "advanced",
-		"create": "create",
-		"loading": "loading",
-		"mode": "mode",
-		"views": "{n, plural, =0 {views} =1 {1 view} other {# views}}",
-		"minutes": "{n, plural, =0 {minutes} =1 {1 minute} other {# minutes}}",
-		"max": "max",
-		"share_link": "share link",
-		"copy_clipboard": "copy to clipboard",
-		"copied_to_clipboard": "copied to clipboard",
-		"encrypting": "encrypting",
-		"decrypting": "decrypting",
-		"uploading": "uploading",
-		"downloading": "downloading",
-		"qr_code": "qr code",
-		"password": "password"
+		"loading": "Loading…",
+		"password": "Password",
+		"show": "Show",
+		"hide": "Hide",
+		"show_password": "Show password",
+		"hide_password": "Hide password",
+		"retry": "Try again",
+		"working": "Working…"
 	},
-	"home": {
-		"intro": "Easily send <i>fully encrypted</i>, secure notes or files with one click. Just create a note and share the link.",
-		"explanation": "the note will expire and be destroyed after {type}.",
-		"new_note": "new note",
-		"new_note_notice": "<b>availability:</b><br />the note is not guaranteed to be stored as everything is kept in ram, if it fills up the oldest notes will be removed.<br />(you probably will be fine, just be warned.)",
+	"nav": {
+		"label": "Main navigation",
+		"home": "Nyanbin home",
+		"about": "About",
+		"skip": "Skip to content"
+	},
+	"locale": {
+		"label": "Language"
+	},
+	"theme": {
+		"label": "Color theme",
+		"system": "System",
+		"light": "Light",
+		"dark": "Dark"
+	},
+	"footer": {
+		"label": "Footer navigation",
+		"local_only": "Encryption and QR generation happen locally in your browser."
+	},
+	"formats": {
+		"plain": "Plain text",
+		"source": "Source",
+		"markdown": "Markdown"
+	},
+	"expiry": {
+		"3600": "1 hour",
+		"21600": "6 hours",
+		"86400": "1 day",
+		"604800": "7 days",
+		"minutes": "{count, plural, =1 {1 minute} other {# minutes}}",
+		"hours": "{count, plural, =1 {1 hour} other {# hours}}",
+		"days": "{count, plural, =1 {1 day} other {# days}}"
+	},
+	"create": {
+		"eyebrow": "Private sharing, without the fuss",
+		"title": "Tuck a note into the blue box.",
+		"intro": "Write, attach, and encrypt in this browser. The server receives only an authenticated encrypted envelope and its lifecycle.",
+		"format": "Text format",
+		"edit": "Edit",
+		"preview": "Preview",
+		"preview_empty": "Your preview will appear here.",
+		"text_label": "Note",
+		"text_help": "Text, formatting choice, and attachment details are encrypted together.",
+		"placeholder": "Type something worth sharing…",
+		"local_title": "Encrypted here.",
+		"local_body": "Your link secret and optional password are never uploaded.",
+		"expiry": "Expires after",
+		"expiry_help": "The server converts this duration to the exact expiry used by encryption.",
+		"read_cap": "Limit the number of reveals",
+		"read_cap_help": "One reveal is burn-after-reading. A reveal is consumed before local decryption.",
+		"max_reads": "Maximum reveals",
+		"password_toggle": "Require a second-factor password",
+		"password_help": "The random link secret remains required. Share this password separately.",
+		"how_title": "How the sealed envelope works",
+		"how_body": "Nyanbin reserves an ID and exact lifecycle, encrypts locally with AES-256-GCM, binds that public policy as authenticated data, then uploads. Anyone with the complete link and password can reveal it.",
+		"files_count": "attachments",
+		"bytes": "local bytes",
+		"envelope_size": "Encrypted envelope: {bytes} bytes",
+		"limit": "Server envelope limit: {bytes} bytes",
+		"over_limit": "Over by {overage} bytes. Largest contributor: {name}.",
+		"note_content": "note content",
+		"submit": "Encrypt and create link",
+		"add_something": "Add text or at least one attachment to encrypt.",
+		"phase": {
+			"reserving": "Reserving…",
+			"encrypting": "Encrypting locally…",
+			"uploading": "Uploading envelope…"
+		},
 		"errors": {
-			"note_too_big": "could not create note. note is too big",
-			"note_error": "could not create note. please try again.",
-			"max": "max: {n}",
-			"empty_content": "note is empty."
+			"empty": "Add text or an attachment first.",
+			"status": "This Nyanbin instance is unavailable. Your draft remains in this browser.",
+			"expiry": "Choose an expiry within this instance's limit.",
+			"reads": "Choose a reveal count within this instance's limit.",
+			"too_large": "The encrypted envelope is larger than this instance allows. Remove an attachment or shorten the note.",
+			"too_large_detail": "The encrypted envelope exceeds the server limit by {overage} bytes. Largest contributor: {name}.",
+			"network": "The server could not be reached. Your draft remains here; please try again.",
+			"failed": "The note could not be created. Your draft has not been cleared.",
+			"password": "Enter a non-empty second-factor password.",
+			"file_name": "An attachment name is not valid. Rename the file and add it again.",
+			"duplicate_files": "Attachment names must be unique. Remove or rename the duplicate “{name}”."
 		},
-		"messages": {
-			"note_created": "note created."
-		},
-		"advanced": {
-			"explanation": "By default, a securely generated password is used for each note. You can however also choose your own password, which is not included in the link.",
-			"custom_password": "custom password"
-		},
-		"pasting": "Pasting...",
-		"pasted_files": "Pasted Files",
-		"remove": "Remove"
+		"page_title": "Create an encrypted note",
+		"meta_description": "Share encrypted notes and attachments with an expiring secret link.",
+		"password_required": "Enter the second-factor password or turn the option off.",
+		"loading_instance": "Loading this instance’s limits and capabilities…"
+	},
+	"files": {
+		"add": "Add attachments",
+		"drop_help": "Choose files, drag them here, or paste files anywhere in the composer.",
+		"selected": "Attachments",
+		"unknown_type": "unknown type",
+		"unnamed": "unnamed attachment",
+		"remove_named": "Remove {name}"
+	},
+	"result": {
+		"step": "Sealed and ready",
+		"title": "Your secret link is ready.",
+		"bearer_warning": "This complete URL is a bearer secret. Anyone who has it can spend a reveal and attempt to decrypt the note.",
+		"share_link": "Complete secret link",
+		"copy": "Copy link",
+		"copied": "Copied",
+		"copy_failed": "Clipboard access failed. Select and copy the complete link manually.",
+		"open": "Open reveal page",
+		"qr_label": "QR code containing the complete secret link",
+		"qr_caption": "Generated locally. The QR contains the same bearer secret as the link.",
+		"expires": "Expires",
+		"reads": "Reveal limit",
+		"unlimited_reads": "No read cap",
+		"revoke_summary": "Creator controls",
+		"revoke_help": "This browser still holds the one-time delete capability. It is not included in the share link or displayed on screen.",
+		"revoke": "Revoke this note",
+		"revoke_failed": "The note could not be revoked. It may already be gone, or the server may be unavailable.",
+		"revoked_title": "Note revoked.",
+		"revoked_body": "The encrypted envelope is no longer available from the server.",
+		"create_another": "Create another note"
 	},
 	"show": {
+		"page_title": "Reveal note",
+		"eyebrow": "Sealed note found",
+		"gate_title": "Ready when you are.",
+		"consume_warning": "Revealing consumes one read before this browser decrypts. A wrong password, damaged link, or closed tab can still spend that read.",
+		"expires": "Expires",
+		"remaining": "Reveals remaining",
+		"password_optional": "Second-factor password, if the sender set one",
+		"password_help": "Leave blank when the sender did not set a password.",
+		"reveal": "Consume one reveal and decrypt",
+		"revealing": "Consuming one reveal…",
+		"decrypting": "Decrypting locally…",
+		"fragment_help": "The link secret stays after # in this page address and is not sent with normal HTTP requests.",
+		"missing_title": "This note is sleeping elsewhere.",
+		"missing_body": "It may have expired, been consumed, been revoked, or never existed.",
+		"invalid_title": "This secret link is incomplete.",
+		"invalid_body": "Ask the sender for the complete URL, including the fragment after #.",
+		"error_title": "The note could not be opened.",
+		"consumed_error_title": "A reveal was consumed, but decryption failed.",
+		"retry_info": "Retry note information",
+		"retry_consumed_help": "If the sender allowed more than one reveal, check availability before deliberately trying again. Another reveal will consume another read.",
+		"retry_reveal": "Check availability before retrying",
+		"create_new": "Create a new encrypted note",
+		"decrypted": "Decrypted in this browser",
+		"title": "Your note",
+		"copy_text": "Copy text",
+		"copy_failed": "Clipboard access failed. Select and copy the note text manually.",
+		"attachments": "Attachments ({count})",
+		"preview": "Preview",
+		"close_preview": "Close preview",
+		"download": "Download",
 		"errors": {
-			"not_found": "note was not found or was already deleted.",
-			"decryption_failed": "wrong password. could not decipher. probably a broken link. note was destroyed.",
-			"unsupported_type": "unsupported note type."
-		},
-		"explanation": "click below to show and delete the note if the counter has reached its limit",
-		"show_note": "show note",
-		"warning_will_not_see_again": "you will <b>not</b> get the chance to see the note again.",
-		"download_all": "download all",
-		"links_found": "links found inside the note:"
+			"info": "The note information could not be loaded. No reveal was consumed.",
+			"decrypt_consumed": "The envelope could not be authenticated. This reveal was already consumed; check the password or complete link with the sender.",
+			"consumed": "The note is no longer available. It may have expired, been revoked, or reached its reveal limit.",
+			"network": "The network failed while revealing. The server may already have consumed a read; ask the sender before retrying a one-read note.",
+			"reveal_consumed": "The reveal failed after it may have been consumed. Check availability before deliberately trying again.",
+			"reveal": "The server could not reveal this note."
+		}
 	},
-	"file_upload": {
-		"selected_files": "Selected Files",
-		"no_files_selected": "No Files Selected",
-		"clear": "Reset"
+	"about": {
+		"eyebrow": "A small blue privacy tool",
+		"title": "About Nyanbin",
+		"lead": "Nyanbin shares text and files as authenticated encrypted envelopes with bounded lifecycles.",
+		"how_title": "What the server sees",
+		"how_body": "The browser encrypts the note, format, filenames, MIME hints, sizes, and bytes. The server sees the note ID, protocol version, encrypted length, expiry, and optional read cap. The link secret stays in the URL fragment.",
+		"limits_title": "Important limits",
+		"limits_body": "Anyone with the complete link and optional password can reveal the note. A malicious server could replace the web application, and traffic timing or ciphertext length remains visible. Use HTTPS and a trusted deployment.",
+		"origin_title": "Open-source lineage",
+		"origin_body": "Nyanbin is built from Cryptgeon's MIT-licensed foundation and reimplements selected privacy and product ideas studied in PrivateBin. Its interface and cat artwork are original.",
+		"instance_title": "This instance",
+		"instance_default": "This is a self-hosted Nyanbin instance."
+	},
+	"imprint": {
+		"title": "Imprint",
+		"external": "This instance publishes its imprint at a separate address.",
+		"open": "Open imprint",
+		"unavailable": "No imprint address is configured for this instance."
 	}
 }

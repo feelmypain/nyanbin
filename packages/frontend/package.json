@@ -1,26 +1,18 @@
 {
 	"private": true,
-	"name": "@cryptgeon/web",
+	"name": "@nyanbin/web",
 	"scripts": {
 		"postinstall": "svelte-kit sync",
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
-		"check": "svelte-check --tsconfig tsconfig.json",
-		"licenses": "license-checker-rseidelsohn --summary > licenses.csv",
-		"locale:download": "node scripts/locale.js",
-		"test:prepare": "pnpm run build"
+		"check": "svelte-check --tsconfig tsconfig.json"
 	},
 	"type": "module",
 	"devDependencies": {
-		"@lokalise/node-api": "^13.2.1",
 		"@sveltejs/adapter-static": "^3.0.10",
 		"@sveltejs/kit": "^2.61.1",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
-		"@zerodevx/svelte-toast": "^0.9.6",
-		"adm-zip": "^0.5.17",
-		"dotenv": "^17.4.2",
-		"license-checker-rseidelsohn": "^5.0.1",
 		"svelte": "^5.55.9",
 		"svelte-check": "^4.4.8",
 		"svelte-intl-precompile": "^0.12.3",
@@ -29,9 +21,9 @@
 		"vite": "^8.0.14"
 	},
 	"dependencies": {
-		"@fontsource/fira-mono": "^5.2.7",
-		"cryptgeon": "workspace:*",
-		"occulto": "^2.0.6",
+		"@fontsource/atkinson-hyperlegible": "^5.2.7",
+		"@fontsource/m-plus-rounded-1c": "^5.2.7",
+		"nyanbin": "workspace:*",
 		"pretty-bytes": "^7.1.0",
 		"uqr": "^0.1.3"
 	}

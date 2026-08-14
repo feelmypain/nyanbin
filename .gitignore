@@ -1,11 +1,21 @@
 .env
+.env.*
+!.env.dev
 *.tsbuildinfo
-node_modules
-dist
-bin
+node_modules/
+dist/
+bin/
+target/
+.svelte-kit/
+packages/frontend/build/
+# Generated temporarily by the CLI prepack hook
+packages/cli/LICENSE
+packages/cli/THIRD_PARTY_NOTICES
+packages/cli/DEPENDENCY_LICENSES.csv
 
-target
-
-# Testing
-test-results
-tmp
+# Test and local runtime output
+playwright-report/
+test-results/
+tmp/
+*.log
+.DS_Store

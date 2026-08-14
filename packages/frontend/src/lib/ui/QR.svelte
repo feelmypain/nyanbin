@@ -1,45 +1,10 @@
 <script lang="ts">
-	import { getCSSVariable } from '$lib/utils'
+	import { encode } from 'uqr'
 	import { t } from 'svelte-intl-precompile'
-	import { renderSVG } from 'uqr'
-
-	interface Props {
-		value: string
-	}
-
+	interface Props { value: string }
 	let { value }: Props = $props()
-
-	let qr: string | null = $state(null)
-
-	$effect(() => {
-		qr = renderSVG(value, {
-			ecc: 'Q',
-			blackColor: getCSSVariable('--ui-bg-0'),
-			whiteColor: getCSSVariable('--ui-text-0'),
-		})
-	})
+	let code = $derived(encode(value, { ecc: 'Q' }))
+	const border = 2
 </script>
-
-<small>{$t('common.qr_code')}</small>
-<div>
-	{#if qr}
-		{@html qr}
-	{/if}
-</div>
-
-<style>
-	div {
-		padding: 0.25rem;
-		width: fit-content;
-		border: 2px solid var(--ui-bg-1);
-		background-color: var(--ui-bg-0);
-		margin-top: 0.125rem;
-		overflow: hidden;
-		aspect-ratio: 1;
-	}
-
-	div :global(svg) {
-		width: 100%;
-		height: auto;
-	}
-</style>
+<figure data-testid="share-qr"><svg viewBox={`0 0 ${code.size + border * 2} ${code.size + border * 2}`} role="img" aria-label={$t('result.qr_label')} shape-rendering="crispEdges"><rect width="100%" height="100%" class="paper"/>{#each code.data as row, y}{#each row as dark, x}{#if dark}<rect x={x + border} y={y + border} width="1" height="1" class="ink"/>{/if}{/each}{/each}</svg><figcaption>{$t('result.qr_caption')}</figcaption></figure>
+<style>figure { width: min(14rem, 100%); margin: 0; } svg { display: block; width: 100%; height: auto; padding: var(--space-2); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--qr-paper); } .paper { fill: var(--qr-paper); } .ink { fill: var(--qr-ink); } figcaption { margin-top: var(--space-1); color: var(--ink-muted); font-size: var(--text-sm); }</style>

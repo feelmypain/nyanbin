@@ -3,104 +3,130 @@
 import { Argument, Option, program } from '@commander-js/extra-typings'
 import prettyBytes from 'pretty-bytes'
 
-import { download } from './actions/download.js'
+import { deleteNoteByLink } from './actions/delete.js'
+import { download, escapeTerminalLine } from './actions/download.js'
 import { upload } from './actions/upload.js'
-import { API } from './shared/api.js'
-import { parseFile, parseNumber } from './utils/parsers.js'
+import { createAPI } from './shared/api.js'
+import { parseDuration, parseFile, parseFormat, parsePositiveInteger, parseURL } from './utils/parsers.js'
 import { getStdin } from './utils/stdin.js'
-import { checkConstrains, exit } from './utils/utils.js'
+import { checkConstraints, errorMessage, exit } from './utils/utils.js'
 
-const defaultServer = process.env['CRYPTGEON_SERVER'] || 'https://cryptgeon.org'
-const server = new Option('-s --server <url>', 'the cryptgeon server to use').default(defaultServer)
-const files = new Argument('<file...>', 'Files to be sent').argParser(parseFile)
-const text = new Argument('<text>', 'Text content of the note')
-const password = new Option('-p --password <string>', 'manually set a password')
-const all = new Option('-a --all', 'Save all files without prompt').default(false)
-const url = new Argument('<url>', 'The url to open')
-const views = new Option('-v --views <number>', 'Amount of views before getting destroyed').argParser(parseNumber)
-const minutes = new Option('-m --minutes <number>', 'Minutes before the note expires').argParser(parseNumber)
+const defaultServer = process.env['NYANBIN_SERVER'] || 'http://localhost:8000'
+const server = new Option('-s, --server <url>', 'Nyanbin server URL').default(defaultServer)
+const expires = new Option('-e, --expires <duration>', 'lifetime in seconds or with s/m/h/d suffix').argParser(parseDuration)
+const maxReads = new Option('-r, --max-reads <number>', 'maximum successful reveals').argParser(parsePositiveInteger)
+const password = new Option('-p, --password <string>', 'optional second-factor password').conflicts('passwordStdin')
+const passwordStdin = new Option('--password-stdin', 'read the second-factor password from standard input').conflicts('password')
+const format = new Option('-f, --format <format>', 'text format: plain, source, or markdown').argParser(parseFormat).default('plain' as const)
+const attachments = new Option('--file <path>', 'attach a file (repeatable)').argParser(parseFile).default([] as string[])
+const raw = new Option('--raw', 'write decrypted note text verbatim (unsafe on untrusted terminals)').default(false)
+const all = new Option('-a, --all', 'save all files without prompting').default(false)
+const deleteToken = new Option('-t, --delete-token <token>', 'creator delete token').makeOptionMandatory()
+const link = new Argument('<url>', 'Nyanbin note URL').argParser(parseURL)
 
-// Node 18 guard
-parseInt(process.version.slice(1).split(',')[0]) < 18 && exit('Node 18 or higher is required')
+if (Number(process.versions.node.split('.')[0]) < 22) exit('Nyanbin requires Node.js 22 or newer')
 
-// @ts-ignore
+// Injected by the package build.
+// @ts-expect-error build-time constant
 const version: string = VERSION
 
-program.name('cryptgeon').version(version).configureHelp({ showGlobalOptions: true })
+program.name('nyanbin').description('Create and open end-to-end encrypted Nyanbin notes').version(version)
 
 program
   .command('info')
-  .description('show information about the server')
+  .description('show server limits and defaults')
   .addOption(server)
   .action(async (options) => {
-    API.setOptions({ server: options.server })
-    const response = await API.status()
-    const formatted = {
-      ...response,
-      max_size: prettyBytes(response.max_size),
-    }
-    for (const key of Object.keys(formatted)) {
-      if (key.startsWith('theme_')) delete formatted[key as keyof typeof formatted]
-    }
-    console.table(formatted)
+    const api = createAPI({ server: options.server })
+    const response = await api.status()
+    console.table({
+      protocol: response.protocol,
+      max_envelope: prettyBytes(response.limits.maxEnvelopeBytes),
+      max_expiry_seconds: response.limits.maxExpiresIn,
+      max_reads: response.limits.maxReads,
+      default_expiry_seconds: response.defaults.expiresIn,
+      default_reads: response.defaults.maxReads ?? 'unlimited',
+    })
   })
 
-const send = program.command('send').description('send a note')
-send
-  .command('file')
-  .addArgument(files)
-  .addOption(server)
-  .addOption(views)
-  .addOption(minutes)
-  .addOption(password)
-  .action(async (files, options) => {
-    API.setOptions({ server: options.server })
-    await checkConstrains(options)
-    options.password ||= await getStdin()
-    try {
-      const url = await upload(files, { views: options.views, expiration: options.minutes, password: options.password })
-      console.log(`Note created:\n\n${url}`)
-    } catch {
-      exit('Could not create note')
-    }
-  })
-send
+const create = program.command('create').alias('send').description('create an encrypted note')
+
+create
   .command('text')
-  .addArgument(text)
+  .description('create a text note, optionally with files')
+  .addArgument(new Argument('<text>', 'note text'))
   .addOption(server)
-  .addOption(views)
-  .addOption(minutes)
+  .addOption(expires)
+  .addOption(maxReads)
   .addOption(password)
+  .addOption(passwordStdin)
+  .addOption(format)
+  .addOption(attachments)
   .action(async (text, options) => {
-    API.setOptions({ server: options.server })
-    await checkConstrains(options)
-    options.password ||= await getStdin()
-    try {
-      const url = await upload(text, { views: options.views, expiration: options.minutes, password: options.password })
-      console.log(`Note created:\n\n${url}`)
-    } catch {
-      exit('Could not create note')
-    }
+    const api = createAPI({ server: options.server })
+    const lifecycle = await checkConstraints({ expiresIn: options.expires, maxReads: options.maxReads }, api)
+    const suppliedPassword = options.passwordStdin ? await getStdin() : options.password
+    if (suppliedPassword !== undefined && suppliedPassword.length === 0) throw new Error('password must not be empty')
+    const result = await upload(text, {
+      ...lifecycle,
+      format: options.format,
+      files: options.file,
+      ...(suppliedPassword === undefined ? {} : { password: suppliedPassword }),
+    }, api)
+    console.log(`Note: ${result.url}`)
+    console.log(`Delete token: ${result.deleteToken}`)
+  })
+
+create
+  .command('file')
+  .description('create a note containing one or more files')
+  .addArgument(new Argument('<file...>', 'files to encrypt').argParser(parseFile))
+  .addOption(server)
+  .addOption(expires)
+  .addOption(maxReads)
+  .addOption(password)
+  .addOption(passwordStdin)
+  .action(async (files, options) => {
+    const api = createAPI({ server: options.server })
+    const lifecycle = await checkConstraints({ expiresIn: options.expires, maxReads: options.maxReads }, api)
+    const suppliedPassword = options.passwordStdin ? await getStdin() : options.password
+    if (suppliedPassword !== undefined && suppliedPassword.length === 0) throw new Error('password must not be empty')
+    const result = await upload(files, {
+      ...lifecycle,
+      ...(suppliedPassword === undefined ? {} : { password: suppliedPassword }),
+    }, api)
+    console.log(`Note: ${result.url}`)
+    console.log(`Delete token: ${result.deleteToken}`)
   })
 
 program
   .command('open')
-  .description('open a link with text or files inside')
-  .addArgument(url)
+  .description('reveal and decrypt a note')
+  .addArgument(link)
   .addOption(password)
+  .addOption(passwordStdin)
   .addOption(all)
-  .action(async (note, options) => {
-    try {
-      const url = new URL(note)
-      options.password ||= await getStdin()
-      try {
-        await download(url, options.all, options.password)
-      } catch (e) {
-        exit(e instanceof Error ? e.message : 'Unknown error occurred')
-      }
-    } catch {
-      exit('Invalid URL')
-    }
+  .addOption(raw)
+  .action(async (url, options) => {
+    const suppliedPassword = options.passwordStdin ? await getStdin() : options.password
+    if (suppliedPassword !== undefined && suppliedPassword.length === 0) throw new Error('password must not be empty')
+    await download(url, {
+      all: options.all,
+      raw: options.raw,
+      ...(suppliedPassword === undefined ? {} : { password: suppliedPassword }),
+    })
   })
 
-program.parse()
+program
+  .command('delete')
+  .description('delete a note using its creator token')
+  .addArgument(link)
+  .addOption(deleteToken)
+  .action(async (url, options) => {
+    await deleteNoteByLink(url, options.deleteToken)
+    console.log('Note deleted.')
+  })
+
+program.parseAsync().catch((error: unknown) => {
+  exit(escapeTerminalLine(errorMessage(error)))
+})

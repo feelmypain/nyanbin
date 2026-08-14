@@ -1,61 +1,187 @@
 {
 	"common": {
-		"note": "poznámka",
-		"file": "soubor",
-		"advanced": "pokročilé",
-		"create": "vytvořit",
-		"loading": "načítání",
-		"mode": "režim",
-		"views": "{n, plural, =0 {zobrazení} =1 {1 zobrazení} other {# zobrazení}}",
-		"minutes": "{n, plural, =0 {minut} =1 {1 minuta} other {# minutách}}",
-		"max": "max",
-		"share_link": "sdílet odkaz",
-		"copy_clipboard": "zkopírovat do schránky",
-		"copied_to_clipboard": "zkopírováno do schránky",
-		"encrypting": "šifrování",
-		"decrypting": "dešifrování",
-		"uploading": "nahrávání",
-		"downloading": "stahování",
-		"qr_code": "QR kód",
-		"password": "heslo"
+		"loading": "Načítání…",
+		"password": "Heslo",
+		"show": "Zobrazit",
+		"hide": "Skrýt",
+		"show_password": "Zobrazit heslo",
+		"hide_password": "Skrýt heslo",
+		"retry": "Zkusit znovu",
+		"working": "Probíhá zpracování…"
 	},
-	"home": {
-		"intro": "Jednoduše posílejte <i>plně šifrované</i> a zabezpečené poznámky nebo soubory jediným kliknutím. Stačí vytvořit poznámku a sdílet odkaz.",
-		"explanation": "Poznámka vyprší a bude zničena po {n}.",
-		"new_note": "Nová poznámka",
-		"new_note_notice": "<b>Dostupnost:</b><br />Poznámka není zaručeně uchována, protože je uložena pouze v paměti RAM. Pokud se paměť zaplní, nejstarší poznámky budou automaticky smazány.<br />(Obvykle to nebývá problém, ale je dobré o tom vědět.)",
+	"nav": {
+		"label": "Hlavní navigace",
+		"home": "Domů na Nyanbin",
+		"about": "O aplikaci",
+		"skip": "Přejít k obsahu"
+	},
+	"locale": {
+		"label": "Jazyk"
+	},
+	"theme": {
+		"label": "Barevný motiv",
+		"system": "Podle systému",
+		"light": "Světlý",
+		"dark": "Tmavý"
+	},
+	"footer": {
+		"label": "Navigace v zápatí",
+		"local_only": "Šifrování i vytváření QR kódu probíhá přímo ve vašem prohlížeči."
+	},
+	"formats": {
+		"plain": "Prostý text",
+		"source": "Zdrojový text",
+		"markdown": "Markdown"
+	},
+	"expiry": {
+		"3600": "1 hodina",
+		"21600": "6 hodin",
+		"86400": "1 den",
+		"604800": "7 dní",
+		"minutes": "{count, plural, =1 {1 minuta} few {# minuty} other {# minut}}",
+		"hours": "{count, plural, =1 {1 hodina} few {# hodiny} other {# hodin}}",
+		"days": "{count, plural, =1 {1 den} few {# dny} other {# dní}}"
+	},
+	"create": {
+		"eyebrow": "Soukromé sdílení bez starostí",
+		"title": "Uložte zprávu do modré krabičky.",
+		"intro": "Napište zprávu, připojte soubory a vše zašifrujte přímo v tomto prohlížeči. Server obdrží jen autentizovanou šifrovanou obálku a údaje o její platnosti.",
+		"format": "Formát textu",
+		"edit": "Upravit",
+		"preview": "Náhled",
+		"preview_empty": "Tady se zobrazí náhled.",
+		"text_label": "Zpráva",
+		"text_help": "Text, zvolený formát i údaje o přílohách se šifrují společně.",
+		"placeholder": "Napište něco, co stojí za sdílení…",
+		"local_title": "Zašifrováno přímo tady.",
+		"local_body": "Tajný klíč z odkazu ani volitelné heslo se nikdy neodesílají.",
+		"expiry": "Platnost vyprší za",
+		"expiry_help": "Server tuto dobu převede na přesný čas vypršení platnosti použitý při šifrování.",
+		"read_cap": "Omezit počet zobrazení",
+		"read_cap_help": "Při jediném zobrazení zpráva po přečtení zanikne. Zobrazení se započítá ještě před místním dešifrováním.",
+		"max_reads": "Nejvyšší počet zobrazení",
+		"password_toggle": "Vyžadovat heslo jako druhý faktor",
+		"password_help": "Náhodný tajný klíč v odkazu je nutný i nadále. Toto heslo sdílejte odděleně.",
+		"how_title": "Jak zapečetěná obálka funguje",
+		"how_body": "Nyanbin vyhradí ID a přesnou dobu platnosti, data zašifruje přímo v prohlížeči pomocí AES-256-GCM, sváže veřejná pravidla jako autentizovaná data a obálku odešle. Zobrazit ji může každý, kdo má úplný odkaz a heslo.",
+		"files_count": "přílohy",
+		"bytes": "bajty v prohlížeči",
+		"envelope_size": "Šifrovaná obálka: {bytes} bajtů",
+		"limit": "Limit obálky na serveru: {bytes} bajtů",
+		"over_limit": "Limit překročen o {overage} bajtů. Nejvíce zabírá: {name}.",
+		"note_content": "obsah zprávy",
+		"submit": "Zašifrovat a vytvořit odkaz",
+		"add_something": "Přidejte text nebo alespoň jednu přílohu k zašifrování.",
+		"phase": {
+			"reserving": "Rezervace…",
+			"encrypting": "Šifrování v prohlížeči…",
+			"uploading": "Odesílání obálky…"
+		},
 		"errors": {
-			"note_too_big": "Poznámku nelze vytvořit. Je příliš velká.",
-			"note_error": "Poznámku nelze vytvořit. Zkuste to prosím znovu.",
-			"max": "Max: {n}",
-			"empty_content": "Poznámka je prázdná."
+			"empty": "Nejprve přidejte text nebo přílohu.",
+			"status": "Tato instance Nyanbin není dostupná. Váš koncept zůstává v tomto prohlížeči.",
+			"expiry": "Zvolte dobu platnosti v mezích této instance.",
+			"reads": "Zvolte počet zobrazení v mezích této instance.",
+			"too_large": "Šifrovaná obálka je větší, než tato instance dovoluje. Odeberte přílohu nebo zprávu zkraťte.",
+			"too_large_detail": "Šifrovaná obálka překračuje limit serveru o {overage} bajtů. Nejvíce zabírá: {name}.",
+			"network": "Server se nepodařilo kontaktovat. Váš koncept zůstává tady; zkuste to znovu.",
+			"failed": "Zprávu se nepodařilo vytvořit. Váš koncept nebyl smazán.",
+			"password": "Zadejte neprázdné heslo pro druhý faktor.",
+			"file_name": "Název přílohy není platný. Soubor přejmenujte a znovu přidejte.",
+			"duplicate_files": "Názvy příloh musí být jedinečné. Duplicitní soubor „{name}“ odeberte nebo přejmenujte."
 		},
-		"messages": {
-			"note_created": "Poznámka byla vytvořena."
-		},
-		"advanced": {
-			"explanation": "Ve výchozím nastavení se pro každou poznámku generuje bezpečné heslo. Pokud chcete, můžete si nastavit vlastní heslo, které nebude součástí odkazu.",
-			"custom_password": "Vlastní heslo"
-		},
-		"pasting": "Vkládání...",
-		"pasted_files": "Vložené soubory",
-		"remove": "Odstranit"
+		"page_title": "Vytvořit šifrovanou zprávu",
+		"meta_description": "Sdílejte šifrované zprávy a přílohy pomocí tajného odkazu s omezenou platností.",
+		"password_required": "Zadejte heslo pro druhý faktor, nebo tuto možnost vypněte.",
+		"loading_instance": "Načítání limitů a možností této instance…"
+	},
+	"files": {
+		"add": "Přidat přílohy",
+		"drop_help": "Vyberte soubory, přetáhněte je sem nebo je vložte kamkoli do editoru.",
+		"selected": "Přílohy",
+		"unknown_type": "neznámý typ",
+		"unnamed": "příloha bez názvu",
+		"remove_named": "Odebrat {name}"
+	},
+	"result": {
+		"step": "Zapečetěno a připraveno",
+		"title": "Váš tajný odkaz je připraven.",
+		"bearer_warning": "Tato úplná adresa URL slouží jako tajný přístupový údaj. Kdokoli ji má, může spotřebovat jedno zobrazení a pokusit se zprávu dešifrovat.",
+		"share_link": "Úplný tajný odkaz",
+		"copy": "Kopírovat odkaz",
+		"copied": "Zkopírováno",
+		"copy_failed": "Přístup ke schránce se nezdařil. Označte a zkopírujte celý odkaz ručně.",
+		"open": "Otevřít stránku se zprávou",
+		"qr_label": "QR kód obsahující úplný tajný odkaz",
+		"qr_caption": "Vytvořen přímo v prohlížeči. QR kód obsahuje stejný tajný přístupový údaj jako odkaz.",
+		"expires": "Platnost vyprší",
+		"reads": "Limit zobrazení",
+		"unlimited_reads": "Bez omezení počtu zobrazení",
+		"revoke_summary": "Možnosti autora",
+		"revoke_help": "Tento prohlížeč stále uchovává jednorázové oprávnění ke smazání. Ve sdíleném odkazu není obsaženo a na obrazovce se nezobrazuje.",
+		"revoke": "Zneplatnit tuto zprávu",
+		"revoke_failed": "Zprávu se nepodařilo zneplatnit. Možná už neexistuje nebo server není dostupný.",
+		"revoked_title": "Zpráva byla zneplatněna.",
+		"revoked_body": "Šifrovaná obálka již na serveru není dostupná.",
+		"create_another": "Vytvořit další zprávu"
 	},
 	"show": {
+		"page_title": "Zobrazit zprávu",
+		"eyebrow": "Zapečetěná zpráva nalezena",
+		"gate_title": "Můžete začít, až budete chtít.",
+		"consume_warning": "Zobrazení se započítá ještě před dešifrováním v tomto prohlížeči. I chybné heslo, poškozený odkaz nebo zavřená karta mohou toto zobrazení spotřebovat.",
+		"expires": "Platnost vyprší",
+		"remaining": "Zbývající zobrazení",
+		"password_optional": "Heslo pro druhý faktor, pokud ho odesílatel nastavil",
+		"password_help": "Pokud odesílatel heslo nenastavil, ponechte pole prázdné.",
+		"reveal": "Spotřebovat jedno zobrazení a dešifrovat",
+		"revealing": "Spotřebovává se jedno zobrazení…",
+		"decrypting": "Dešifrování v prohlížeči…",
+		"fragment_help": "Tajný klíč odkazu zůstává v adrese této stránky za znakem # a při běžných požadavcích HTTP se neodesílá.",
+		"missing_title": "Tahle zpráva spí někde jinde.",
+		"missing_body": "Mohla vypršet, být zobrazena, zneplatněna nebo nikdy neexistovala.",
+		"invalid_title": "Tento tajný odkaz není úplný.",
+		"invalid_body": "Požádejte odesílatele o úplnou adresu URL včetně části za znakem #.",
+		"error_title": "Zprávu se nepodařilo otevřít.",
+		"consumed_error_title": "Zobrazení se spotřebovalo, ale dešifrování selhalo.",
+		"retry_info": "Znovu načíst informace o zprávě",
+		"retry_consumed_help": "Pokud odesílatel povolil více než jedno zobrazení, před vědomým dalším pokusem ověřte dostupnost. Další pokus spotřebuje další zobrazení.",
+		"retry_reveal": "Před dalším pokusem ověřit dostupnost",
+		"create_new": "Vytvořit novou šifrovanou zprávu",
+		"decrypted": "Dešifrováno v tomto prohlížeči",
+		"title": "Vaše zpráva",
+		"copy_text": "Kopírovat text",
+		"copy_failed": "Přístup ke schránce se nezdařil. Označte a zkopírujte text zprávy ručně.",
+		"attachments": "Přílohy ({count})",
+		"preview": "Náhled",
+		"close_preview": "Zavřít náhled",
+		"download": "Stáhnout",
 		"errors": {
-			"not_found": "Poznámka nebyla nalezena nebo již byla smazána.",
-			"decryption_failed": "Špatné heslo. Nelze dešifrovat. Odkaz je pravděpodobně poškozen. Poznámka byla zničena.",
-			"unsupported_type": "Nepodporovaný typ poznámky."
-		},
-		"explanation": "Klikněte níže pro zobrazení a následné smazání poznámky, pokud bylo dosaženo limitu zobrazení.",
-		"show_note": "Zobrazit poznámku",
-		"warning_will_not_see_again": "Tuto poznámku již <b>nebudete</b> moci znovu zobrazit.",
-		"download_all": "Stáhnout vše",
-		"links_found": "Odkazy nalezené v poznámce:"
+			"info": "Informace o zprávě se nepodařilo načíst. Žádné zobrazení se nespotřebovalo.",
+			"decrypt_consumed": "Pravost obálky se nepodařilo ověřit. Toto zobrazení už bylo spotřebováno; ověřte u odesílatele heslo nebo úplnost odkazu.",
+			"consumed": "Zpráva už není dostupná. Mohla vypršet, být zneplatněna nebo dosáhnout limitu zobrazení.",
+			"network": "Při zobrazování došlo k chybě sítě. Server už mohl zobrazení spotřebovat; před dalším pokusem o jednorázovou zprávu se poraďte s odesílatelem.",
+			"reveal_consumed": "Zobrazení selhalo poté, co už mohlo být spotřebováno. Před vědomým dalším pokusem ověřte dostupnost.",
+			"reveal": "Server tuto zprávu nemohl zobrazit."
+		}
 	},
-	"file_upload": {
-		"selected_files": "Vybrané soubory",
-		"no_files_selected": "Žádné soubory nevybrány",
-		"clear": "Vymazat"
+	"about": {
+		"eyebrow": "Malý modrý nástroj pro soukromí",
+		"title": "O aplikaci Nyanbin",
+		"lead": "Nyanbin sdílí text a soubory v podobě autentizovaných šifrovaných obálek s omezenou životností.",
+		"how_title": "Co vidí server",
+		"how_body": "Prohlížeč šifruje zprávu, formát, názvy souborů, údaje MIME, velikosti i samotná data. Server vidí ID zprávy, verzi protokolu, délku šifrovaných dat, dobu platnosti a volitelný limit zobrazení. Tajný klíč odkazu zůstává ve fragmentu adresy URL.",
+		"limits_title": "Důležitá omezení",
+		"limits_body": "Zprávu může zobrazit každý, kdo má úplný odkaz a případné heslo. Škodlivý server by mohl webovou aplikaci nahradit a časování provozu i délka šifrovaných dat zůstávají viditelné. Používejte HTTPS a důvěryhodnou instanci.",
+		"origin_title": "Kořeny v otevřeném softwaru",
+		"origin_body": "Nyanbin vychází ze základu projektu Cryptgeon s licencí MIT a znovu implementuje vybrané postupy pro ochranu soukromí a produktové prvky prostudované v projektu PrivateBin. Rozhraní i kočičí ilustrace jsou původní.",
+		"instance_title": "Tato instance",
+		"instance_default": "Toto je instance Nyanbin provozovaná na vlastním serveru."
+	},
+	"imprint": {
+		"title": "Tiráž",
+		"external": "Tato instance zveřejňuje svou tiráž na jiné adrese.",
+		"open": "Otevřít tiráž",
+		"unavailable": "Pro tuto instanci není nastavena adresa tiráže."
 	}
 }

@@ -1,25 +1,16 @@
-export function getStdin(timeout: number = 10): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
-    // Store the data from stdin in a buffer
-    let buffer = ''
-    let t: NodeJS.Timeout
+import { StringDecoder } from 'node:string_decoder'
 
-    const dataHandler = (d: Buffer) => (buffer += d.toString())
-    const endHandler = () => {
-      clearTimeout(t)
-      resolve(buffer.trim())
-    }
+import type { Readable } from 'node:stream'
 
-    // Stop listening for data after the timeout, otherwise hangs indefinitely
-    t = setTimeout(() => {
-      process.stdin.removeListener('data', dataHandler)
-      process.stdin.removeListener('end', endHandler)
-      process.stdin.pause()
-      resolve('')
-    }, timeout)
+export async function getStdin(input: Readable = process.stdin): Promise<string> {
+  if ('isTTY' in input && input.isTTY === true) throw new Error('--password-stdin requires piped standard input')
 
-    process.stdin.on('error', reject)
-    process.stdin.on('data', dataHandler)
-    process.stdin.on('end', endHandler)
-  })
+  const chunks: Buffer[] = []
+  for await (const chunk of input) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+
+  const decoder = new StringDecoder('utf8')
+  let password = decoder.write(Buffer.concat(chunks)) + decoder.end()
+  if (password.endsWith('\r\n')) password = password.slice(0, -2)
+  else if (password.endsWith('\n') || password.endsWith('\r')) password = password.slice(0, -1)
+  return password
 }

@@ -1,27 +1,24 @@
 [package]
-name = "cryptgeon"
-version = "2.9.3"
-authors = ["cupcakearmy <hi@nicco.io>"]
+name = "nyanbin"
+version = "1.0.0"
+authors = ["cupcakearmy <hi@nicco.io>", "Nyanbin contributors"]
 edition = "2024"
-rust-version = "1.95"
+rust-version = "1.85"
+license = "MIT"
 
 [[bin]]
-name = "cryptgeon"
+name = "nyanbin"
 path = "src/main.rs"
 
 [dependencies]
-# Core
-axum = "0.8"
-serde = { version = "1", features = ["derive"] }
-tokio = { version = "1", features = ["full"] }
-tower = "0.5"
-tower-http = { version = "0.6", features = ["full"] }
-redis = { version = "1", features = ["tls-native-tls"] }
-
-# Utility
-serde_json = "1"
-lazy_static = "1"
+axum = { version = "0.8", features = ["json"] }
+base64 = "0.22"
+ipnet = "2"
+redis = { version = "1", features = ["aio", "connection-manager", "tokio-native-tls-comp"] }
 ring = "0.17"
-bs62 = "0.1"
-byte-unit = "4"
-dotenv = "0.15"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+url = "2"
+sha2 = "0.10"
+tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "time"] }
+tower-http = { version = "0.6", features = ["compression-full", "fs"] }

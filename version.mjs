@@ -12,9 +12,7 @@ if (!semver.test(VERSION)) {
   process.exit(1)
 }
 
-// CLI
-shelljs.sed('-i', /"version": ".*"/, `"version": "${process.argv[2]}"`, './packages/cli/package.json')
-
-// Backend
-shelljs.sed('-i', /^version = ".*"$/m, `version = "${process.argv[2]}"`, './packages/backend/Cargo.toml')
-execSync('cargo check -p cryptgeon', { cwd: './packages/backend' })
+// CLI and backend stay on one release version.
+shelljs.sed('-i', /"version": ".*"/, `"version": "${VERSION}"`, './packages/cli/package.json')
+shelljs.sed('-i', /^version = ".*"$/m, `version = "${VERSION}"`, './packages/backend/Cargo.toml')
+execSync('cargo check -p nyanbin', { cwd: './packages/backend', stdio: 'inherit' })

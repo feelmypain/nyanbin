@@ -4,109 +4,107 @@ import { promisify } from 'node:util'
 import { getFileChecksum } from './files'
 
 const exec = promisify(execFile)
+export const SERVER = process.env.NYANBIN_E2E_URL ?? 'http://127.0.0.1:3000'
 
-type CreatePage = {
-  views?: number
-  expiration?: number
-  error?: string
+export type CreateOptions = {
+  text?: string
+  files?: string[]
+  format?: 'plain' | 'source' | 'markdown'
+  expiresIn?: 3600 | 21600 | 86400 | 604800
+  maxReads?: number
   password?: string
-} & (
-  | {
-      text: string
-    }
-  | {
-      files: string[]
-    }
-)
-async function createNote(page: Page, options: CreatePage): Promise<void> {
+}
+
+export async function createNoteSuccessfully(page: Page, options: CreateOptions): Promise<string> {
   await page.goto('/')
+  await expect(page.getByTestId('create-form')).toBeVisible()
 
-  if ('text' in options) {
-    await page.getByTestId('text-field').fill(options.text)
-  } else if (options.files) {
-    await page.getByTestId('switch-file').click()
-
-    const [fileChooser] = await Promise.all([
-      page.waitForEvent('filechooser'),
-      page.locator('text=No Files Selected').click(),
-    ])
-    await fileChooser.setFiles(options.files)
-  }
-
-  if (options.views || options.expiration || options.password) await page.getByTestId('switch-advanced').click()
-  if (options.views) {
-    await page.getByTestId('field-views').fill(options.views.toString())
-  }
-  if (options.expiration) {
-    await page.getByTestId('switch-advanced-toggle').click()
-    await page.getByTestId('field-expiration').fill(options.expiration.toString())
+  if (options.format) await page.getByTestId(`format-${options.format}`).click()
+  if (options.text !== undefined) await page.getByTestId('text-field').fill(options.text)
+  if (options.files?.length) await page.getByTestId('file-upload').setInputFiles(options.files)
+  if (options.expiresIn) await page.getByTestId('field-expiry').selectOption(String(options.expiresIn))
+  if (options.maxReads !== undefined) {
+    const toggle = page.getByTestId('read-cap-toggle')
+    if (!(await toggle.isChecked())) await toggle.check()
+    await page.getByTestId('field-reads').fill(String(options.maxReads))
   }
   if (options.password) {
-    await page.getByTestId('custom-password').click()
+    await page.getByTestId('password-toggle').check()
     await page.getByTestId('password').fill(options.password)
   }
 
-  await page.locator('button:has-text("create")').click()
+  await page.getByTestId('create-button').click()
+  await expect(page.getByTestId('create-result')).toBeVisible()
+  const link = await page.getByTestId('share-link').inputValue()
+  expect(link).toMatch(/^https?:\/\/[^\s]+\/note\/[A-Za-z0-9]{32}#[A-Za-z0-9_-]{43}$/)
+  return link
 }
 
-export async function createNoteSuccessfully(page: Page, options: CreatePage): Promise<string> {
-  await createNote(page, options)
-  return await page.getByTestId('share-link').inputValue()
-}
-
-export async function createNoteError(page: Page, options: CreatePage, error: string): Promise<void> {
-  await createNote(page, options)
-  await expect(page.locator('._toastContainer')).toContainText(error)
-}
-
-type CheckLinkBase = {
-  link: string
-  text: string
-  password?: string
-}
-
-export async function checkLinkForDownload(page: Page, options: CheckLinkBase & { checksum: string }) {
-  await page.goto('/')
-  await page.goto(options.link)
-  if (options.password) await page.getByTestId('show-note-password').fill(options.password)
+export async function reveal(page: Page, link: string, password?: string): Promise<void> {
+  await page.goto('about:blank')
+  await page.goto(link)
+  await expect(page.getByTestId('reveal-gate')).toBeVisible()
+  if (password) await page.getByTestId('show-note-password').fill(password)
   await page.getByTestId('show-note-button').click()
+  await expect(page.getByTestId('result')).toBeVisible()
+}
 
+export async function checkLinkForText(
+  page: Page,
+  options: { link: string; text: string; password?: string },
+): Promise<void> {
+  await reveal(page, options.link, options.password)
+  await expect(page.getByTestId('result')).toContainText(options.text)
+}
+
+export async function checkLinkForDownload(
+  page: Page,
+  options: { link: string; index?: number; checksum: string; password?: string },
+): Promise<void> {
+  await reveal(page, options.link, options.password)
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByTestId(`result`).locator(`text=${options.text}`).click(),
+    page.getByTestId(`download-file-${options.index ?? 0}`).click(),
   ])
   const path = await download.path()
   if (!path) throw new Error('Download failed')
-  const cs = await getFileChecksum(path)
-  expect(cs).toBe(options.checksum)
+  expect(await getFileChecksum(path)).toBe(options.checksum)
 }
 
-export async function checkLinkForText(page: Page, options: CheckLinkBase) {
-  await page.goto('/')
-  await page.goto(options.link)
-  if (options.password) await page.getByTestId('show-note-password').fill(options.password)
-  await page.getByTestId('show-note-button').click()
-  const text = await page.getByTestId('result').locator('.note').innerText()
-  expect(text).toContain(options.text)
+export function parseNoteLink(link: string): { server: string; id: string; secret: string } {
+  const url = new URL(link)
+  const match = /^\/note\/([A-Za-z0-9]{32})$/.exec(url.pathname)
+  if (!match || !url.hash) throw new Error(`Invalid Nyanbin note link: ${link}`)
+  return { server: url.origin, id: match[1], secret: url.hash.slice(1) }
 }
 
-export async function checkLinkDoesNotExist(page: Page, link: string) {
-  await page.goto('/') // Required due to firefox: https://github.com/microsoft/playwright/issues/15781
-  await page.goto(link)
-  await expect(page.locator('main')).toContainText('note was not found or was already deleted')
+export async function expectNoteMissing(link: string): Promise<void> {
+  const { server, id } = parseNoteLink(link)
+  const response = await fetch(`${server}/api/notes/${id}`)
+  expect([404, 410]).toContain(response.status)
 }
 
 export async function CLI(...args: string[]) {
-  return await exec('./packages/cli/dist/cli.cjs', args, {
-    env: {
-      ...process.env,
-      CRYPTGEON_SERVER: 'http://localhost:3000',
-    },
+  return exec('./packages/cli/dist/cli.cjs', args, {
+    env: { ...process.env, NYANBIN_SERVER: SERVER },
   })
 }
 
 export function getLinkFromCLI(output: string): string {
-  const match = output.match(/(https?:\/\/[^\s]+)/)
-  if (!match) throw new Error('No link found in CLI output')
-  return match[0]
+  const match = /^Note:\s+(https?:\/\/\S+)$/m.exec(output)
+  if (!match) throw new Error(`No labelled note link found in CLI output: ${output}`)
+  return match[1]
+}
+
+export function getDeleteTokenFromCLI(output: string): string {
+  const match = /^Delete token:\s+([A-Za-z0-9_-]{43})$/m.exec(output)
+  if (!match) throw new Error(`No labelled delete token found in CLI output: ${output}`)
+  return match[1]
+}
+
+export async function CLIAt(cwd: string, ...args: string[]) {
+  return exec(`${process.cwd()}/packages/cli/dist/cli.cjs`, args, {
+    cwd,
+    env: { ...process.env, NYANBIN_SERVER: SERVER },
+  })
 }

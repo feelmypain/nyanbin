@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Nyanbin cat envelope mark</title>
+  <desc id="desc">A geometric blue cat peeking over a sealed envelope</desc>
+  <rect width="128" height="128" rx="28" fill="#eaf3ff"/>
+  <path d="M30 52 38 25 57 41h14l19-16 8 27v27H30Z" fill="#79aaf8" stroke="#17345f" stroke-width="6" stroke-linejoin="round"/>
+  <circle cx="52" cy="59" r="4" fill="#17345f"/>
+  <circle cx="76" cy="59" r="4" fill="#17345f"/>
+  <path d="m59 69 5 4 5-4M64 73v6" fill="none" stroke="#17345f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="20" y="76" width="88" height="36" rx="8" fill="#fff" stroke="#17345f" stroke-width="6"/>
+  <path d="m24 81 40 25 40-25" fill="none" stroke="#4f86dc" stroke-width="5" stroke-linejoin="round"/>
+</svg>

@@ -1,4 +1,5 @@
+export * from './actions/delete.js'
 export * from './actions/download.js'
 export * from './actions/upload.js'
-export * from './shared/adapters.js'
-export * from './shared/api.js'
+export * from './shared/shared.js'
+export * from './utils/stdin.js'

@@ -1,45 +1,74 @@
-use crate::config;
-use axum::{http::StatusCode, Json};
+use axum::{Json, extract::State};
 use serde::Serialize;
+use std::sync::Arc;
+
+use crate::{AppState, config::PROTOCOL_VERSION};
 
 #[derive(Serialize)]
-pub struct Status {
-    // General
-    pub version: String,
-    // Config
-    pub max_size: u32,
-    pub max_views: u32,
-    pub max_expiration: u32,
-    pub allow_advanced: bool,
-    pub allow_files: bool,
-    pub imprint_url: String,
-    pub imprint_html: String,
-    // Theme
-    pub theme_image: String,
-    pub theme_text: String,
-    pub theme_page_title: String,
-    pub theme_favicon: String,
-    pub theme_new_note_notice: bool,
-    pub theme_home_link: bool,
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Limits {
+    max_envelope_bytes: usize,
+    max_expires_in: u64,
+    max_reads: u32,
 }
 
-pub async fn get_status() -> (StatusCode, Json<Status>) {
-    let status = Status {
-        version: config::VERSION.to_string(),
-        max_size: *config::LIMIT as u32,
-        max_views: *config::MAX_VIEWS,
-        max_expiration: *config::MAX_EXPIRATION,
-        allow_advanced: *config::ALLOW_ADVANCED,
-        allow_files: *config::ALLOW_FILES,
-        imprint_url: config::IMPRINT_URL.to_string(),
-        imprint_html: config::IMPRINT_HTML.to_string(),
-        theme_new_note_notice: *config::THEME_NEW_NOTE_NOTICE,
-        theme_home_link: *config::THEME_HOME_LINK,
-        theme_image: config::THEME_IMAGE.to_string(),
-        theme_text: config::THEME_TEXT.to_string(),
-        theme_page_title: config::THEME_PAGE_TITLE.to_string(),
-        theme_favicon: config::THEME_FAVICON.to_string(),
-    };
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Defaults {
+    expires_in: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    max_reads: Option<u32>,
+}
 
-    (StatusCode::OK, Json(status))
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Capabilities {
+    files: bool,
+    passwords: bool,
+    formats: [&'static str; 3],
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Branding {
+    name: String,
+    description: String,
+    logo_url: String,
+    imprint_url: String,
+}
+
+#[derive(Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Status {
+    protocol: u8,
+    limits: Limits,
+    defaults: Defaults,
+    capabilities: Capabilities,
+    branding: Branding,
+}
+
+pub async fn get_status(State(state): State<Arc<AppState>>) -> Json<Status> {
+    Json(Status {
+        protocol: PROTOCOL_VERSION,
+        limits: Limits {
+            max_envelope_bytes: state.config.max_envelope_bytes,
+            max_expires_in: state.config.max_expires_in,
+            max_reads: state.config.max_reads,
+        },
+        defaults: Defaults {
+            expires_in: state.config.default_expires_in,
+            max_reads: state.config.default_max_reads,
+        },
+        capabilities: Capabilities {
+            files: true,
+            passwords: true,
+            formats: ["plain", "source", "markdown"],
+        },
+        branding: Branding {
+            name: state.config.branding.name.clone(),
+            description: state.config.branding.description.clone(),
+            logo_url: state.config.branding.logo_url.clone(),
+            imprint_url: state.config.branding.imprint_url.clone(),
+        },
+    })
 }

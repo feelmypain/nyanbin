@@ -1,29 +1,47 @@
-version: '3.8'
-
 services:
-  redis:
-    image: valkey/valkey:7-alpine
-    # This is required to stay in RAM only.
-    command: valkey-server --save "" --appendonly no
-    # Set a size limit. See link below on how to customise.
-    # https://valkey.io/docs/latest/operate/rs/databases/memory-performance/eviction-policy/
-    # --maxmemory 1gb --maxmemory-policy allkeys-lrulpine
-    # This prevents the creation of an anonymous volume.
+  valkey:
+    image: valkey/valkey:8.1-alpine
+    command: ["valkey-server", "--save", "", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction"]
     tmpfs:
-      - /data
+      - /data:size=256m,mode=0700
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   app:
-    image: cupcakearmy/cryptgeon:latest
+    image: ${NYANBIN_IMAGE:-nyanbin:latest}
+    environment:
+      NYANBIN_REDIS_URL: redis://valkey:6379/
     depends_on:
-      - redis
+      valkey:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8000/api/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
 
   proxy:
-    image: nginx:alpine
+    image: nginx:1.29-alpine
     depends_on:
-      - app
+      app:
+        condition: service_healthy
     volumes:
-      - ./nginx-plain.conf:/etc/nginx/conf.d/default.conf
-      # Or with tls
-      # - ./nginx-tls.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx-plain.conf:/etc/nginx/conf.d/default.conf:ro
+      # Or mount nginx-tls.conf after configuring certificates.
     ports:
-      - 80:80
+      - "80:80"
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run

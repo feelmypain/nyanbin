@@ -1,84 +1,13 @@
 <script lang="ts">
 	import { t } from 'svelte-intl-precompile'
-
-	import Button from '$lib/ui/Button.svelte'
-	import MaxSize from '$lib/ui/MaxSize.svelte'
-	import type { FileDTO } from 'cryptgeon/shared'
-
-	interface Props {
-		label?: string
-		files?: FileDTO[]
-		[key: string]: any
-	}
-
-	let { label = '', files = $bindable([]), ...rest }: Props = $props()
-
-	async function fileToDTO(file: File): Promise<FileDTO> {
-		return {
-			name: file.name,
-			size: file.size,
-			type: file.type,
-			contents: new Uint8Array(await file.arrayBuffer()),
-		}
-	}
-
-	async function onInput(e: Event) {
-		const input = e.target as HTMLInputElement
-		if (input?.files?.length) {
-			const toAdd = await Promise.all(Array.from(input.files).map(fileToDTO))
-			files = [...files, ...toAdd]
-		}
-	}
-
-	function clear(e: Event) {
-		e.preventDefault()
-		files = []
-	}
+	interface Props { files?: File[]; disabled?: boolean; onfiles?: (files: File[]) => void }
+	let { files = $bindable([]), disabled = false, onfiles }: Props = $props()
+	let dragging = $state(false)
+	function add(list: FileList | null) { if (disabled || !list) return; const added = Array.from(list); files = [...files, ...added]; onfiles?.(added) }
+	function input(event: Event) { const picker = event.currentTarget as HTMLInputElement; add(picker.files); picker.value = '' }
+	function drop(event: DragEvent) { event.preventDefault(); dragging = false; if (!disabled) add(event.dataTransfer?.files ?? null) }
 </script>
-
-<label>
-	<small>
-		{label}
-	</small>
-	<input {...rest} type="file" onchange={onInput} multiple />
-	<div class="box">
-		{#if files.length}
-			<div>
-				<b>{$t('file_upload.selected_files')}</b>
-				{#each files as file}
-					<div class="file">
-						{file.name}
-					</div>
-				{/each}
-				<div class="spacer"></div>
-				<Button onclick={clear}>{$t('file_upload.clear')}</Button>
-			</div>
-		{:else}
-			<div>
-				<b>{$t('file_upload.no_files_selected')}</b>
-				<br />
-				<small>
-					{$t('common.max')}: <MaxSize />
-				</small>
-			</div>
-		{/if}
-	</div>
-</label>
-
-<style>
-	input {
-		display: none;
-	}
-
-	.box {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		align-items: center;
-		cursor: pointer;
-	}
-
-	.spacer {
-		margin-top: 1rem;
-	}
-</style>
+<div role="group" aria-label={$t('files.add')} aria-disabled={disabled} class:dragging class="drop" ondragover={(event) => { event.preventDefault(); if (!disabled) dragging = true }} ondragleave={() => (dragging = false)} ondrop={drop}>
+	<label><span>{$t('files.add')}</span><input data-testid="file-upload" type="file" multiple {disabled} onchange={input}/><small>{$t('files.drop_help')}</small></label>
+</div>
+<style>.drop { display: grid; min-height: 7rem; place-items: center; padding: var(--space-4); border: 2px dashed var(--border-strong); border-radius: var(--radius-md); background: var(--surface-blue); text-align: center; transition: background var(--duration-ui) var(--ease-out); } .drop.dragging { background: var(--surface-strong); } label { width: 100%; cursor: pointer; } input { margin-block: var(--space-2); padding: var(--space-2); background: var(--surface); } small { display: block; color: var(--ink-muted); }</style>

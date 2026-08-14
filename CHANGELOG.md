@@ -1,10 +1,31 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to Nyanbin are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [Unreleased]
 
+### Added
+
+- Nyanbin v1 authenticated AES-256-GCM envelope shared by the browser and Node.js CLI.
+- Absolute expiry, optional atomic read caps, explicit reveal, and independent creator deletion capabilities.
+- Plain text, source, Markdown, password, and encrypted multi-file payload support.
+- Dependency-aware readiness and hardened ephemeral Valkey deployment defaults.
+- Original blue kawaii interface and geometric cat branding.
+
+### Changed
+
+- Forked Cryptgeon's MIT-licensed Rust, Svelte, and CLI foundation into Nyanbin with a clean protocol and product cutover.
+- Production containers now run as an unprivileged user and support read-only filesystems.
+- Release artifacts publish only under repository-controlled npm and Forgejo container-registry credentials and namespaces.
+
+### Removed
+
+- Cryptgeon wire compatibility, Occulto adapters, legacy views/expiration modes, remote branding, and third-party runtime integrations.
+- Discussions, never-expiring notes, external URL shorteners, operator HTML, and legacy translated deployment guides.
+
+## Cryptgeon history
+
+The entries below are retained as upstream change history and attribution.
 ## [2.4.0] - 2023-11-01
 
 ### Changed

@@ -1,0 +1,20 @@
+{
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "path": "packages/backend"
+    },
+    {
+      "path": "packages/frontend"
+    },
+    {
+      "path": "packages/cli"
+    }
+  ],
+  "settings": {
+    "i18n-ally.localesPaths": ["packages/frontend/locales"],
+    "cSpell.words": ["Nyanbin", "Valkey"]
+  }
+}

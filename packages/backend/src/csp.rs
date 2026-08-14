@@ -1,16 +1,62 @@
-use axum::{body::Body, extract::Request, http::HeaderValue, middleware::Next, response::Response};
+use axum::{
+    body::Body,
+    extract::Request,
+    http::{HeaderName, HeaderValue},
+    middleware::Next,
+    response::Response,
+};
 
-const CUSTOM_HEADER_NAME: &str = "Content-Security-Policy";
-const CUSTOM_HEADER_VALUE: &str = "default-src 'self'; script-src 'report-sample' 'self'; style-src 'report-sample' 'self'; object-src 'none'; base-uri 'self'; connect-src 'self' data:; font-src 'self'; frame-src 'self'; img-src 'self'; manifest-src 'self'; media-src 'self'; worker-src 'none';";
+const HEADERS: &[(&str, &str)] = &[
+    (
+        "content-security-policy",
+        "base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'",
+    ),
+    ("cross-origin-opener-policy", "same-origin"),
+    ("cross-origin-resource-policy", "same-origin"),
+    (
+        "permissions-policy",
+        "camera=(), geolocation=(), microphone=(), payment=(), usb=()",
+    ),
+    ("referrer-policy", "no-referrer"),
+    (
+        "strict-transport-security",
+        "max-age=31536000; includeSubDomains",
+    ),
+    ("x-content-type-options", "nosniff"),
+    ("x-frame-options", "DENY"),
+];
 
-lazy_static! {
-    static ref HEADER_VALUE: HeaderValue = HeaderValue::from_static(CUSTOM_HEADER_VALUE);
+pub async fn security_headers(request: Request<Body>, next: Next) -> Response {
+    let is_api = request.uri().path().starts_with("/api/");
+    let mut response = next.run(request).await;
+    for (name, value) in HEADERS {
+        response.headers_mut().insert(
+            HeaderName::from_static(name),
+            HeaderValue::from_static(value),
+        );
+    }
+    if is_api {
+        response
+            .headers_mut()
+            .insert("cache-control", HeaderValue::from_static("no-store"));
+    }
+    response
 }
 
-pub async fn add_csp_header(request: Request<Body>, next: Next) -> Response {
-    let mut response = next.run(request).await;
-    response
-        .headers_mut()
-        .append(CUSTOM_HEADER_NAME, HEADER_VALUE.clone());
-    response
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn csp_complements_the_prerendered_resource_policy() {
+        let csp = HEADERS
+            .iter()
+            .find(|(name, _)| *name == "content-security-policy")
+            .unwrap()
+            .1;
+        assert!(csp.contains("base-uri 'none'"));
+        assert!(csp.contains("frame-ancestors 'none'"));
+        assert!(csp.contains("object-src 'none'"));
+        assert!(!csp.contains("unsafe-inline"));
+        assert!(!csp.contains("https:"));
+    }
 }

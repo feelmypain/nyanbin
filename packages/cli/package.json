@@ -1,47 +1,61 @@
 {
-  "name": "cryptgeon",
-  "version": "2.9.3",
-  "homepage": "https://github.com/cupcakearmy/cryptgeon",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/cupcakearmy/cryptgeon.git",
-    "directory": "packages/cli"
-  },
+  "name": "nyanbin",
+  "version": "1.0.0",
+  "description": "Nyanbin encrypted paste and file sharing CLI and browser-safe protocol",
+  "license": "MIT",
   "type": "module",
   "exports": {
-    ".": "./dist/index.js",
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
     "./shared": {
       "import": "./dist/shared/shared.js",
       "types": "./dist/shared/shared.d.ts"
+    },
+    "./shared/api": {
+      "import": "./dist/shared/api.js",
+      "types": "./dist/shared/api.d.ts"
+    },
+    "./shared/protocol": {
+      "import": "./dist/shared/protocol.js",
+      "types": "./dist/shared/protocol.d.ts"
     }
   },
   "types": "./dist/index.d.ts",
   "bin": {
-    "cryptgeon": "./dist/cli.cjs"
+    "nyanbin": "./dist/cli.cjs"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES",
+    "DEPENDENCY_LICENSES.csv"
   ],
   "scripts": {
     "bin": "run-s build package",
     "build": "tsc && node build.js",
     "dev": "node build.js --watch",
+    "test": "pnpm build && node --test test/*.test.mjs",
+    "prepack": "node ../../scripts/package-cli-legal.mjs",
     "prepublishOnly": "run-s build"
   },
-  "devDependencies": {
+  "dependencies": {
     "@commander-js/extra-typings": "^12.1.0",
-    "@types/inquirer": "^9.0.9",
-    "@types/mime": "^4.0.0",
-    "@types/node": "^20.19.41",
     "commander": "^12.1.0",
     "inquirer": "^9.3.8",
     "mime": "^4.1.0",
-    "occulto": "^2.0.6",
-    "pretty-bytes": "^6.1.1",
+    "pretty-bytes": "^6.1.1"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.9",
+    "@types/mime": "^4.0.0",
+    "@types/node": "^24.12.4",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   }
 }

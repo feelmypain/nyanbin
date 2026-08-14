@@ -1,156 +1,353 @@
 use axum::{
-    extract::Path,
-    http::StatusCode,
-    response::{IntoResponse, Response},
     Json,
+    extract::{ConnectInfo, Path, Request, State, rejection::JsonRejection},
+    http::{HeaderMap, Method, StatusCode},
+    middleware::Next,
+    response::{IntoResponse, Response},
 };
-use serde::{Deserialize, Serialize};
-use std::{sync::Arc, time::SystemTime};
-use tokio::sync::Mutex;
+use ring::rand::SystemRandom;
+use sha2::{Digest, Sha256};
+use std::{
+    net::{IpAddr, Ipv6Addr, SocketAddr},
+    sync::Arc,
+    time::Duration,
+};
 
-use crate::note::{generate_id, Note, NoteInfo};
-use crate::store;
-use crate::{config, lock::SharedState};
+use super::{
+    CommitRequest, CreateResponse, DeleteRequest, InfoLifecycle, InfoResponse, Lifecycle,
+    ReserveRequest, ReserveResponse, RevealResponse, generate_delete_token, generate_id,
+    sha256_hex, validate_commit, validate_delete_token, validate_id, validate_reserve,
+};
+use crate::{
+    AppState,
+    error::{ApiError, json_rejection},
+    store::{CommitResult, DeleteResult, ReserveResult},
+};
 
-use super::NotePublic;
+const MAX_ID_ATTEMPTS: usize = 16;
 
-pub fn now() -> u32 {
-    SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-        .as_secs() as u32
-}
+pub async fn reserve(
+    State(state): State<Arc<AppState>>,
+    payload: Result<Json<ReserveRequest>, JsonRejection>,
+) -> Result<impl IntoResponse, ApiError> {
+    let Json(request) = payload.map_err(json_rejection)?;
+    let max_reads = validate_reserve(&request, &state.config)?;
+    let expires_in = Duration::from_secs(request.expires_in);
+    let random = SystemRandom::new();
+    let (delete_token_bytes, delete_token) = generate_delete_token(&random)?;
+    let delete_hash = sha256_hex(&delete_token_bytes);
 
-#[derive(Deserialize)]
-pub struct OneNoteParams {
-    id: String,
-}
-
-pub async fn preview(Path(OneNoteParams { id }): Path<OneNoteParams>) -> Response {
-    let note = store::get(&id);
-
-    match note {
-        Ok(Some(n)) => (StatusCode::OK, Json(NoteInfo { meta: n.meta })).into_response(),
-        Ok(None) => (StatusCode::NOT_FOUND).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-struct CreateResponse {
-    id: String,
-}
-
-pub async fn create(Json(mut n): Json<Note>) -> Response {
-    // let mut n = note.into_inner();
-    let id = generate_id();
-    // let bad_req = HttpResponse::BadRequest().finish();
-    if n.views == None && n.expiration == None {
-        return (
-            StatusCode::BAD_REQUEST,
-            "At least views or expiration must be set",
-        )
-            .into_response();
-    }
-    if !*config::ALLOW_ADVANCED {
-        n.views = Some(1);
-        n.expiration = None;
-    }
-    match n.views {
-        Some(v) => {
-            if v > *config::MAX_VIEWS || v < 1 {
-                return (StatusCode::BAD_REQUEST, "Invalid views").into_response();
-            }
-            n.expiration = None; // views overrides expiration
-        }
-        _ => {}
-    }
-    match n.expiration {
-        Some(e) => {
-            if e > *config::MAX_EXPIRATION || e < 1 {
-                return (StatusCode::BAD_REQUEST, "Invalid expiration").into_response();
-            }
-            let expiration = now() + (e * 60);
-            n.expiration = Some(expiration);
-        }
-        _ => {}
-    }
-    match store::set(&id.clone(), &n.clone()) {
-        Ok(_) => (StatusCode::OK, Json(CreateResponse { id })).into_response(),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    }
-}
-
-pub async fn delete(
-    Path(OneNoteParams { id }): Path<OneNoteParams>,
-    state: axum::extract::State<SharedState>,
-) -> Response {
-    let mut locks_map = state.locks.lock().await;
-    let lock = locks_map
-        .entry(id.clone())
-        .or_insert_with(|| Arc::new(Mutex::new(())))
-        .clone();
-    drop(locks_map);
-    let _guard = lock.lock().await;
-
-    let note = store::get(&id);
-    match note {
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-        Ok(None) => (StatusCode::NOT_FOUND).into_response(),
-        Ok(Some(note)) => {
-            let mut changed = note.clone();
-            if changed.views == None && changed.expiration == None {
-                return (StatusCode::BAD_REQUEST).into_response();
-            }
-            match changed.views {
-                Some(v) => {
-                    changed.views = Some(v - 1);
-                    let id = id.clone();
-                    if v <= 1 {
-                        match store::del(&id) {
-                            Err(e) => {
-                                return (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
-                                    .into_response();
-                            }
-                            _ => {}
-                        }
-                    } else {
-                        match store::set(&id, &changed.clone()) {
-                            Err(e) => {
-                                return (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
-                                    .into_response();
-                            }
-                            _ => {}
-                        }
-                    }
-                }
-                _ => {}
-            }
-
-            let n = now();
-            match changed.expiration {
-                Some(e) => {
-                    if e < n {
-                        match store::del(&id.clone()) {
-                            Ok(_) => return (StatusCode::BAD_REQUEST).into_response(),
-                            Err(e) => {
-                                return (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
-                                    .into_response()
-                            }
-                        }
-                    }
-                }
-                _ => {}
-            }
-
-            return (
-                StatusCode::OK,
-                Json(NotePublic {
-                    contents: changed.contents,
-                    meta: changed.meta,
-                }),
+    for _ in 0..MAX_ID_ATTEMPTS {
+        let id = generate_id(&random)?;
+        match state
+            .store
+            .reserve(
+                &id,
+                expires_in,
+                max_reads,
+                &delete_hash,
+                state.config.reservation_ttl,
             )
-                .into_response();
+            .await
+            .map_err(|_| ApiError::storage())?
+        {
+            ReserveResult::Created { expires_at } => {
+                return Ok((
+                    StatusCode::CREATED,
+                    Json(ReserveResponse {
+                        id,
+                        delete_token,
+                        lifecycle: Lifecycle {
+                            expires_at,
+                            max_reads,
+                        },
+                    }),
+                ));
+            }
+            ReserveResult::Collision => continue,
         }
+    }
+    Err(ApiError::new(
+        StatusCode::SERVICE_UNAVAILABLE,
+        "id_space_exhausted",
+        "Could not reserve a note ID",
+    ))
+}
+
+pub async fn commit(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+    payload: Result<Json<CommitRequest>, JsonRejection>,
+) -> Result<impl IntoResponse, ApiError> {
+    validate_id(&id)?;
+    let Json(request) = payload.map_err(json_rejection)?;
+    validate_commit(&id, &request, &state.config)?;
+    match state
+        .store
+        .commit(
+            &id,
+            &request.lifecycle,
+            &request.delete_token_hash,
+            &request.envelope,
+        )
+        .await
+        .map_err(|_| ApiError::storage())?
+    {
+        CommitResult::Created => Ok((StatusCode::CREATED, Json(CreateResponse { id }))),
+        CommitResult::Missing => Err(ApiError::new(
+            StatusCode::NOT_FOUND,
+            "reservation_not_found",
+            "Reservation not found or expired",
+        )),
+        CommitResult::Mismatch => Err(ApiError::new(
+            StatusCode::CONFLICT,
+            "reservation_mismatch",
+            "Commit does not match the reservation",
+        )),
+        CommitResult::Collision => Err(ApiError::new(
+            StatusCode::CONFLICT,
+            "reservation_mismatch",
+            "A note already exists for this reservation",
+        )),
+    }
+}
+
+pub async fn info(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+) -> Result<Json<InfoResponse>, ApiError> {
+    validate_id(&id)?;
+    let info = state
+        .store
+        .info(&id)
+        .await
+        .map_err(|_| ApiError::storage())?
+        .ok_or_else(ApiError::not_found)?;
+    Ok(Json(InfoResponse {
+        protocol: crate::config::PROTOCOL_VERSION,
+        lifecycle: InfoLifecycle {
+            expires_at: info.expires_at,
+            max_reads: info.max_reads,
+            remaining_reads: info.remaining_reads,
+        },
+    }))
+}
+
+pub async fn reveal(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+) -> Result<Json<RevealResponse>, ApiError> {
+    validate_id(&id)?;
+    let envelope = state
+        .store
+        .reveal(&id)
+        .await
+        .map_err(|_| ApiError::storage())?
+        .ok_or_else(ApiError::not_found)?;
+    Ok(Json(RevealResponse {
+        protocol: crate::config::PROTOCOL_VERSION,
+        envelope,
+    }))
+}
+
+pub async fn delete_note(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+    payload: Result<Json<DeleteRequest>, JsonRejection>,
+) -> Result<StatusCode, ApiError> {
+    validate_id(&id)?;
+    let Json(request) = payload.map_err(json_rejection)?;
+    let token = validate_delete_token(&request.delete_token)?;
+    let candidate = sha256_hex(&token);
+    match state
+        .store
+        .delete(&id, &candidate)
+        .await
+        .map_err(|_| ApiError::storage())?
+    {
+        DeleteResult::Deleted => Ok(StatusCode::NO_CONTENT),
+        DeleteResult::Missing => Err(ApiError::not_found()),
+        DeleteResult::Invalid => Err(ApiError::new(
+            StatusCode::FORBIDDEN,
+            "invalid_delete_token",
+            "Delete capability is invalid",
+        )),
+    }
+}
+
+pub async fn write_rate_limit(
+    State(state): State<Arc<AppState>>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    request: Request,
+    next: Next,
+) -> Result<Response, ApiError> {
+    let Some(operation) = metered_write_operation(request.method()) else {
+        return Err(ApiError::new(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "internal_error",
+            "Rate limiter applied to an unsupported operation",
+        ));
+    };
+    let ip = client_ip(
+        peer.ip(),
+        request.headers(),
+        &state.config.trusted_proxy_cidrs,
+    );
+    let bucket = pseudonymous_bucket(normalize_client_ip(
+        ip,
+        state.config.rate_limit_ipv6_prefix_bits,
+    ));
+    let allowed = state
+        .store
+        .rate_limit(
+            operation,
+            &bucket,
+            state.config.rate_limit_window,
+            state.config.rate_limit_requests,
+            state.config.rate_limit_global_requests,
+        )
+        .await
+        .map_err(|_| ApiError::storage())?;
+    if !allowed {
+        return Err(ApiError::new(
+            StatusCode::TOO_MANY_REQUESTS,
+            "rate_limited",
+            "Too many note write attempts; try again later",
+        ));
+    }
+    Ok(next.run(request).await)
+}
+
+fn metered_write_operation(method: &Method) -> Option<&'static str> {
+    match *method {
+        Method::POST => Some("reserve"),
+        Method::PUT => Some("commit"),
+        _ => None,
+    }
+}
+
+fn client_ip(peer: IpAddr, headers: &HeaderMap, trusted: &[ipnet::IpNet]) -> IpAddr {
+    if !trusted.iter().any(|network| network.contains(&peer)) {
+        return peer;
+    }
+    let Some(forwarded) = headers
+        .get("x-forwarded-for")
+        .and_then(|value| value.to_str().ok())
+    else {
+        return peer;
+    };
+    let Ok(mut chain): Result<Vec<IpAddr>, _> = forwarded
+        .split(',')
+        .map(|value| value.trim().parse())
+        .collect()
+    else {
+        return peer;
+    };
+    chain.push(peer);
+    for address in chain.into_iter().rev() {
+        if !trusted.iter().any(|network| network.contains(&address)) {
+            return address;
+        }
+    }
+    peer
+}
+
+fn normalize_client_ip(ip: IpAddr, ipv6_prefix_bits: u8) -> IpAddr {
+    let IpAddr::V6(address) = ip else {
+        return ip;
+    };
+    if let Some(address) = address.to_ipv4_mapped() {
+        return IpAddr::V4(address);
+    }
+    let mask = if ipv6_prefix_bits == 0 {
+        0
+    } else {
+        u128::MAX << (128 - ipv6_prefix_bits)
+    };
+    IpAddr::V6(Ipv6Addr::from(u128::from(address) & mask))
+}
+
+fn pseudonymous_bucket(ip: IpAddr) -> String {
+    let digest = Sha256::digest(ip.to_string().as_bytes());
+    let mut output = String::with_capacity(32);
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+    for byte in &digest[..16] {
+        output.push(HEX[(byte >> 4) as usize] as char);
+        output.push(HEX[(byte & 15) as usize] as char);
+    }
+    output
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::str::FromStr;
+
+    #[test]
+    fn ignores_forwarded_header_from_untrusted_peer() {
+        let mut headers = HeaderMap::new();
+        headers.insert("x-forwarded-for", "203.0.113.2".parse().unwrap());
+        let peer: IpAddr = "192.0.2.4".parse().unwrap();
+        assert_eq!(client_ip(peer, &headers, &[]), peer);
+    }
+
+    #[test]
+    fn uses_forwarded_header_from_trusted_peer() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "x-forwarded-for",
+            "198.51.100.9, 203.0.113.2".parse().unwrap(),
+        );
+        let trusted = [ipnet::IpNet::from_str("10.0.0.0/8").unwrap()];
+        assert_eq!(
+            client_ip("10.1.2.3".parse().unwrap(), &headers, &trusted),
+            "203.0.113.2".parse::<IpAddr>().unwrap()
+        );
+    }
+
+    #[test]
+    fn buckets_ipv6_clients_by_configured_prefix() {
+        let first: IpAddr = "2001:db8:1234:5678::1".parse().unwrap();
+        let second: IpAddr = "2001:db8:1234:5678:ffff::2".parse().unwrap();
+        assert_eq!(
+            normalize_client_ip(first, 64),
+            normalize_client_ip(second, 64)
+        );
+        assert_eq!(
+            pseudonymous_bucket(normalize_client_ip(first, 64)),
+            pseudonymous_bucket(normalize_client_ip(second, 64))
+        );
+    }
+
+    #[test]
+    fn configurable_ipv6_prefix_distinguishes_other_networks() {
+        let first: IpAddr = "2001:db8:1234:5600::1".parse().unwrap();
+        let second: IpAddr = "2001:db8:1234:5700::2".parse().unwrap();
+        assert_eq!(
+            normalize_client_ip(first, 48),
+            normalize_client_ip(second, 48)
+        );
+        assert_ne!(
+            normalize_client_ip(first, 56),
+            normalize_client_ip(second, 56)
+        );
+    }
+
+    #[test]
+    fn invalid_forwarded_chain_falls_back_to_peer() {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "x-forwarded-for",
+            "198.51.100.9, invalid, 203.0.113.2".parse().unwrap(),
+        );
+        let peer: IpAddr = "10.1.2.3".parse().unwrap();
+        let trusted = [ipnet::IpNet::from_str("10.0.0.0/8").unwrap()];
+        assert_eq!(client_ip(peer, &headers, &trusted), peer);
+    }
+    #[test]
+    fn reservations_and_commits_are_metered_writes() {
+        assert_eq!(metered_write_operation(&Method::POST), Some("reserve"));
+        assert_eq!(metered_write_operation(&Method::PUT), Some("commit"));
+        assert_eq!(metered_write_operation(&Method::GET), None);
     }
 }

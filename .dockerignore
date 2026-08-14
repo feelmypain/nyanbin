@@ -1,9 +1,13 @@
 *
 
-!/packages
-!/package.json
-!/pnpm-lock.yaml
-!/pnpm-workspace.yaml
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!packages/
+!packages/**
+!LICENSE
+!THIRD_PARTY_NOTICES
+!DEPENDENCY_LICENSES.csv
 
 **/target
 **/node_modules
@@ -13,3 +17,5 @@
 **/build
 **/.svelte
 **/.svelte-kit
+**/.env*
+**/*.log

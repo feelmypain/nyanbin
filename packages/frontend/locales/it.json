@@ -1,61 +1,187 @@
 {
 	"common": {
-		"note": "nota",
-		"file": "file",
-		"advanced": "avanzato",
-		"create": "crea",
-		"loading": "carica",
-		"mode": "modalità",
-		"views": "{n, plural, =0 {viste} =1 {1 vista} other {# viste}}",
-		"minutes": "{n, plural, =0 {minuti} =1 {1 minuto} other {# minuti}}",
-		"max": "max",
-		"share_link": "condividi link",
-		"copy_clipboard": "copia negli appunti",
-		"copied_to_clipboard": "copiato negli appunti",
-		"encrypting": "criptando",
-		"decrypting": "decifrando",
-		"uploading": "caricamento",
-		"downloading": "scaricando",
-		"qr_code": "codice qr",
-		"password": "password"
+		"loading": "Caricamento…",
+		"password": "Parola d’ordine",
+		"show": "Mostra",
+		"hide": "Nascondi",
+		"show_password": "Mostra password",
+		"hide_password": "Nascondi password",
+		"retry": "Riprova",
+		"working": "Operazione in corso…"
 	},
-	"home": {
-		"intro": "Invia facilmente note o file <i>completamente criptati</i> e sicuri con un solo clic. Basta creare una nota e condividere il link.",
-		"explanation": "la nota scadrà e sarà distrutta dopo {type}.",
-		"new_note": "nuova nota",
-		"new_note_notice": "<b>disponibilità:</b><br />la nota non è garantita per essere memorizzata come tutto è tenuto in ram, se si riempie le note più vecchie saranno rimosse.<br />(probabilmente andrà bene, basta essere avvertiti).",
+	"nav": {
+		"label": "Navigazione principale",
+		"home": "Pagina iniziale di Nyanbin",
+		"about": "Informazioni",
+		"skip": "Vai al contenuto"
+	},
+	"locale": {
+		"label": "Lingua"
+	},
+	"theme": {
+		"label": "Tema colori",
+		"system": "Sistema",
+		"light": "Chiaro",
+		"dark": "Scuro"
+	},
+	"footer": {
+		"label": "Navigazione a piè di pagina",
+		"local_only": "La cifratura e la generazione del codice QR avvengono localmente nel browser."
+	},
+	"formats": {
+		"plain": "Testo semplice",
+		"source": "Sorgente",
+		"markdown": "Markdown"
+	},
+	"expiry": {
+		"3600": "1 ora",
+		"21600": "6 ore",
+		"86400": "1 giorno",
+		"604800": "7 giorni",
+		"minutes": "{count, plural, =1 {1 minuto} other {# minuti}}",
+		"hours": "{count, plural, =1 {1 ora} other {# ore}}",
+		"days": "{count, plural, =1 {1 giorno} other {# giorni}}"
+	},
+	"create": {
+		"eyebrow": "Condivisione privata, senza complicazioni",
+		"title": "Metti una nota nella scatola blu.",
+		"intro": "Scrivi, allega e cifra direttamente in questo browser. Il server riceve soltanto una busta cifrata e autenticata, insieme al suo ciclo di vita.",
+		"format": "Formato del testo",
+		"edit": "Modifica",
+		"preview": "Anteprima",
+		"preview_empty": "L'anteprima apparirà qui.",
+		"text_label": "Nota",
+		"text_help": "Il testo, il formato scelto e i dettagli degli allegati vengono cifrati insieme.",
+		"placeholder": "Scrivi qualcosa che valga la pena condividere…",
+		"local_title": "Cifrata qui.",
+		"local_body": "Il segreto del link e la password facoltativa non vengono mai caricati.",
+		"expiry": "Scade dopo",
+		"expiry_help": "Il server converte questa durata nella scadenza esatta usata per la cifratura.",
+		"read_cap": "Limita il numero di visualizzazioni",
+		"read_cap_help": "Con una sola visualizzazione, la nota si distrugge dopo la lettura. La visualizzazione viene conteggiata prima della decifratura locale.",
+		"max_reads": "Visualizzazioni massime",
+		"password_toggle": "Richiedi una password come secondo fattore",
+		"password_help": "Il segreto casuale del link resta necessario. Condividi questa password separatamente.",
+		"how_title": "Come funziona la busta sigillata",
+		"how_body": "Nyanbin riserva un ID e un ciclo di vita preciso, cifra localmente con AES-256-GCM, vincola i criteri pubblici come dati autenticati e infine carica la busta. Chiunque abbia il link completo e la password può visualizzarla.",
+		"files_count": "allegati",
+		"bytes": "byte locali",
+		"envelope_size": "Busta cifrata: {bytes} byte",
+		"limit": "Limite del server per la busta: {bytes} byte",
+		"over_limit": "Supera il limite di {overage} byte. Elemento più grande: {name}.",
+		"note_content": "contenuto della nota",
+		"submit": "Cifra e crea il link",
+		"add_something": "Aggiungi del testo o almeno un allegato da cifrare.",
+		"phase": {
+			"reserving": "Prenotazione in corso…",
+			"encrypting": "Cifratura locale in corso…",
+			"uploading": "Caricamento della busta…"
+		},
 		"errors": {
-			"note_too_big": "impossibile creare una nota. la nota è troppo grande",
-			"note_error": "Impossibile creare la nota. Riprova.",
-			"max": "max: {n}",
-			"empty_content": "la nota è vuota."
+			"empty": "Prima aggiungi del testo o un allegato.",
+			"status": "Questa istanza di Nyanbin non è disponibile. La bozza resta in questo browser.",
+			"expiry": "Scegli una scadenza entro il limite di questa istanza.",
+			"reads": "Scegli un numero di visualizzazioni entro il limite di questa istanza.",
+			"too_large": "La busta cifrata supera le dimensioni consentite da questa istanza. Rimuovi un allegato o accorcia la nota.",
+			"too_large_detail": "La busta cifrata supera il limite del server di {overage} byte. Elemento più grande: {name}.",
+			"network": "Impossibile raggiungere il server. La bozza resta qui; riprova.",
+			"failed": "Impossibile creare la nota. La bozza non è stata cancellata.",
+			"password": "Inserisci una password non vuota come secondo fattore.",
+			"file_name": "Il nome di un allegato non è valido. Rinomina il file e aggiungilo di nuovo.",
+			"duplicate_files": "I nomi degli allegati devono essere univoci. Rimuovi o rinomina il duplicato “{name}”."
 		},
-		"messages": {
-			"note_created": "nota creata."
-		},
-		"advanced": {
-			"explanation": "Per impostazione predefinita, per ogni nota viene utilizzata una password generata in modo sicuro. È tuttavia possibile scegliere la propria password, che non è inclusa nel link.",
-			"custom_password": "password personalizzata"
-		},
-		"pasting": "Incollando...",
-		"pasted_files": "File incollati",
-		"remove": "Rimuovi"
+		"page_title": "Crea una nota cifrata",
+		"meta_description": "Condividi note e allegati cifrati tramite un link segreto con scadenza.",
+		"password_required": "Inserisci la password del secondo fattore oppure disattiva l'opzione.",
+		"loading_instance": "Caricamento dei limiti e delle funzionalità di questa istanza…"
+	},
+	"files": {
+		"add": "Aggiungi allegati",
+		"drop_help": "Scegli i file, trascinali qui oppure incollali in qualsiasi punto dell'editor.",
+		"selected": "Allegati",
+		"unknown_type": "tipo sconosciuto",
+		"unnamed": "allegato senza nome",
+		"remove_named": "Rimuovi {name}"
+	},
+	"result": {
+		"step": "Sigillata e pronta",
+		"title": "Il tuo link segreto è pronto.",
+		"bearer_warning": "Questo URL completo è una credenziale segreta al portatore. Chiunque lo possieda può consumare una visualizzazione e tentare di decifrare la nota.",
+		"share_link": "Link segreto completo",
+		"copy": "Copia link",
+		"copied": "Copiato",
+		"copy_failed": "Impossibile accedere agli appunti. Seleziona e copia manualmente il link completo.",
+		"open": "Apri la pagina di visualizzazione",
+		"qr_label": "Codice QR contenente il link segreto completo",
+		"qr_caption": "Generato localmente. Il codice QR contiene la stessa credenziale segreta al portatore del link.",
+		"expires": "Scade",
+		"reads": "Limite di visualizzazioni",
+		"unlimited_reads": "Nessun limite di visualizzazioni",
+		"revoke_summary": "Controlli del creatore",
+		"revoke_help": "Questo browser conserva ancora la facoltà di eliminazione monouso. Non è inclusa nel link di condivisione né mostrata sullo schermo.",
+		"revoke": "Revoca questa nota",
+		"revoke_failed": "Impossibile revocare la nota. Potrebbe essere già stata eliminata oppure il server potrebbe non essere disponibile.",
+		"revoked_title": "Nota revocata.",
+		"revoked_body": "La busta cifrata non è più disponibile sul server.",
+		"create_another": "Crea un'altra nota"
 	},
 	"show": {
+		"page_title": "Visualizza nota",
+		"eyebrow": "Nota sigillata trovata",
+		"gate_title": "Quando vuoi, siamo pronti.",
+		"consume_warning": "La visualizzazione viene conteggiata prima che il browser decifri la nota. Una password errata, un link danneggiato o la chiusura della scheda possono comunque consumarla.",
+		"expires": "Scade",
+		"remaining": "Visualizzazioni rimaste",
+		"password_optional": "Password del secondo fattore, se impostata dal mittente",
+		"password_help": "Lascia vuoto se il mittente non ha impostato una password.",
+		"reveal": "Consuma una visualizzazione e decifra",
+		"revealing": "Utilizzo di una visualizzazione…",
+		"decrypting": "Decifratura locale in corso…",
+		"fragment_help": "Il segreto del link resta dopo # nell'indirizzo di questa pagina e non viene inviato con le normali richieste HTTP.",
+		"missing_title": "Questa nota dorme altrove.",
+		"missing_body": "Potrebbe essere scaduta, già visualizzata, revocata oppure non essere mai esistita.",
+		"invalid_title": "Questo link segreto è incompleto.",
+		"invalid_body": "Chiedi al mittente l'URL completo, incluso il frammento dopo #.",
+		"error_title": "Impossibile aprire la nota.",
+		"consumed_error_title": "È stata consumata una visualizzazione, ma la decifratura non è riuscita.",
+		"retry_info": "Ricarica le informazioni sulla nota",
+		"retry_consumed_help": "Se il mittente ha consentito più di una visualizzazione, verifica la disponibilità prima di riprovare intenzionalmente. Un altro tentativo consumerà un'altra visualizzazione.",
+		"retry_reveal": "Verifica la disponibilità prima di riprovare",
+		"create_new": "Crea una nuova nota cifrata",
+		"decrypted": "Decifrata in questo browser",
+		"title": "La tua nota",
+		"copy_text": "Copia testo",
+		"copy_failed": "Impossibile accedere agli appunti. Seleziona e copia manualmente il testo della nota.",
+		"attachments": "Allegati ({count})",
+		"preview": "Anteprima",
+		"close_preview": "Chiudi anteprima",
+		"download": "Scarica",
 		"errors": {
-			"not_found": "non è stata trovata o è stata già cancellata.",
-			"decryption_failed": "password sbagliata. non ha potuto decifrare. probabilmente un link rotto. la nota è stata distrutta.",
-			"unsupported_type": "tipo di nota non supportato."
-		},
-		"explanation": "clicca sotto per mostrare e cancellare la nota se il contatore ha raggiunto il suo limite",
-		"show_note": "mostra la nota",
-		"warning_will_not_see_again": "<b>non</b> avrete la possibilità di rivedere la nota.",
-		"download_all": "scarica tutti",
-		"links_found": "link presenti all'interno della nota:"
+			"info": "Impossibile caricare le informazioni sulla nota. Non è stata consumata alcuna visualizzazione.",
+			"decrypt_consumed": "Impossibile autenticare la busta. Questa visualizzazione è già stata consumata; verifica con il mittente la password o il link completo.",
+			"consumed": "La nota non è più disponibile. Potrebbe essere scaduta, revocata o aver raggiunto il limite di visualizzazioni.",
+			"network": "Si è verificato un errore di rete durante la visualizzazione. Il server potrebbe avere già consumato una visualizzazione; prima di riprovare con una nota monouso, chiedi al mittente.",
+			"reveal_consumed": "La visualizzazione non è riuscita e potrebbe essere stata consumata. Verifica la disponibilità prima di riprovare intenzionalmente.",
+			"reveal": "Il server non è riuscito a mostrare questa nota."
+		}
 	},
-	"file_upload": {
-		"selected_files": "File selezionati",
-		"no_files_selected": "Nessun file selezionato",
-		"clear": "Reset"
+	"about": {
+		"eyebrow": "Un piccolo strumento blu per la privacy",
+		"title": "Informazioni su Nyanbin",
+		"lead": "Nyanbin condivide testi e file sotto forma di buste cifrate e autenticate con un ciclo di vita limitato.",
+		"how_title": "Cosa vede il server",
+		"how_body": "Il browser cifra la nota, il formato, i nomi dei file, le indicazioni MIME, le dimensioni e i byte. Il server vede l'ID della nota, la versione del protocollo, la lunghezza cifrata, la scadenza e l'eventuale limite di visualizzazioni. Il segreto del link resta nel frammento dell'URL.",
+		"limits_title": "Limiti importanti",
+		"limits_body": "Chiunque abbia il link completo e l'eventuale password può visualizzare la nota. Un server malevolo potrebbe sostituire l'applicazione web, mentre la tempistica del traffico e la lunghezza del testo cifrato restano visibili. Usa HTTPS e un'installazione affidabile.",
+		"origin_title": "Origini open source",
+		"origin_body": "Nyanbin nasce dalla base di Cryptgeon, distribuita con licenza MIT, e reimplementa alcune idee sulla privacy e sul prodotto studiate in PrivateBin. L'interfaccia e le illustrazioni dei gatti sono originali.",
+		"instance_title": "Questa istanza",
+		"instance_default": "Questa è un'istanza di Nyanbin in hosting autonomo."
+	},
+	"imprint": {
+		"title": "Note legali",
+		"external": "Questa istanza pubblica le proprie note legali a un indirizzo separato.",
+		"open": "Apri le note legali",
+		"unavailable": "Per questa istanza non è configurato alcun indirizzo per le note legali."
 	}
 }

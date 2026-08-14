@@ -1,29 +1,63 @@
 services:
-  redis:
-    image: valkey/valkey:7-alpine
-    # This is required to stay in RAM only.
-    command: valkey-server --save "" --appendonly no
-    # Set a size limit. See link below on how to customise.
-    # https://valkey.io/docs/latest/operate/rs/databases/memory-performance/eviction-policy/
-    # --maxmemory 1gb --maxmemory-policy allkeys-lrulpine
-    # This prevents the creation of an anonymous volume.
+  valkey:
+    image: valkey/valkey:8.1-alpine
+    command:
+      - valkey-server
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+      - --maxmemory
+      - ${VALKEY_MAXMEMORY:-256mb}
+      - --maxmemory-policy
+      - noeviction
     tmpfs:
-      - /data
+      - /data:size=${VALKEY_TMPFS_SIZE:-268435456},mode=0700
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
 
   app:
-    image: cupcakearmy/cryptgeon:latest
+    image: ${NYANBIN_IMAGE:-nyanbin:latest}
+    build:
+      context: .
     depends_on:
-      - redis
+      valkey:
+        condition: service_healthy
     environment:
-      # Size limit for a single note.
-      SIZE_LIMIT: 4 MiB
+      NYANBIN_REDIS_URL: redis://valkey:6379/
+      NYANBIN_REDIS_PREFIX: ${NYANBIN_REDIS_PREFIX:-nyanbin:}
+      NYANBIN_MAX_ENVELOPE_BYTES: ${NYANBIN_MAX_ENVELOPE_BYTES:-1048576}
+      NYANBIN_MAX_EXPIRES_IN: ${NYANBIN_MAX_EXPIRES_IN:-604800}
+      NYANBIN_DEFAULT_EXPIRES_IN: ${NYANBIN_DEFAULT_EXPIRES_IN:-86400}
+      NYANBIN_MAX_READS: ${NYANBIN_MAX_READS:-100}
+      NYANBIN_DEFAULT_MAX_READS: ${NYANBIN_DEFAULT_MAX_READS:-1}
+      NYANBIN_RESERVATION_TTL_SECONDS: ${NYANBIN_RESERVATION_TTL_SECONDS:-120}
+      NYANBIN_REDIS_TIMEOUT_MS: ${NYANBIN_REDIS_TIMEOUT_MS:-2000}
+      NYANBIN_RATE_LIMIT_REQUESTS: ${NYANBIN_RATE_LIMIT_REQUESTS:-30}
+      NYANBIN_RATE_LIMIT_WINDOW_SECONDS: ${NYANBIN_RATE_LIMIT_WINDOW_SECONDS:-60}
+      NYANBIN_RATE_LIMIT_GLOBAL_REQUESTS: ${NYANBIN_RATE_LIMIT_GLOBAL_REQUESTS:-300}
+      NYANBIN_RATE_LIMIT_IPV6_PREFIX_BITS: ${NYANBIN_RATE_LIMIT_IPV6_PREFIX_BITS:-64}
+      NYANBIN_TRUSTED_PROXY_CIDRS: ${NYANBIN_TRUSTED_PROXY_CIDRS:-}
     ports:
-      - 80:8000
-
-    # Optional health checks
-    # healthcheck:
-    #   test: ["CMD", "curl", "--fail", "http://127.0.0.1:8000/api/live/"]
-    #   interval: 1m
-    #   timeout: 3s
-    #   retries: 2
-    #   start_period: 5s
+      - "${NYANBIN_PORT:-8000}:8000"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://127.0.0.1:8000/api/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped

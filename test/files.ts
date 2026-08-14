@@ -1,10 +1,9 @@
 import { createHash } from 'node:crypto'
-import { cp, readFile } from 'node:fs/promises'
+import { readFile } from 'node:fs/promises'
 
 export const Files = {
   PDF: 'test/assets/AES.pdf',
   Image: 'test/assets/image.jpg',
-  Zip: 'test/assets/Pigeons.zip',
 }
 
 export async function getFileChecksum(file: string) {
@@ -13,8 +12,3 @@ export async function getFileChecksum(file: string) {
   return hash
 }
 
-export async function tmpFile(file: string) {
-  const name = `./tmp/${Math.random().toString(36).substring(7)}`
-  await cp(file, name)
-  return name
-}

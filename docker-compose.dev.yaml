@@ -1,32 +1,51 @@
-# DEV Compose file.
-# For a production file see: README.md
-
 services:
-  redis:
-    image: valkey/valkey:7-alpine
-    # This is required to stay in RAM only.
-    command: valkey-server --save "" --appendonly no
-    # Set a size limit. See link below on how to customise.
-    # https://valkey.io/docs/latest/operate/rs/databases/memory-performance/eviction-policy/
-    # --maxmemory 1gb --maxmemory-policy allkeys-lrulpine
-    # This prevents the creation of an anonymous volume.
+  valkey:
+    image: valkey/valkey:8.1-alpine
+    command:
+      - valkey-server
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+      - --maxmemory
+      - 256mb
+      - --maxmemory-policy
+      - noeviction
     tmpfs:
-      - /data
+      - /data:size=256m,mode=0700
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
     ports:
-      - 6379:6379
+      - "127.0.0.1:${NYANBIN_VALKEY_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
 
   app:
-    build: .
+    image: nyanbin:test
+    build:
+      context: .
     env_file: .env.dev
+    environment:
+      NYANBIN_REDIS_URL: redis://valkey:6379/
     depends_on:
-      - redis
-    restart: unless-stopped
+      valkey:
+        condition: service_healthy
     ports:
-      - 3000:8000
-
+      - "3000:8000"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
-      test: ['CMD', 'curl', '--fail', 'http://127.0.0.1:8000/api/live/']
-      interval: 1m
+      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://127.0.0.1:8000/api/ready"]
+      interval: 5s
       timeout: 3s
-      retries: 2
+      retries: 20
       start_period: 5s

@@ -1,61 +1,187 @@
 {
 	"common": {
-		"note": "筆記",
-		"file": "檔案",
-		"advanced": "進階",
-		"create": "創建",
-		"loading": "載入中",
-		"mode": "模式",
-		"views": "{n, plural, =0 {瀏覽次數} =1 {1 次瀏覽} other {# 次瀏覽}}",
-		"minutes": "{n, plural, =0 {分鐘} =1 {1 分鐘} other {# 分鐘}}",
-		"max": "最大",
-		"share_link": "分享連結",
-		"copy_clipboard": "複製到剪貼板",
-		"copied_to_clipboard": "已複製到剪貼板",
-		"encrypting": "加密中",
-		"decrypting": "解密中",
-		"uploading": "上傳中",
-		"downloading": "下載中",
-		"qr_code": "QR 碼",
-		"password": "密碼"
+		"loading": "載入中…",
+		"password": "密碼",
+		"show": "顯示",
+		"hide": "隱藏",
+		"show_password": "顯示密碼",
+		"hide_password": "隱藏密碼",
+		"retry": "再試一次",
+		"working": "處理中…"
 	},
-	"home": {
-		"intro": "輕鬆地以一鍵傳送<i>完全加密</i>的安全筆記或檔案。只需創建筆記並分享連結。",
-		"explanation": "筆記將在 {type} 後過期並被銷毀。",
-		"new_note": "新筆記",
-		"new_note_notice": "<b>可用性：</b><br />筆記不保證被儲存，因為所有內容都保留在 RAM 中，如果 RAM 填滿，最舊的筆記將被移除。<br />(您可能會沒事，只是提醒一下。)",
+	"nav": {
+		"label": "主要導覽列",
+		"home": "Nyanbin 首頁",
+		"about": "關於",
+		"skip": "跳至主要內容"
+	},
+	"locale": {
+		"label": "語言"
+	},
+	"theme": {
+		"label": "色彩主題",
+		"system": "跟隨系統",
+		"light": "淺色",
+		"dark": "深色"
+	},
+	"footer": {
+		"label": "頁尾導覽",
+		"local_only": "加密與 QR Code 產生作業都在您的瀏覽器中執行。"
+	},
+	"formats": {
+		"plain": "純文字",
+		"source": "原始碼",
+		"markdown": "Markdown"
+	},
+	"expiry": {
+		"3600": "1 小時",
+		"21600": "6 小時",
+		"86400": "1 天",
+		"604800": "7 天",
+		"minutes": "{count, plural, =1 {1 分鐘} other {# 分鐘}}",
+		"hours": "{count, plural, =1 {1 小時} other {# 小時}}",
+		"days": "{count, plural, =1 {1 天} other {# 天}}"
+	},
+	"create": {
+		"eyebrow": "私密分享，輕鬆無負擔",
+		"title": "把內容收進藍色小盒子裡。",
+		"intro": "直接在此瀏覽器中撰寫、加入附件並加密。伺服器只會收到經驗證的加密信封及其存續資訊。",
+		"format": "文字格式",
+		"edit": "編輯",
+		"preview": "預覽",
+		"preview_empty": "預覽內容會顯示在這裡。",
+		"text_label": "內容",
+		"text_help": "文字、格式選項與附件資訊會一起加密。",
+		"placeholder": "輸入想分享的內容…",
+		"local_title": "就在這裡加密。",
+		"local_body": "連結密鑰與選填密碼絕不會上傳。",
+		"expiry": "有效期限",
+		"expiry_help": "伺服器會將這段時間換算成加密時使用的確切到期時間。",
+		"read_cap": "限制查看次數",
+		"read_cap_help": "只允許查看一次時，內容即為閱後即焚。每次查看都會在本機解密前先扣除次數。",
+		"max_reads": "最多查看次數",
+		"password_toggle": "要求第二重密碼",
+		"password_help": "仍須使用隨機產生的連結密鑰。請透過其他管道分享這組密碼。",
+		"how_title": "密封信封的運作方式",
+		"how_body": "Nyanbin 會先配發 ID 與確切的存續期限，再於本機使用 AES-256-GCM 加密，將公開規則綁定為驗證資料後才上傳。任何取得完整連結與密碼的人都能查看內容。",
+		"files_count": "個附件",
+		"bytes": "本機位元組",
+		"envelope_size": "加密信封：{bytes} 位元組",
+		"limit": "伺服器信封上限：{bytes} 位元組",
+		"over_limit": "超出 {overage} 位元組。占用最多的是：{name}。",
+		"note_content": "文字內容",
+		"submit": "加密並建立連結",
+		"add_something": "請加入文字或至少一個附件以進行加密。",
+		"phase": {
+			"reserving": "正在配發…",
+			"encrypting": "正在本機加密…",
+			"uploading": "正在上傳信封…"
+		},
 		"errors": {
-			"note_too_big": "無法創建筆記。筆記過大",
-			"note_error": "無法創建筆記。請再試一次。",
-			"max": "最大值：{n}",
-			"empty_content": "筆記內容為空。"
+			"empty": "請先加入文字或附件。",
+			"status": "此 Nyanbin 站台目前無法使用。草稿仍保留在此瀏覽器中。",
+			"expiry": "請選擇此站台允許範圍內的有效期限。",
+			"reads": "請選擇此站台允許範圍內的查看次數。",
+			"too_large": "加密信封超過此站台允許的大小。請移除附件或縮短內容。",
+			"too_large_detail": "加密信封超出伺服器上限 {overage} 位元組。占用最多的是：{name}。",
+			"network": "無法連上伺服器。草稿仍保留在這裡，請再試一次。",
+			"failed": "無法建立內容。草稿尚未清除。",
+			"password": "請輸入非空白的第二重密碼。",
+			"file_name": "附件名稱無效。請重新命名檔案後再加入。",
+			"duplicate_files": "附件名稱不得重複。請移除或重新命名重複的「{name}」。"
 		},
-		"messages": {
-			"note_created": "筆記已創建。"
-		},
-		"advanced": {
-			"explanation": "預設情況下，每個筆記都會使用安全生成的密碼。您也可以選擇自己的密碼，該密碼不會包含在連結中。",
-			"custom_password": "自定義密碼"
-		},
-		"pasting": "正在粘貼...",
-		"pasted_files": "粘貼的檔案",
-		"remove": "移除"
+		"page_title": "建立加密內容",
+		"meta_description": "透過會到期的私密連結，分享加密文字與附件。",
+		"password_required": "請輸入第二重密碼，或關閉此選項。",
+		"loading_instance": "正在載入此站台的限制與功能…"
+	},
+	"files": {
+		"add": "加入附件",
+		"drop_help": "選取檔案、將檔案拖曳至此，或在編輯區任意位置貼上檔案。",
+		"selected": "附件",
+		"unknown_type": "未知類型",
+		"unnamed": "未命名附件",
+		"remove_named": "移除 {name}"
+	},
+	"result": {
+		"step": "封存完成",
+		"title": "私密連結已經準備好了。",
+		"bearer_warning": "這個完整網址本身就是持有者密鑰。任何取得網址的人都能用掉一次查看次數，並嘗試解密內容。",
+		"share_link": "完整私密連結",
+		"copy": "複製連結",
+		"copied": "已複製",
+		"copy_failed": "無法存取剪貼簿。請手動選取並複製完整連結。",
+		"open": "開啟查看頁面",
+		"qr_label": "含有完整私密連結的 QR Code",
+		"qr_caption": "由本機產生。QR Code 與連結含有相同的持有者密鑰。",
+		"expires": "到期時間",
+		"reads": "查看次數上限",
+		"unlimited_reads": "不限查看次數",
+		"revoke_summary": "建立者控制項",
+		"revoke_help": "此瀏覽器仍保有一次性的刪除權限。這項權限不會包含在分享連結中，也不會顯示在畫面上。",
+		"revoke": "撤銷此內容",
+		"revoke_failed": "無法撤銷此內容。內容可能已不存在，或伺服器目前無法使用。",
+		"revoked_title": "內容已撤銷。",
+		"revoked_body": "伺服器已不再提供此加密信封。",
+		"create_another": "建立另一則內容"
 	},
 	"show": {
+		"page_title": "查看內容",
+		"eyebrow": "找到密封內容",
+		"gate_title": "準備好就來開啟吧。",
+		"consume_warning": "查看時會先扣除一次次數，再由此瀏覽器解密。即使密碼錯誤、連結損毀或分頁關閉，該次數仍可能已被用掉。",
+		"expires": "到期時間",
+		"remaining": "剩餘查看次數",
+		"password_optional": "第二重密碼（若傳送者有設定）",
+		"password_help": "若傳送者未設定密碼，請留白。",
+		"reveal": "使用一次查看次數並解密",
+		"revealing": "正在使用一次查看次數…",
+		"decrypting": "正在本機解密…",
+		"fragment_help": "連結密鑰會留在此頁面網址的 # 後方，不會隨一般 HTTP 請求傳送。",
+		"missing_title": "這則內容已不在這裡。",
+		"missing_body": "內容可能已到期、查看完畢、遭到撤銷，或從未存在。",
+		"invalid_title": "這個私密連結不完整。",
+		"invalid_body": "請向傳送者索取完整網址，包括 # 後方的片段。",
+		"error_title": "無法開啟此內容。",
+		"consumed_error_title": "已使用一次查看次數，但解密失敗。",
+		"retry_info": "重新取得內容資訊",
+		"retry_consumed_help": "若傳送者允許多次查看，請先確認是否仍可查看，再決定是否重試。再次開啟會再使用一次查看次數。",
+		"retry_reveal": "重試前先確認是否可查看",
+		"create_new": "建立新的加密內容",
+		"decrypted": "已在此瀏覽器中解密",
+		"title": "您的內容",
+		"copy_text": "複製文字",
+		"copy_failed": "無法存取剪貼簿。請手動選取並複製文字內容。",
+		"attachments": "附件（{count}）",
+		"preview": "預覽",
+		"close_preview": "關閉預覽",
+		"download": "下載",
 		"errors": {
-			"not_found": "筆記未找到或已被刪除。",
-			"decryption_failed": "密碼錯誤。無法解密。可能是連結已損壞。筆記已被銷毀。",
-			"unsupported_type": "不支持的筆記類型。"
-		},
-		"explanation": "如果計數器達到限制，請點擊下方以顯示並刪除筆記",
-		"show_note": "顯示筆記",
-		"warning_will_not_see_again": "您將<b>無法</b>再次查看筆記。",
-		"download_all": "全部下載",
-		"links_found": "在筆記中找到的連結："
+			"info": "無法載入內容資訊，未使用任何查看次數。",
+			"decrypt_consumed": "無法驗證信封。此次查看次數已使用；請向傳送者確認密碼或完整連結。",
+			"consumed": "此內容已無法查看。內容可能已到期、遭到撤銷，或已達查看次數上限。",
+			"network": "查看時發生網路錯誤。伺服器可能已使用一次查看次數；若內容只能查看一次，請先詢問傳送者再重試。",
+			"reveal_consumed": "查看失敗，且可能已使用一次次數。請先確認是否仍可查看，再決定是否重試。",
+			"reveal": "伺服器無法開啟此內容。"
+		}
 	},
-	"file_upload": {
-		"selected_files": "已選擇的檔案",
-		"no_files_selected": "未選擇檔案",
-		"clear": "重置"
+	"about": {
+		"eyebrow": "藍色小巧的隱私工具",
+		"title": "關於 Nyanbin",
+		"lead": "Nyanbin 將文字與檔案封裝成經驗證的加密信封，並以有限的存續週期進行分享。",
+		"how_title": "伺服器看得到什麼",
+		"how_body": "瀏覽器會加密文字內容、格式、檔名、MIME 提示、大小與檔案位元組。伺服器只會看到內容 ID、協定版本、加密後的長度、到期時間，以及選填的查看次數上限。連結密鑰會留在網址片段中。",
+		"limits_title": "重要限制",
+		"limits_body": "任何取得完整連結與選填密碼的人都能查看內容。惡意伺服器可能替換網頁應用程式，而流量時間與密文長度仍然可見。請使用 HTTPS 與可信任的部署環境。",
+		"origin_title": "開放原始碼淵源",
+		"origin_body": "Nyanbin 以 Cryptgeon 的 MIT 授權基礎為起點，並重新實作從 PrivateBin 研究而來的部分隱私與產品概念。介面與貓咪插圖則為原創。",
+		"instance_title": "此站台",
+		"instance_default": "這是自行託管的 Nyanbin 站台。"
+	},
+	"imprint": {
+		"title": "站方資訊",
+		"external": "此站台的站方資訊發布於另一個網址。",
+		"open": "開啟站方資訊",
+		"unavailable": "此站台未設定站方資訊網址。"
 	}
 }

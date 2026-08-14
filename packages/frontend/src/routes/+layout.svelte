@@ -1,46 +1,23 @@
 <script lang="ts">
-	import { SvelteToast } from '@zerodevx/svelte-toast'
 	import { onMount } from 'svelte'
-	import { waitLocale } from 'svelte-intl-precompile'
-
+	import { get } from 'svelte/store'
+	import { locale, t, waitLocale } from 'svelte-intl-precompile'
 	import '../app.css'
-
-	import { init as initStores, status } from '$lib/stores/status'
+	import { init } from '$lib/stores/status'
 	import Footer from '$lib/views/Footer.svelte'
 	import Header from '$lib/views/Header.svelte'
-	interface Props {
-		children?: import('svelte').Snippet
-	}
-
+	interface Props { children?: import('svelte').Snippet }
 	let { children }: Props = $props()
-
 	onMount(() => {
-		initStores()
+		void init()
+		const update = (value: string) => { document.documentElement.lang = value; document.documentElement.dir = /^(ar|fa|he|ur)(-|$)/i.test(value) ? 'rtl' : 'ltr' }
+		update(get(locale))
+		return locale.subscribe(update)
 	})
 </script>
-
-<svelte:head>
-	<title>{$status?.theme_page_title || 'cryptgeon'}</title>
-	<link rel="icon" href={$status?.theme_favicon || '/favicon.png'} />
-</svelte:head>
-
+<svelte:head><script src="/theme-init.js"></script><title>Nyanbin — encrypted sharing</title><meta name="description" content="Share encrypted notes and files with a link secret that stays in your browser."/><meta name="referrer" content="no-referrer"/><link rel="icon" href="/favicon.svg"/></svelte:head>
 {#await waitLocale() then _}
-	<main>
-		<Header />
-		{@render children?.()}
-	</main>
-
-	<SvelteToast />
-
-	<Footer />
+	<a class="skip-link" href="#main">{$t('nav.skip')}</a>
+	<div class="shell"><Header /><main id="main">{@render children?.()}</main><Footer /></div>
 {/await}
-
-<style>
-	main {
-		padding: 1rem;
-		padding-bottom: 4rem;
-		width: 100%;
-		max-width: 35rem;
-		margin: 0 auto;
-	}
-</style>
+<style>.shell { width: min(calc(100% - 2 * var(--space-5)), 70rem); margin-inline: auto; } main { min-height: 60vh; } @media (max-width: 30rem) { .shell { width: min(calc(100% - 2 * var(--space-4)), 70rem); } }</style>

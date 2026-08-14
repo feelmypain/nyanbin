@@ -1,151 +1,22 @@
-<script lang="ts" module>
-	export type DecryptedNote = Omit<NotePublic, 'contents'> & { contents: any }
-
-	function saveAs(file: File) {
-		const url = window.URL.createObjectURL(file)
-		const a = document.createElement('a')
-		a.style.display = 'none'
-		a.href = url
-		a.download = file.name
-		document.body.appendChild(a)
-		a.click()
-		window.URL.revokeObjectURL(url)
-		a.remove()
-	}
-</script>
-
 <script lang="ts">
 	import prettyBytes from 'pretty-bytes'
+	import { decodeBase64Url, type PrivatePayload } from 'nyanbin/shared'
 	import { t } from 'svelte-intl-precompile'
-
-	import Button from '$lib/ui/Button.svelte'
-	import { copy } from '$lib/utils'
-	import type { FileDTO, NotePublic } from 'cryptgeon/shared'
-
-	interface Props {
-		note: DecryptedNote
-	}
-
-	let { note }: Props = $props()
-
-	const RE_URL = /[A-Za-z]+:\/\/([A-Z a-z0-9\-._~:\/?#\[\]@!$&'()*+,;%=])+/g
-	let files: FileDTO[] = $state([])
-
-	async function downloadFile(file: FileDTO) {
-		// @ts-ignore
-		const f = new File([file.contents], file.name, {
-			type: file.type,
-		})
-		saveAs(f)
-	}
-
-	$effect(() => {
-		if (note.meta.type === 'file') {
-			files = note.contents
-		}
-	})
-	let download = $derived(() => {
-		for (const file of files) {
-			downloadFile(file)
-		}
-	})
-	let links = $derived(typeof note.contents === 'string' ? note.contents.match(RE_URL) : [])
+	import { copy, safeFilename } from '$lib/utils'
+	import Button from './Button.svelte'
+	import MarkdownView from './MarkdownView.svelte'
+	import SourceView from './SourceView.svelte'
+	interface Props { payload: PrivatePayload }
+	let { payload }: Props = $props()
+	let copied = $state(false); let copyError = $state(false); let previewIndex = $state<number | null>(null); let previewUrl = $state(''); let previewText = $state('')
+	const images = new Set(['image/gif','image/jpeg','image/png','image/webp'])
+	const textTypes = new Set(['text/plain','text/csv','application/json'])
+	function bytes(index: number) { return decodeBase64Url(payload.files[index].data, { label: 'file data' }) }
+	function download(index: number) { const file = payload.files[index]; const url = URL.createObjectURL(new Blob([bytes(index)], { type: 'application/octet-stream' })); const link = document.createElement('a'); link.href = url; link.download = safeFilename(file.name); link.rel = 'noopener'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 0) }
+	function closePreview() { if (previewUrl) URL.revokeObjectURL(previewUrl); previewUrl = ''; previewText = ''; previewIndex = null }
+	async function preview(index: number) { if (previewIndex === index) { closePreview(); return } closePreview(); previewIndex = index; const file = payload.files[index]; if (images.has(file.type)) previewUrl = URL.createObjectURL(new Blob([bytes(index)], { type: file.type })); else if (textTypes.has(file.type) && file.size <= 1_000_000) previewText = new TextDecoder().decode(bytes(index)) }
+	async function copyText() { copied = await copy(payload.text); copyError = !copied }
+	$effect(() => () => previewUrl && URL.revokeObjectURL(previewUrl))
 </script>
-
-<p class="error-text">{@html $t('show.warning_will_not_see_again')}</p>
-<div data-testid="result">
-	{#if note.meta.type === 'text'}
-		<div class="note">
-			{note.contents}
-		</div>
-		<Button onclick={() => copy(note.contents)}>{$t('common.copy_clipboard')}</Button>
-
-		{#if links && links.length}
-			<div class="links">
-				{$t('show.links_found')}
-				<ul>
-					{#each links as link}
-						<li>
-							<a href={link} target="_blank" rel="noopener noreferrer">{link}</a>
-						</li>
-					{/each}
-				</ul>
-			</div>
-		{/if}
-	{:else}
-		{#each files as file}
-			<div class="note file">
-				<button onclick={() => downloadFile(file)}>
-					<b>↓ {file.name}</b>
-				</button>
-				<small> {file.type} － {prettyBytes(file.size)}</small>
-			</div>
-			{#if file.type.startsWith('image/')}
-				{#key file.name}
-					<img
-						src={URL.createObjectURL(new File([file.contents], file.name, { type: file.type }))}
-						alt={file.name}
-						class="preview"
-					/>
-				{/key}
-			{/if}
-		{/each}
-		<Button onclick={download}>{$t('show.download_all')}</Button>
-	{/if}
-</div>
-
-<style>
-	.note {
-		width: 100%;
-		margin: 0;
-		padding: 0;
-		border: 2px solid var(--ui-bg-1);
-		outline: none;
-		padding: 0.5rem;
-		white-space: pre;
-		overflow: auto;
-		margin-bottom: 0.5rem;
-	}
-
-	.note b {
-		cursor: pointer;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	.note.file {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-	}
-
-	.note.file small {
-		padding-left: 1rem;
-	}
-
-	.links {
-		margin-top: 2rem;
-	}
-	.links ul {
-		margin: 0;
-		padding: 0;
-		margin-top: 0.5rem;
-		padding-left: 1rem;
-		list-style: square;
-	}
-
-	.links ul li {
-		margin-bottom: 0.5rem;
-		word-wrap: break-word;
-	}
-
-	.preview {
-		display: block;
-		max-width: 100%;
-		max-height: 60vh;
-		margin-bottom: 0.5rem;
-		border-radius: 0.25rem;
-		border: 2px solid var(--ui-bg-1);
-	}
-</style>
+<section data-testid="result" aria-labelledby="note-title"><div class="heading"><div><span class="eyebrow">{$t('show.decrypted')}</span><h1 id="note-title" tabindex="-1">{$t('show.title')}</h1></div><span aria-hidden="true" class="cat">=＾● ⋏ ●＾=</span></div>{#if payload.text}<div class="content">{#if payload.format === 'markdown'}<MarkdownView text={payload.text}/>{:else if payload.format === 'source'}<SourceView text={payload.text}/>{:else}<pre class="plain">{payload.text}</pre>{/if}<Button type="button" onclick={copyText}>{copied ? $t('result.copied') : $t('show.copy_text')}</Button>{#if copyError}<p class="notice error copy-error" role="alert">{$t('show.copy_failed')}</p>{/if}</div>{/if}{#if payload.files.length}<section class="files" aria-labelledby="files-title"><h2 id="files-title">{$t('show.attachments', { values: { count: payload.files.length } })}</h2><ul data-testid="revealed-files">{#each payload.files as file, index}<li><span class="meta"><strong><bdi>{safeFilename(file.name, $t('files.unnamed'))}</bdi></strong><small>{prettyBytes(file.size)} · {file.type || $t('files.unknown_type')}</small></span><span class="actions">{#if images.has(file.type) || (textTypes.has(file.type) && file.size <= 1_000_000)}<Button type="button" onclick={() => preview(index)} aria-expanded={previewIndex === index} aria-controls={`attachment-preview-${index}`}>{previewIndex === index ? $t('show.close_preview') : $t('show.preview')}</Button>{/if}<Button data-testid={`download-file-${index}`} type="button" onclick={() => download(index)}>{$t('show.download')}</Button></span>{#if previewIndex === index}<div class="preview" id={`attachment-preview-${index}`}>{#if previewUrl}<img src={previewUrl} alt={safeFilename(file.name, $t('files.unnamed'))}/>{:else}<pre>{previewText}</pre>{/if}</div>{/if}</li>{/each}</ul></section>{/if}</section>
+<style>.heading { display: flex; justify-content: space-between; gap: var(--space-4); align-items: center; margin-bottom: var(--space-5); } .eyebrow { color: var(--success); font-weight: 700; } .cat { color: var(--blue-600); font: 700 var(--text-lg)/1 var(--font-mono); } .content, .files { padding: var(--space-5); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-panel); } .plain { margin: 0 0 var(--space-4); white-space: pre-wrap; overflow-wrap: anywhere; } .copy-error { margin-top: var(--space-3); } .files { margin-top: var(--space-5); } ul { display: grid; gap: var(--space-3); padding: 0; list-style: none; } li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-3); padding-block: var(--space-3); border-bottom: 1px solid var(--border); } .meta strong, .meta small { display: block; overflow-wrap: anywhere; } .meta small { color: var(--ink-muted); } .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); } .preview { grid-column: 1 / -1; } .preview img { display: block; max-width: 100%; max-height: 28rem; border-radius: var(--radius-sm); } .preview pre { max-height: 24rem; overflow: auto; padding: var(--space-4); background: var(--surface-blue); white-space: pre-wrap; } @media (max-width: 35rem) { .content, .files { padding: var(--space-4); } li { grid-template-columns: 1fr; } .actions :global(button) { flex: 1; } }</style>

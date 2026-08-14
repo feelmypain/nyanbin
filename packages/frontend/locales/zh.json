@@ -1,61 +1,187 @@
 {
 	"common": {
-		"note": "密信",
-		"file": "上传文件",
-		"advanced": "高级设置",
-		"create": "创建",
-		"loading": "加载中",
-		"mode": "模式",
-		"views": "{n, plural, =0 {可读次数} =1 {1 次查看} other {# 次查看}}",
-		"minutes": "{n, plural, =0 {有效期（分钟）} =1 {1 分钟} other {# 分钟}}",
-		"max": "最大值",
-		"share_link": "分享链接",
-		"copy_clipboard": "复制到粘贴板",
-		"copied_to_clipboard": "已成功复制到粘贴板",
-		"encrypting": "加密",
-		"decrypting": "解密",
-		"uploading": "上传",
-		"downloading": "下载",
-		"qr_code": "二维码",
-		"password": "密码"
+		"loading": "正在加载…",
+		"password": "密码",
+		"show": "显示",
+		"hide": "隐藏",
+		"show_password": "显示密码",
+		"hide_password": "隐藏密码",
+		"retry": "重试",
+		"working": "正在处理…"
 	},
-	"home": {
-		"intro": "飞鸽传书，一键传输完全加密的密信或文件，阅后即焚。",
-		"explanation": "该密信会在{type}后失效。",
-		"new_note": "新建密信",
-		"new_note_notice": "<b>提醒：</b><br>密信保存在内存中，如果内存满了，则最早的密信将被删除以释放内存，因此不保证该密信的可用性。一般不会出现这种情况，无需担心。",
+	"nav": {
+		"label": "主导航",
+		"home": "Nyanbin 首页",
+		"about": "关于",
+		"skip": "跳到正文"
+	},
+	"locale": {
+		"label": "语言"
+	},
+	"theme": {
+		"label": "配色主题",
+		"system": "跟随系统",
+		"light": "浅色",
+		"dark": "深色"
+	},
+	"footer": {
+		"label": "页脚导航",
+		"local_only": "加密和二维码生成均在您的浏览器中本地完成。"
+	},
+	"formats": {
+		"plain": "纯文本",
+		"source": "源代码",
+		"markdown": "Markdown"
+	},
+	"expiry": {
+		"3600": "1 小时",
+		"21600": "6 小时",
+		"86400": "1 天",
+		"604800": "7 天",
+		"minutes": "{count, plural, =1 {1 分钟} other {# 分钟}}",
+		"hours": "{count, plural, =1 {1 小时} other {# 小时}}",
+		"days": "{count, plural, =1 {1 天} other {# 天}}"
+	},
+	"create": {
+		"eyebrow": "私密分享，轻松简单",
+		"title": "把便笺藏进蓝色小盒吧。",
+		"intro": "直接在此浏览器中撰写、添加附件并加密。服务器只会收到经过认证的加密封装及其生命周期信息。",
+		"format": "文本格式",
+		"edit": "编辑",
+		"preview": "预览",
+		"preview_empty": "预览内容会显示在这里。",
+		"text_label": "便笺",
+		"text_help": "文本、格式选项和附件信息会一并加密。",
+		"placeholder": "写点值得分享的内容吧…",
+		"local_title": "就在这里加密。",
+		"local_body": "您的链接密钥和可选密码绝不会上传。",
+		"expiry": "有效期",
+		"expiry_help": "服务器会将此时长换算为加密时使用的确切到期时间。",
+		"read_cap": "限制查看次数",
+		"read_cap_help": "只允许查看一次即为阅后即焚。每次查看的次数会在本地解密前扣除。",
+		"max_reads": "最多查看次数",
+		"password_toggle": "要求二重验证密码",
+		"password_help": "随机链接密钥仍不可缺少。请通过其他方式单独分享此密码。",
+		"how_title": "密封封装的工作原理",
+		"how_body": "Nyanbin 会预留 ID 并确定生命周期，在本地使用 AES-256-GCM 加密，将公开策略作为认证数据绑定后再上传。任何拥有完整链接和密码的人都可以查看内容。",
+		"files_count": "个附件",
+		"bytes": "本地字节数",
+		"envelope_size": "加密封装：{bytes} 字节",
+		"limit": "服务器封装上限：{bytes} 字节",
+		"over_limit": "超出 {overage} 字节。占用最多的是：{name}。",
+		"note_content": "便笺内容",
+		"submit": "加密并创建链接",
+		"add_something": "请添加文本或至少一个要加密的附件。",
+		"phase": {
+			"reserving": "正在预留…",
+			"encrypting": "正在本地加密…",
+			"uploading": "正在上传封装…"
+		},
 		"errors": {
-			"note_too_big": "创建失败，密信过大。",
-			"note_error": "创建失败，请稍后重试。",
-			"max": "次数上限：{n}",
-			"empty_content": "密信不能为空。"
+			"empty": "请先添加文本或附件。",
+			"status": "此 Nyanbin 实例当前不可用。您的草稿仍保留在此浏览器中。",
+			"expiry": "请选择不超过此实例上限的有效期。",
+			"reads": "请选择不超过此实例上限的查看次数。",
+			"too_large": "加密封装超过此实例允许的大小。请移除附件或缩短便笺内容。",
+			"too_large_detail": "加密封装超出服务器上限 {overage} 字节。占用最多的是：{name}。",
+			"network": "无法连接服务器。您的草稿仍保留在这里，请重试。",
+			"failed": "无法创建便笺。您的草稿尚未清除。",
+			"password": "请输入非空的二重验证密码。",
+			"file_name": "附件名称无效。请重命名文件后重新添加。",
+			"duplicate_files": "附件名称不能重复。请移除或重命名重复的“{name}”。"
 		},
-		"messages": {
-			"note_created": "密信创建成功。"
-		},
-		"advanced": {
-			"explanation": "默认情况下，每个笔记都使用安全生成的密码。但是，您也可以选择您自己的密码，该密码未包含在链接中。",
-			"custom_password": "自定义密码"
-		},
-		"pasting": "正在粘贴...",
-		"pasted_files": "粘贴的文件",
-		"remove": "移除"
+		"page_title": "创建加密便笺",
+		"meta_description": "通过会过期的私密链接分享加密便笺和附件。",
+		"password_required": "请输入二重验证密码，或关闭此选项。",
+		"loading_instance": "正在加载此实例的限制和功能…"
+	},
+	"files": {
+		"add": "添加附件",
+		"drop_help": "选择文件、将文件拖到这里，或在编辑区任意位置粘贴文件。",
+		"selected": "附件",
+		"unknown_type": "未知类型",
+		"unnamed": "未命名附件",
+		"remove_named": "移除 {name}"
+	},
+	"result": {
+		"step": "已密封，可以分享",
+		"title": "您的私密链接已准备好。",
+		"bearer_warning": "此完整 URL 本身就是持有者密钥。任何获得它的人都能消耗一次查看次数，并尝试解密便笺。",
+		"share_link": "完整私密链接",
+		"copy": "复制链接",
+		"copied": "已复制",
+		"copy_failed": "无法访问剪贴板。请手动选择并复制完整链接。",
+		"open": "打开查看页面",
+		"qr_label": "包含完整私密链接的二维码",
+		"qr_caption": "二维码在本地生成，其中包含与链接相同的持有者密钥。",
+		"expires": "到期时间",
+		"reads": "查看次数上限",
+		"unlimited_reads": "不限查看次数",
+		"revoke_summary": "创建者控制",
+		"revoke_help": "此浏览器仍持有一次性删除权限。该权限不包含在分享链接中，也不会显示在屏幕上。",
+		"revoke": "撤销此便笺",
+		"revoke_failed": "无法撤销便笺。它可能已不存在，或服务器当前不可用。",
+		"revoked_title": "便笺已撤销。",
+		"revoked_body": "服务器已不再提供此加密封装。",
+		"create_another": "再创建一个便笺"
 	},
 	"show": {
+		"page_title": "查看便笺",
+		"eyebrow": "已找到密封便笺",
+		"gate_title": "准备好就开始吧。",
+		"consume_warning": "查看便笺时，会先扣除一次查看次数，再由此浏览器解密。密码错误、链接损坏或关闭标签页仍可能消耗这次查看机会。",
+		"expires": "到期时间",
+		"remaining": "剩余查看次数",
+		"password_optional": "二重验证密码（若发送者已设置）",
+		"password_help": "若发送者未设置密码，请留空。",
+		"reveal": "消耗一次查看次数并解密",
+		"revealing": "正在消耗一次查看次数…",
+		"decrypting": "正在本地解密…",
+		"fragment_help": "链接密钥位于本页地址中 # 之后，普通 HTTP 请求不会发送这部分内容。",
+		"missing_title": "这张便笺正在别处安睡。",
+		"missing_body": "它可能已过期、已被查看、已被撤销，或者从未存在。",
+		"invalid_title": "此私密链接不完整。",
+		"invalid_body": "请向发送者索取完整 URL，其中应包括 # 后的片段。",
+		"error_title": "无法打开便笺。",
+		"consumed_error_title": "已消耗一次查看次数，但解密失败。",
+		"retry_info": "重新获取便笺信息",
+		"retry_consumed_help": "如果发送者允许多次查看，请先确认便笺仍可用，再决定是否重试。每次重试都会再消耗一次查看次数。",
+		"retry_reveal": "确认可用后再重试",
+		"create_new": "创建新的加密便笺",
+		"decrypted": "已在此浏览器中解密",
+		"title": "您的便笺",
+		"copy_text": "复制文本",
+		"copy_failed": "无法访问剪贴板。请手动选择并复制便笺文本。",
+		"attachments": "附件（{count}）",
+		"preview": "预览",
+		"close_preview": "关闭预览",
+		"download": "下载",
 		"errors": {
-			"not_found": "密信不存在，可能已被查看或删除。",
-			"decryption_failed": "密钥错误，无法查看。",
-			"unsupported_type": "不支持的类型。"
-		},
-		"explanation": "点击下方按钮即可查看密信，阅后即焚。",
-		"show_note": "查看密信",
-		"warning_will_not_see_again": "你将<b>无法</b>再次查看该密信，请尽快复制到粘贴板。",
-		"download_all": "下载全部",
-		"links_found": "注释中找到的链接："
+			"info": "无法加载便笺信息。未消耗查看次数。",
+			"decrypt_consumed": "无法验证加密封装。此次查看次数已消耗，请与发送者核对密码或完整链接。",
+			"consumed": "此便笺已不可用。它可能已过期、已被撤销，或已达到查看次数上限。",
+			"network": "查看时网络连接失败。服务器可能已经扣除一次查看次数；若便笺仅能查看一次，请在重试前询问发送者。",
+			"reveal_consumed": "查看失败，且此次查看次数可能已经消耗。请先确认便笺仍可用，再决定是否重试。",
+			"reveal": "服务器无法显示此便笺。"
+		}
 	},
-	"file_upload": {
-		"selected_files": "已选中的文件",
-		"no_files_selected": "没有文件被选中",
-		"clear": "重置"
+	"about": {
+		"eyebrow": "蓝色小巧的隐私工具",
+		"title": "关于 Nyanbin",
+		"lead": "Nyanbin 将文本和文件封装为经过认证的加密数据，并在有限的生命周期内安全分享。",
+		"how_title": "服务器能看到什么",
+		"how_body": "浏览器会加密便笺、格式、文件名、MIME 提示、大小和文件字节。服务器只能看到便笺 ID、协议版本、加密数据长度、到期时间和可选的查看次数上限。链接密钥始终留在 URL 片段中。",
+		"limits_title": "重要限制",
+		"limits_body": "任何拥有完整链接和可选密码的人都能查看便笺。恶意服务器可能替换此 Web 应用，流量时序或密文长度也仍然可见。请使用 HTTPS 和可信的部署实例。",
+		"origin_title": "开源传承",
+		"origin_body": "Nyanbin 基于采用 MIT 许可证的 Cryptgeon 构建，并重新实现了从 PrivateBin 中研究和借鉴的部分隐私与产品理念。界面与猫咪插画均为原创。",
+		"instance_title": "此实例",
+		"instance_default": "这是一个自行托管的 Nyanbin 实例。"
+	},
+	"imprint": {
+		"title": "法律声明",
+		"external": "此实例在另一个地址发布法律声明。",
+		"open": "打开法律声明",
+		"unavailable": "此实例尚未配置法律声明地址。"
 	}
 }

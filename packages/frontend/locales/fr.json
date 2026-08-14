@@ -1,61 +1,187 @@
 {
 	"common": {
-		"note": "note",
-		"file": "fichier",
-		"advanced": "avancé",
-		"create": "créer",
-		"loading": "chargement",
-		"mode": "mode",
-		"views": "{n, plural, =0 {vues} =1 {1 vue} other {# vues}}",
-		"minutes": "{n, plural, =0 {minutes} =1 {1 minute} other {# minutes}}",
-		"max": "max",
-		"share_link": "partager le lien",
-		"copy_clipboard": "copier dans le presse-papiers",
-		"copied_to_clipboard": "copié dans le presse-papiers",
-		"encrypting": "chiffrer",
-		"decrypting": "déchiffrer",
-		"uploading": "téléversement",
-		"downloading": "téléchargement",
-		"qr_code": "code qr",
-		"password": "mot de passe"
+		"loading": "Chargement…",
+		"password": "Mot de passe",
+		"show": "Afficher",
+		"hide": "Masquer",
+		"show_password": "Afficher le mot de passe",
+		"hide_password": "Masquer le mot de passe",
+		"retry": "Réessayer",
+		"working": "Traitement en cours…"
 	},
-	"home": {
-		"intro": "Envoyez facilement des notes ou des fichiers <i>entièrement chiffrés</i> et sécurisés en un seul clic. Il suffit de créer une note et de partager le lien.",
-		"explanation": "la note expirera et sera détruite après {type}.",
-		"new_note": "nouvelle note",
-		"new_note_notice": "<b>disponibilité :</b><br />il n'est pas garanti que la note reste stockée car tout est conservé dans la mémoire vive; si elle se remplit, les notes les plus anciennes seront supprimées.<br />(tout ira probablement bien, soyez juste averti.)",
+	"nav": {
+		"label": "Navigation principale",
+		"home": "Accueil de Nyanbin",
+		"about": "À propos",
+		"skip": "Aller au contenu"
+	},
+	"locale": {
+		"label": "Langue"
+	},
+	"theme": {
+		"label": "Thème de couleurs",
+		"system": "Système",
+		"light": "Clair",
+		"dark": "Sombre"
+	},
+	"footer": {
+		"label": "Navigation du pied de page",
+		"local_only": "Le chiffrement et la génération du code QR s’effectuent localement dans votre navigateur."
+	},
+	"formats": {
+		"plain": "Texte brut",
+		"source": "Source",
+		"markdown": "Markdown"
+	},
+	"expiry": {
+		"3600": "1 heure",
+		"21600": "6 heures",
+		"86400": "1 jour",
+		"604800": "7 jours",
+		"minutes": "{count, plural, =1 {1 minute} other {# minutes}}",
+		"hours": "{count, plural, =1 {1 heure} other {# heures}}",
+		"days": "{count, plural, =1 {1 jour} other {# jours}}"
+	},
+	"create": {
+		"eyebrow": "Le partage privé, tout simplement",
+		"title": "Glissez une note dans la boîte bleue.",
+		"intro": "Rédigez, joignez et chiffrez dans ce navigateur. Le serveur ne reçoit qu’une enveloppe chiffrée authentifiée et son cycle de vie.",
+		"format": "Format du texte",
+		"edit": "Modifier",
+		"preview": "Aperçu",
+		"preview_empty": "Votre aperçu s’affichera ici.",
+		"text_label": "Note",
+		"text_help": "Le texte, le format choisi et les informations sur les pièces jointes sont chiffrés ensemble.",
+		"placeholder": "Écrivez quelque chose qui mérite d’être partagé…",
+		"local_title": "Chiffré ici.",
+		"local_body": "Le secret de votre lien et le mot de passe facultatif ne sont jamais envoyés.",
+		"expiry": "Expire après",
+		"expiry_help": "Le serveur convertit cette durée en date d’expiration exacte utilisée pour le chiffrement.",
+		"read_cap": "Limiter le nombre d’ouvertures",
+		"read_cap_help": "Une seule ouverture permet une lecture unique. Elle est décomptée avant le déchiffrement local.",
+		"max_reads": "Nombre maximal d’ouvertures",
+		"password_toggle": "Exiger un mot de passe de second facteur",
+		"password_help": "Le secret aléatoire du lien reste indispensable. Communiquez ce mot de passe séparément.",
+		"how_title": "Fonctionnement de l’enveloppe scellée",
+		"how_body": "Nyanbin réserve un identifiant et un cycle de vie précis, chiffre localement avec AES-256-GCM, lie cette politique publique comme données authentifiées, puis envoie le tout. Toute personne disposant du lien complet et du mot de passe peut ouvrir la note.",
+		"files_count": "pièces jointes",
+		"bytes": "octets locaux",
+		"envelope_size": "Enveloppe chiffrée : {bytes} octets",
+		"limit": "Limite du serveur pour l’enveloppe : {bytes} octets",
+		"over_limit": "Dépassement de {overage} octets. Élément principal : {name}.",
+		"note_content": "contenu de la note",
+		"submit": "Chiffrer et créer le lien",
+		"add_something": "Ajoutez du texte ou au moins une pièce jointe à chiffrer.",
+		"phase": {
+			"reserving": "Réservation…",
+			"encrypting": "Chiffrement local…",
+			"uploading": "Envoi de l’enveloppe…"
+		},
 		"errors": {
-			"note_too_big": "Impossible de créer une note. La note est trop grande.",
-			"note_error": "n'a pas pu créer de note. Veuillez réessayer.",
-			"max": "max: {n}",
-			"empty_content": "La note est vide."
+			"empty": "Ajoutez d’abord du texte ou une pièce jointe.",
+			"status": "Cette instance Nyanbin est indisponible. Votre brouillon reste dans ce navigateur.",
+			"expiry": "Choisissez une durée d’expiration autorisée par cette instance.",
+			"reads": "Choisissez un nombre d’ouvertures autorisé par cette instance.",
+			"too_large": "L’enveloppe chiffrée dépasse la taille autorisée par cette instance. Retirez une pièce jointe ou raccourcissez la note.",
+			"too_large_detail": "L’enveloppe chiffrée dépasse la limite du serveur de {overage} octets. Élément principal : {name}.",
+			"network": "Impossible de joindre le serveur. Votre brouillon reste ici ; veuillez réessayer.",
+			"failed": "Impossible de créer la note. Votre brouillon a été conservé.",
+			"password": "Saisissez un mot de passe de second facteur non vide.",
+			"file_name": "Le nom d’une pièce jointe n’est pas valide. Renommez le fichier, puis ajoutez-le à nouveau.",
+			"duplicate_files": "Les noms des pièces jointes doivent être uniques. Retirez ou renommez le doublon « {name} »."
 		},
-		"messages": {
-			"note_created": "note créée."
-		},
-		"advanced": {
-			"explanation": "Par défaut, un mot de passe généré de manière sécurisée est utilisé pour chaque note. Vous pouvez toutefois choisir votre propre mot de passe, qui n'est pas inclus dans le lien.",
-			"custom_password": "mot de passe personnalisé"
-		},
-		"pasting": "Collage...",
-		"pasted_files": "Fichiers collés",
-		"remove": "Supprimer"
+		"page_title": "Créer une note chiffrée",
+		"meta_description": "Partagez des notes et des pièces jointes chiffrées grâce à un lien secret temporaire.",
+		"password_required": "Saisissez le mot de passe de second facteur ou désactivez cette option.",
+		"loading_instance": "Chargement des limites et fonctionnalités de cette instance…"
+	},
+	"files": {
+		"add": "Ajouter des pièces jointes",
+		"drop_help": "Choisissez des fichiers, déposez-les ici ou collez-les n’importe où dans l’éditeur.",
+		"selected": "Pièces jointes",
+		"unknown_type": "type inconnu",
+		"unnamed": "pièce jointe sans nom",
+		"remove_named": "Retirer {name}"
+	},
+	"result": {
+		"step": "Scellée et prête",
+		"title": "Votre lien secret est prêt.",
+		"bearer_warning": "Cette URL complète est un secret au porteur. Toute personne qui la détient peut utiliser une ouverture et tenter de déchiffrer la note.",
+		"share_link": "Lien secret complet",
+		"copy": "Copier le lien",
+		"copied": "Copié",
+		"copy_failed": "Impossible d’accéder au presse-papiers. Sélectionnez et copiez manuellement le lien complet.",
+		"open": "Ouvrir la page de consultation",
+		"qr_label": "Code QR contenant le lien secret complet",
+		"qr_caption": "Généré localement. Le code QR contient le même secret au porteur que le lien.",
+		"expires": "Expiration",
+		"reads": "Limite d’ouvertures",
+		"unlimited_reads": "Aucune limite d’ouvertures",
+		"revoke_summary": "Commandes du créateur",
+		"revoke_help": "Ce navigateur détient encore le droit de suppression à usage unique. Il n’est ni inclus dans le lien de partage ni affiché à l’écran.",
+		"revoke": "Révoquer cette note",
+		"revoke_failed": "Impossible de révoquer la note. Elle a peut-être déjà disparu, ou le serveur est indisponible.",
+		"revoked_title": "Note révoquée.",
+		"revoked_body": "L’enveloppe chiffrée n’est plus disponible sur le serveur.",
+		"create_another": "Créer une autre note"
 	},
 	"show": {
+		"page_title": "Ouvrir la note",
+		"eyebrow": "Note scellée trouvée",
+		"gate_title": "Quand vous voulez.",
+		"consume_warning": "L’ouverture est décomptée avant le déchiffrement dans ce navigateur. Un mauvais mot de passe, un lien endommagé ou un onglet fermé peuvent tout de même la consommer.",
+		"expires": "Expiration",
+		"remaining": "Ouvertures restantes",
+		"password_optional": "Mot de passe de second facteur, si l’expéditeur en a défini un",
+		"password_help": "Laissez ce champ vide si l’expéditeur n’a pas défini de mot de passe.",
+		"reveal": "Utiliser une ouverture et déchiffrer",
+		"revealing": "Utilisation d’une ouverture…",
+		"decrypting": "Déchiffrement local…",
+		"fragment_help": "Le secret du lien reste après le caractère # dans l’adresse de cette page et n’est pas envoyé avec les requêtes HTTP ordinaires.",
+		"missing_title": "Cette note sommeille ailleurs.",
+		"missing_body": "Elle a peut-être expiré, été consultée ou révoquée, ou n’a jamais existé.",
+		"invalid_title": "Ce lien secret est incomplet.",
+		"invalid_body": "Demandez à l’expéditeur l’URL complète, y compris le fragment situé après #.",
+		"error_title": "Impossible d’ouvrir la note.",
+		"consumed_error_title": "Une ouverture a été utilisée, mais le déchiffrement a échoué.",
+		"retry_info": "Recharger les informations de la note",
+		"retry_consumed_help": "Si l’expéditeur a autorisé plusieurs ouvertures, vérifiez la disponibilité avant de réessayer délibérément. Chaque nouvelle tentative consommera une ouverture supplémentaire.",
+		"retry_reveal": "Vérifier la disponibilité avant de réessayer",
+		"create_new": "Créer une nouvelle note chiffrée",
+		"decrypted": "Déchiffrée dans ce navigateur",
+		"title": "Votre note",
+		"copy_text": "Copier le texte",
+		"copy_failed": "Impossible d’accéder au presse-papiers. Sélectionnez et copiez manuellement le texte de la note.",
+		"attachments": "Pièces jointes ({count})",
+		"preview": "Aperçu",
+		"close_preview": "Fermer l’aperçu",
+		"download": "Télécharger",
 		"errors": {
-			"not_found": "La note n'a pas été trouvée ou a déjà été supprimée.",
-			"decryption_failed": "mauvais mot de passe. impossible à déchiffrer. probablement un lien brisé. la note a été détruite.",
-			"unsupported_type": "type de note non supporté."
-		},
-		"explanation": "Cliquez ci-dessous pour afficher et supprimer la note si le compteur a atteint sa limite.",
-		"show_note": "afficher la note",
-		"warning_will_not_see_again": "vous <b>n'aurez pas</b> la chance de revoir la note.",
-		"download_all": "tout télécharger",
-		"links_found": "liens trouvés à l’intérieur de la note :"
+			"info": "Impossible de charger les informations de la note. Aucune ouverture n’a été utilisée.",
+			"decrypt_consumed": "Impossible d’authentifier l’enveloppe. Cette ouverture a déjà été utilisée ; vérifiez le mot de passe ou le lien complet auprès de l’expéditeur.",
+			"consumed": "La note n’est plus disponible. Elle a peut-être expiré, été révoquée ou atteint sa limite d’ouvertures.",
+			"network": "Une erreur réseau s’est produite pendant l’ouverture. Le serveur a peut-être déjà décompté une ouverture ; consultez l’expéditeur avant de réessayer pour une note à lecture unique.",
+			"reveal_consumed": "L’ouverture a échoué alors qu’elle a peut-être été décomptée. Vérifiez la disponibilité avant de réessayer délibérément.",
+			"reveal": "Le serveur n’a pas pu ouvrir cette note."
+		}
 	},
-	"file_upload": {
-		"selected_files": "Fichiers sélectionnés",
-		"no_files_selected": "Aucun fichier sélectionné",
-		"clear": "Réinitialiser"
+	"about": {
+		"eyebrow": "Un petit outil bleu pour votre vie privée",
+		"title": "À propos de Nyanbin",
+		"lead": "Nyanbin partage textes et fichiers sous forme d’enveloppes chiffrées authentifiées à durée de vie limitée.",
+		"how_title": "Ce que voit le serveur",
+		"how_body": "Le navigateur chiffre la note, le format, les noms de fichiers, les indications MIME, les tailles et les octets. Le serveur voit l’identifiant de la note, la version du protocole, la longueur chiffrée, l’expiration et l’éventuelle limite d’ouvertures. Le secret du lien reste dans le fragment de l’URL.",
+		"limits_title": "Limites importantes",
+		"limits_body": "Toute personne disposant du lien complet et de l’éventuel mot de passe peut ouvrir la note. Un serveur malveillant pourrait remplacer l’application web ; la chronologie du trafic et la longueur du texte chiffré restent visibles. Utilisez HTTPS et une instance de confiance.",
+		"origin_title": "Origines libres",
+		"origin_body": "Nyanbin repose sur les fondations de Cryptgeon sous licence MIT et réimplémente certaines idées de confidentialité et de produit étudiées dans PrivateBin. Son interface et ses illustrations de chats sont originales.",
+		"instance_title": "Cette instance",
+		"instance_default": "Ceci est une instance Nyanbin auto-hébergée."
+	},
+	"imprint": {
+		"title": "Mentions légales",
+		"external": "Cette instance publie ses mentions légales à une adresse distincte.",
+		"open": "Ouvrir les mentions légales",
+		"unavailable": "Aucune adresse de mentions légales n’est configurée pour cette instance."
 	}
 }

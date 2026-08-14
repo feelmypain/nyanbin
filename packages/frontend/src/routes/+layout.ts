@@ -1,5 +1,23 @@
 import { getLocaleFromNavigator, init } from 'svelte-intl-precompile'
 // @ts-ignore
-import { registerAll } from '$locales'
+import { availableLocales, registerAll } from '$locales'
+
 registerAll()
-init({ initialLocale: getLocaleFromNavigator() ?? undefined, fallbackLocale: 'en' })
+
+function supportedLocale(value: string | null | undefined): string | undefined {
+	if (!value) return undefined
+	const exact = availableLocales.find((option: string) => option.toLowerCase() === value.toLowerCase())
+	if (exact) return exact
+	const base = value.split('-')[0]?.toLowerCase()
+	return availableLocales.find((option: string) => option.toLowerCase() === base)
+}
+
+let storedLocale: string | null = null
+if (typeof window !== 'undefined') {
+	try { storedLocale = window.localStorage.getItem('nyanbin-locale') } catch { /* Use the navigator fallback. */ }
+}
+const initialLocale = supportedLocale(storedLocale) ?? supportedLocale(getLocaleFromNavigator()) ?? supportedLocale('en') ?? availableLocales[0]
+if (storedLocale !== null && storedLocale !== initialLocale && typeof window !== 'undefined') {
+	try { window.localStorage.setItem('nyanbin-locale', initialLocale) } catch { /* The normalized in-memory locale still applies. */ }
+}
+init({ initialLocale, fallbackLocale: 'en' })

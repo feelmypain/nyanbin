@@ -1,62 +1,23 @@
 <script lang="ts">
-	interface Props {
-		label?: string
-		value: boolean
-		color?: boolean
-		[key: string]: any
-	}
-
-	let { label = '', value = $bindable(), color = true, ...rest }: Props = $props()
+	import type { HTMLInputAttributes } from 'svelte/elements'
+	interface Props { label: string; value?: boolean; help?: string }
+	let { label, value = $bindable(false), help, id, ...rest }: HTMLInputAttributes & Props = $props()
+	let inputId = $derived(id ?? 'switch-input')
 </script>
-
-<label {...rest}>
-	<small>{label}</small>
-	<input type="checkbox" bind:checked={value} />
-	<span class:color class="slider"></span>
+<label for={inputId}>
+	<input id={inputId} type="checkbox" bind:checked={value} {...rest} />
+	<span class="track" aria-hidden="true"><span></span></span>
+	<span class="copy"><strong>{label}</strong>{#if help}<small>{help}</small>{/if}</span>
 </label>
-
 <style>
-	label {
-		position: relative;
-		display: inline-block;
-	}
-
-	label input {
-		display: none;
-	}
-
-	small {
-		display: block;
-		width: max-content;
-	}
-
-	.slider {
-		display: block;
-		width: 4rem;
-		height: 2.5rem;
-		position: relative;
-		cursor: pointer;
-		border: 2px solid var(--ui-bg-1);
-		background-color: var(--ui-bg-0);
-	}
-
-	.slider:before {
-		position: absolute;
-		content: '';
-		height: 2rem;
-		width: 1.25rem;
-		left: 0.125rem;
-		bottom: 0.125rem;
-		background-color: var(--ui-bg-1);
-		-webkit-transition: 0.4s;
-		transition: var(--ui-anim);
-	}
-
-	input:checked + .slider.color:before {
-		background-color: var(--ui-clr-primary);
-	}
-
-	input:checked + .slider:before {
-		transform: translateX(calc(2.25rem - 1px));
-	}
+	label { display: grid; grid-template-columns: auto auto 1fr; align-items: start; gap: var(--space-2); cursor: pointer; }
+	input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+	.track { display: flex; width: 3.25rem; height: 1.75rem; padding: .18rem; border: 1px solid var(--border-strong); border-radius: 99rem; background: var(--surface-blue); transition: background var(--duration-ui) var(--ease-out); }
+	.track span { display: block; width: 1.25rem; height: 1.25rem; border-radius: 50%; background: var(--ink-muted); }
+	input:checked + .track { background: var(--blue-600); }
+	input:checked + .track span { margin-inline-start: auto; background: var(--on-primary); }
+	input:focus-visible + .track { box-shadow: var(--focus-ring); }
+	.copy { display: block; }
+	.copy strong, .copy small { display: block; }
+	.copy small { color: var(--ink-muted); }
 </style>

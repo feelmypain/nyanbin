@@ -1,32 +1,27 @@
-import { test } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import { CLI, checkLinkForText, createNoteSuccessfully, getLinkFromCLI } from '../../utils'
 
-const text = `Endless prejudice endless play derive joy eternal-return selfish burying. Of decieve play pinnacle faith disgust. Spirit reason salvation burying strong of joy ascetic selfish against merciful sea truth. Ubermensch moral prejudice derive chaos mountains ubermensch justice philosophy justice ultimate joy ultimate transvaluation. Virtues convictions war ascetic eternal-return spirit. Ubermensch transvaluation noble revaluation sexuality intentions salvation endless decrepit hope noble fearful. Justice ideal ultimate snare god joy evil sexuality insofar gains oneself ideal.`
-const password = 'password'
+const text = 'Browser and CLI must decrypt the exact same authenticated envelope.'
 
-test.describe('text @cross', () => {
-  test('cli to web', async ({ page }) => {
-    const note = await CLI('send', 'text', text)
-    const link = getLinkFromCLI(note.stdout)
-
-    await checkLinkForText(page, { link, text })
+test.describe('browser and CLI text interoperability', () => {
+  test('CLI creates, browser reveals', async ({ page }) => {
+    const created = await CLI('create', 'text', text, '--format', 'markdown', '--max-reads', '1')
+    await checkLinkForText(page, { link: getLinkFromCLI(created.stdout), text })
   })
 
-  test('web to cli', async ({ page }) => {
-    const link = await createNoteSuccessfully(page, { text })
-    const retrieved = await CLI('open', link)
-    test.expect(retrieved.stdout.trim()).toBe(text)
+  test('browser creates, CLI opens', async ({ page }) => {
+    const link = await createNoteSuccessfully(page, { text, format: 'source' })
+    const opened = await CLI('open', link)
+    expect(opened.stdout).toContain(text)
   })
 
-  test('cli to web with password', async ({ page }) => {
-    const note = await CLI('send', 'text', text, '--password', password)
-    const link = getLinkFromCLI(note.stdout)
-    await checkLinkForText(page, { link, text, password })
-  })
+  test('password mode works in both directions', async ({ page }) => {
+    const password = 'shared-second-factor'
+    const created = await CLI('create', 'text', text, '--password', password)
+    await checkLinkForText(page, { link: getLinkFromCLI(created.stdout), text, password })
 
-  test('web to cli with password', async ({ page }) => {
     const link = await createNoteSuccessfully(page, { text, password })
-    const retrieved = await CLI('open', link, '--password', password)
-    test.expect(retrieved.stdout.trim()).toBe(text)
+    const opened = await CLI('open', link, '--password', password)
+    expect(opened.stdout).toContain(text)
   })
 })

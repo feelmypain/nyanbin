@@ -1,22 +1,30 @@
 {
+  "name": "nyanbin-workspace",
+  "private": true,
   "scripts": {
-    "dev:docker": "docker compose -f docker-compose.dev.yaml up redis",
-    "dev:packages": "pnpm --parallel run dev",
-    "dev": "run-p dev:*",
-    "docker:up": "docker compose -f docker-compose.dev.yaml up",
+    "dev:valkey": "docker compose -f docker-compose.dev.yaml up valkey",
+    "dev:packages": "pnpm --parallel --recursive run dev",
+    "dev": "run-p dev:valkey dev:packages",
+    "docker:up": "docker compose -f docker-compose.dev.yaml up --build",
+    "docker:down": "docker compose -f docker-compose.dev.yaml down --remove-orphans",
     "docker:build": "docker compose -f docker-compose.dev.yaml build",
-    "test": "playwright test --project=chrome --project=firefox --project=safari",
-    "test:local": "playwright test --project=chrome",
-    "test:server": "run-s docker:up",
-    "test:dl-browsers": "playwright install",
-    "test:prepare": "run-p test:dl-browsers build docker:build",
-    "build": "pnpm run --recursive --filter=!@cryptgeon/backend build"
+    "build": "pnpm --recursive run build",
+    "licenses:generate": "node scripts/generate-dependency-licenses.mjs",
+    "check": "pnpm --recursive --if-present run check",
+    "test": "playwright test",
+    "test:local": "playwright test --project=chromium",
+    "test:prepare": "run-p build docker:build test:install-browsers",
+    "test:install-browsers": "playwright install",
+    "ci": "run-s build check test"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
     "@types/node": "^24.12.4",
     "npm-run-all": "^4.1.5",
     "shelljs": "^0.8.5"
+  },
+  "engines": {
+    "node": ">=24 <25"
   },
   "packageManager": "pnpm@11.5.0"
 }

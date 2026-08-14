@@ -1,61 +1,187 @@
 {
 	"common": {
-		"note": "nota",
-		"file": "archivo",
-		"advanced": "avanzado",
-		"create": "crear",
-		"loading": "cargando",
-		"mode": "modo",
-		"views": "{n, plural, =0 {vistas} =1 {1 vista} other {# vistas}}",
-		"minutes": "{n, plural, =0 {minutos} =1 {1 minuto} other {# minutos}}",
-		"max": "max",
-		"share_link": "compartir enlace",
-		"copy_clipboard": "copiar al portapapeles",
-		"copied_to_clipboard": "copiado al portapapeles",
-		"encrypting": "encriptando",
-		"decrypting": "descifrando",
-		"uploading": "cargando",
-		"downloading": "descargando",
-		"qr_code": "código qr",
-		"password": "contraseña"
+		"loading": "Cargando…",
+		"password": "Contraseña",
+		"show": "Mostrar",
+		"hide": "Ocultar",
+		"show_password": "Mostrar contraseña",
+		"hide_password": "Ocultar contraseña",
+		"retry": "Intentar de nuevo",
+		"working": "Procesando…"
 	},
-	"home": {
-		"intro": "Envía fácilmente notas o archivos <i>totalmente encriptados</i> y seguros con un solo clic. Solo tienes que crear una nota y compartir el enlace.",
-		"explanation": "la nota expirará y se destruirá después de {type}.",
-		"new_note": "nueva nota",
-		"new_note_notice": "<b>disponibilidad:</b><br />no se garantiza que la nota se almacene, ya que todo se guarda en la memoria RAM, si se llena se eliminarán las notas más antiguas.<br />(probablemente estará bien, solo está advertido.)",
+	"nav": {
+		"label": "Navegación principal",
+		"home": "Inicio de Nyanbin",
+		"about": "Acerca de",
+		"skip": "Ir al contenido"
+	},
+	"locale": {
+		"label": "Idioma"
+	},
+	"theme": {
+		"label": "Tema de color",
+		"system": "Sistema",
+		"light": "Claro",
+		"dark": "Oscuro"
+	},
+	"footer": {
+		"label": "Navegación del pie de página",
+		"local_only": "El cifrado y la generación del código QR se realizan localmente en tu navegador."
+	},
+	"formats": {
+		"plain": "Texto sin formato",
+		"source": "Código fuente",
+		"markdown": "Markdown"
+	},
+	"expiry": {
+		"3600": "1 hora",
+		"21600": "6 horas",
+		"86400": "1 día",
+		"604800": "7 días",
+		"minutes": "{count, plural, =1 {1 minuto} other {# minutos}}",
+		"hours": "{count, plural, =1 {1 hora} other {# horas}}",
+		"days": "{count, plural, =1 {1 día} other {# días}}"
+	},
+	"create": {
+		"eyebrow": "Comparte en privado, sin complicaciones",
+		"title": "Guarda una nota en la caja azul.",
+		"intro": "Escribe, adjunta y cifra en este navegador. El servidor solo recibe un sobre cifrado y autenticado, junto con su ciclo de vida.",
+		"format": "Formato del texto",
+		"edit": "Editar",
+		"preview": "Vista previa",
+		"preview_empty": "La vista previa aparecerá aquí.",
+		"text_label": "Nota",
+		"text_help": "El texto, el formato elegido y los datos de los archivos adjuntos se cifran juntos.",
+		"placeholder": "Escribe algo que valga la pena compartir…",
+		"local_title": "Cifrado aquí mismo.",
+		"local_body": "El secreto del enlace y la contraseña opcional nunca se suben al servidor.",
+		"expiry": "Caduca después de",
+		"expiry_help": "El servidor convierte esta duración en la fecha exacta de caducidad que se usa para el cifrado.",
+		"read_cap": "Limitar el número de accesos",
+		"read_cap_help": "Un solo acceso hace que la nota se destruya después de leerla. El acceso se descuenta antes del descifrado local.",
+		"max_reads": "Número máximo de accesos",
+		"password_toggle": "Solicitar una segunda contraseña",
+		"password_help": "El secreto aleatorio del enlace sigue siendo necesario. Comparte esta contraseña por separado.",
+		"how_title": "Cómo funciona el sobre sellado",
+		"how_body": "Nyanbin reserva un ID y un ciclo de vida exacto, cifra localmente con AES-256-GCM, vincula esa política pública como datos autenticados y después sube el resultado. Cualquiera que tenga el enlace completo y la contraseña puede abrirlo.",
+		"files_count": "archivos adjuntos",
+		"bytes": "bytes locales",
+		"envelope_size": "Sobre cifrado: {bytes} bytes",
+		"limit": "Límite del sobre en el servidor: {bytes} bytes",
+		"over_limit": "Se supera el límite en {overage} bytes. El elemento que más ocupa es: {name}.",
+		"note_content": "contenido de la nota",
+		"submit": "Cifrar y crear enlace",
+		"add_something": "Añade texto o al menos un archivo adjunto para cifrarlo.",
+		"phase": {
+			"reserving": "Reservando…",
+			"encrypting": "Cifrando localmente…",
+			"uploading": "Subiendo el sobre…"
+		},
 		"errors": {
-			"note_too_big": "no se pudo crear la nota. la nota es demasiado grande",
-			"note_error": "No se ha podido crear la nota. Por favor, inténtelo de nuevo.",
-			"max": "max: {n}",
-			"empty_content": "la nota está vacía."
+			"empty": "Añade primero texto o un archivo adjunto.",
+			"status": "Esta instancia de Nyanbin no está disponible. Tu borrador permanece en este navegador.",
+			"expiry": "Elige un plazo de caducidad dentro del límite de esta instancia.",
+			"reads": "Elige un número de accesos dentro del límite de esta instancia.",
+			"too_large": "El sobre cifrado supera el tamaño permitido por esta instancia. Elimina un archivo adjunto o acorta la nota.",
+			"too_large_detail": "El sobre cifrado supera el límite del servidor en {overage} bytes. El elemento que más ocupa es: {name}.",
+			"network": "No se pudo contactar con el servidor. Tu borrador permanece aquí; inténtalo de nuevo.",
+			"failed": "No se pudo crear la nota. Tu borrador no se ha borrado.",
+			"password": "Introduce una segunda contraseña que no esté vacía.",
+			"file_name": "El nombre de un archivo adjunto no es válido. Cambia el nombre del archivo y vuelve a añadirlo.",
+			"duplicate_files": "Los nombres de los archivos adjuntos deben ser únicos. Elimina o cambia el nombre del duplicado «{name}»."
 		},
-		"messages": {
-			"note_created": "nota creada."
-		},
-		"advanced": {
-			"explanation": "Por defecto, se utiliza una contraseña generada de forma segura para cada nota. No obstante, también puede elegir su propia contraseña, la cual no se incluye en el enlace.",
-			"custom_password": "contraseña personalizada"
-		},
-		"pasting": "Pegando...",
-		"pasted_files": "Archivos pegados",
-		"remove": "Eliminar"
+		"page_title": "Crear una nota cifrada",
+		"meta_description": "Comparte notas y archivos adjuntos cifrados mediante un enlace secreto con caducidad.",
+		"password_required": "Introduce la segunda contraseña o desactiva la opción.",
+		"loading_instance": "Cargando los límites y las funciones de esta instancia…"
+	},
+	"files": {
+		"add": "Añadir archivos adjuntos",
+		"drop_help": "Elige archivos, arrástralos aquí o pégalos en cualquier parte del editor.",
+		"selected": "Archivos adjuntos",
+		"unknown_type": "tipo desconocido",
+		"unnamed": "archivo adjunto sin nombre",
+		"remove_named": "Eliminar {name}"
+	},
+	"result": {
+		"step": "Sellada y lista",
+		"title": "Tu enlace secreto está listo.",
+		"bearer_warning": "Esta URL completa funciona como secreto al portador. Quien la tenga puede consumir un acceso e intentar descifrar la nota.",
+		"share_link": "Enlace secreto completo",
+		"copy": "Copiar enlace",
+		"copied": "Copiado",
+		"copy_failed": "No se pudo acceder al portapapeles. Selecciona y copia manualmente el enlace completo.",
+		"open": "Abrir la página de la nota",
+		"qr_label": "Código QR que contiene el enlace secreto completo",
+		"qr_caption": "Generado localmente. El QR contiene el mismo secreto al portador que el enlace.",
+		"expires": "Caduca",
+		"reads": "Límite de accesos",
+		"unlimited_reads": "Sin límite de accesos",
+		"revoke_summary": "Controles del creador",
+		"revoke_help": "Este navegador aún conserva la autorización de un solo uso para eliminar la nota. No está incluida en el enlace compartido ni se muestra en pantalla.",
+		"revoke": "Revocar esta nota",
+		"revoke_failed": "No se pudo revocar la nota. Puede que ya no exista o que el servidor no esté disponible.",
+		"revoked_title": "Nota revocada.",
+		"revoked_body": "El sobre cifrado ya no está disponible en el servidor.",
+		"create_another": "Crear otra nota"
 	},
 	"show": {
+		"page_title": "Abrir nota",
+		"eyebrow": "Nota sellada encontrada",
+		"gate_title": "Cuando quieras.",
+		"consume_warning": "Abrir la nota consume un acceso antes de que este navegador la descifre. Una contraseña incorrecta, un enlace dañado o cerrar la pestaña también pueden consumirlo.",
+		"expires": "Caduca",
+		"remaining": "Accesos restantes",
+		"password_optional": "Segunda contraseña, si la estableció quien envió la nota",
+		"password_help": "Déjala en blanco si quien envió la nota no estableció ninguna contraseña.",
+		"reveal": "Consumir un acceso y descifrar",
+		"revealing": "Consumiendo un acceso…",
+		"decrypting": "Descifrando localmente…",
+		"fragment_help": "El secreto del enlace permanece después de # en la dirección de esta página y no se envía en las solicitudes HTTP normales.",
+		"missing_title": "Esta nota está durmiendo en otro lugar.",
+		"missing_body": "Puede haber caducado, haberse consumido o revocado, o quizá nunca existió.",
+		"invalid_title": "Este enlace secreto está incompleto.",
+		"invalid_body": "Pide a quien lo envió la URL completa, incluido el fragmento que aparece después de #.",
+		"error_title": "No se pudo abrir la nota.",
+		"consumed_error_title": "Se consumió un acceso, pero no se pudo descifrar la nota.",
+		"retry_info": "Volver a consultar la información de la nota",
+		"retry_consumed_help": "Si quien envió la nota permitió más de un acceso, comprueba su disponibilidad antes de volver a intentarlo deliberadamente. El nuevo intento consumirá otro acceso.",
+		"retry_reveal": "Comprobar disponibilidad antes de reintentar",
+		"create_new": "Crear una nota cifrada nueva",
+		"decrypted": "Descifrada en este navegador",
+		"title": "Tu nota",
+		"copy_text": "Copiar texto",
+		"copy_failed": "No se pudo acceder al portapapeles. Selecciona y copia manualmente el texto de la nota.",
+		"attachments": "Archivos adjuntos ({count})",
+		"preview": "Vista previa",
+		"close_preview": "Cerrar vista previa",
+		"download": "Descargar",
 		"errors": {
-			"not_found": "la nota no se encontró o ya fue borrada.",
-			"decryption_failed": "contraseña incorrecta. no se pudo descifrar. probablemente un enlace roto. la nota fue destruida.",
-			"unsupported_type": "tipo de nota no compatible."
-		},
-		"explanation": "pulse abajo para mostrar y borrar la nota si el contador ha llegado a su límite",
-		"show_note": "mostrar nota",
-		"warning_will_not_see_again": "<b>no</b> tendrás la oportunidad de volver a ver la nota.",
-		"download_all": "descargar todo",
-		"links_found": "enlaces que se encuentran dentro de la nota:"
+			"info": "No se pudo cargar la información de la nota. No se consumió ningún acceso.",
+			"decrypt_consumed": "No se pudo autenticar el sobre. Este acceso ya se consumió; verifica con quien envió la nota la contraseña o el enlace completo.",
+			"consumed": "La nota ya no está disponible. Puede haber caducado, haber sido revocada o haber alcanzado su límite de accesos.",
+			"network": "Se produjo un error de red al abrir la nota. Es posible que el servidor ya haya consumido un acceso; consulta con quien la envió antes de reintentar abrir una nota de un solo acceso.",
+			"reveal_consumed": "La apertura falló después de que el acceso pudiera haberse consumido. Comprueba la disponibilidad antes de volver a intentarlo deliberadamente.",
+			"reveal": "El servidor no pudo abrir esta nota."
+		}
 	},
-	"file_upload": {
-		"selected_files": "Archivos seleccionados",
-		"no_files_selected": "No hay archivos seleccionados",
-		"clear": "Restablecer"
+	"about": {
+		"eyebrow": "Una pequeña herramienta azul de privacidad",
+		"title": "Acerca de Nyanbin",
+		"lead": "Nyanbin comparte texto y archivos como sobres cifrados y autenticados con ciclos de vida limitados.",
+		"how_title": "Qué ve el servidor",
+		"how_body": "El navegador cifra la nota, el formato, los nombres de archivo, las indicaciones MIME, los tamaños y los bytes. El servidor ve el ID de la nota, la versión del protocolo, la longitud cifrada, la caducidad y el límite opcional de accesos. El secreto del enlace permanece en el fragmento de la URL.",
+		"limits_title": "Límites importantes",
+		"limits_body": "Cualquiera que tenga el enlace completo y la contraseña opcional puede abrir la nota. Un servidor malicioso podría sustituir la aplicación web, y el momento del tráfico o la longitud del texto cifrado seguirían siendo visibles. Usa HTTPS y una instalación de confianza.",
+		"origin_title": "Origen de código abierto",
+		"origin_body": "Nyanbin se basa en los cimientos de Cryptgeon, con licencia MIT, y vuelve a implementar algunas ideas de privacidad y producto estudiadas en PrivateBin. Su interfaz y las ilustraciones de gatos son originales.",
+		"instance_title": "Esta instancia",
+		"instance_default": "Esta es una instancia de Nyanbin autoalojada."
+	},
+	"imprint": {
+		"title": "Aviso legal",
+		"external": "Esta instancia publica su aviso legal en otra dirección.",
+		"open": "Abrir aviso legal",
+		"unavailable": "No se ha configurado ninguna dirección para el aviso legal de esta instancia."
 	}
 }

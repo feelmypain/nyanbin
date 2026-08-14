@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 300" role="img" aria-labelledby="title desc">
+  <title id="title">Nyanbin</title>
+  <desc id="desc">Nyanbin wordmark with a blue geometric cat envelope</desc>
+  <rect width="960" height="300" rx="32" fill="#eaf3ff"/>
+  <g transform="translate(66 46)">
+    <path d="M28 88 42 34l38 32h28l38-32 14 54v54H28Z" fill="#79aaf8" stroke="#17345f" stroke-width="10" stroke-linejoin="round"/>
+    <circle cx="75" cy="100" r="7" fill="#17345f"/><circle cx="115" cy="100" r="7" fill="#17345f"/>
+    <path d="m86 117 9 7 9-7M95 124v10" fill="none" stroke="#17345f" stroke-width="7" stroke-linecap="round"/>
+    <rect x="8" y="138" width="172" height="70" rx="14" fill="#fff" stroke="#17345f" stroke-width="10"/>
+    <path d="m16 148 78 48 78-48" fill="none" stroke="#4f86dc" stroke-width="9"/>
+  </g>
+  <text x="300" y="158" fill="#17345f" font-family="ui-rounded, 'Arial Rounded MT Bold', system-ui, sans-serif" font-size="104" font-weight="800" letter-spacing="-3">nyanbin</text>
+  <text x="306" y="210" fill="#376aa9" font-family="system-ui, sans-serif" font-size="25" font-weight="600" letter-spacing="2">SECRETS, SEALED WITH A PURR</text>
+</svg>

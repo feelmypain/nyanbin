@@ -1,0 +1,67 @@
+Nyanbin — provenance and third-party notices
+============================================
+
+Cryptgeon
+---------
+
+Nyanbin is a fork and substantial modification of Cryptgeon. Cryptgeon is
+Copyright (c) 2021 Niccolo Borgioli and is distributed under the MIT License.
+Its copyright and permission notice are preserved in the root LICENSE file.
+
+Upstream project: https://github.com/cupcakearmy/cryptgeon
+Reviewed foundation revision: 1f180a2e53b79dce4e201e4ec2fcf5201538c4b2
+
+PrivateBin
+----------
+
+PrivateBin was studied as conceptual inspiration for client-side-encrypted
+sharing, encrypted metadata, explicit burn-after-reading behavior, deletion
+capabilities, and security-oriented product language. No PrivateBin source code
+or artwork is included in Nyanbin, and Nyanbin is not wire-compatible with
+PrivateBin.
+
+Upstream project: https://github.com/PrivateBin/PrivateBin
+Studied revision: 88cf90534de33f950411c12cdee87d841d97947c
+
+PrivateBin and its contributors do not endorse Nyanbin.
+
+WidgetStar
+----------
+
+WidgetStar's rendered interface was studied only as visual mood inspiration.
+No WidgetStar source code, artwork, logo, mascot, icons, textures, sprites, or
+other proprietary assets are included in Nyanbin.
+
+WidgetStar and its creators do not endorse Nyanbin.
+
+Inherited acknowledgements
+--------------------------
+
+Cryptgeon's distribution carried the following acknowledgements. They are
+retained for inherited fixtures or assets to which they apply:
+
+* Test text was sourced from Nietzsche Ipsum:
+  https://nietzsche-ipsum.com/
+* The AES test document is the Rijndael specification paper:
+  https://www.cs.miami.edu/home/burt/learning/Csc688.012/rijndael/rijndael_doc_V2.pdf
+* Photographic test material was sourced through Unsplash:
+  https://unsplash.com/
+* The historical loading animation was credited to Nikhil Krishnan:
+  https://codepen.io/nikhil8krishnan/pen/rVoXJa
+* Inherited icons were credited to Freepik through Flaticon:
+  https://www.freepik.com/ and https://www.flaticon.com/
+* Lokalise provided Cryptgeon's open-source translation workflow access:
+  https://lokalise.com/
+
+Dependencies and assets
+------------------------
+
+Third-party dependencies and bundled assets remain subject to their respective
+licenses and notices. The root MIT License covers Nyanbin's original work and
+preserves Cryptgeon's MIT notice; it does not replace the licenses of those
+third-party components.
+
+The concrete, generated inventory is `DEPENDENCY_LICENSES.csv`. It records the
+locked pnpm production dependency graph, the locked Rust dependency graph, and
+the fonts and other assets bundled in release artifacts. Regenerate it with
+`pnpm licenses:generate` after dependency or bundled-asset changes.

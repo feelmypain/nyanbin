@@ -22,7 +22,16 @@
 		"label": "Tema colori",
 		"system": "Sistema",
 		"light": "Chiaro",
-		"dark": "Scuro"
+		"dark": "Scuro",
+		"red": "Rosso",
+		"green": "Verde",
+		"pink": "Rosa"
+	},
+	"leave": {
+		"title": "Lasciare la pagina del link segreto?",
+		"body": "Questa pagina è l'unico posto in cui questo link viene mostrato. Copialo o salvalo prima, se ti serve ancora — non potrà essere recuperato in seguito.",
+		"stay": "Rimani su questa pagina",
+		"confirm": "Esci senza salvare"
 	},
 	"footer": {
 		"label": "Navigazione a piè di pagina",

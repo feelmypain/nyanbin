@@ -1,11 +1,12 @@
 <script lang="ts" module>
 	import { writable } from 'svelte/store'
-	export type Theme = 'system' | 'light' | 'dark'
+	export type Theme = 'system' | 'light' | 'dark' | 'red' | 'green' | 'pink'
+	const explicit = new Set<Theme>(['light', 'dark', 'red', 'green', 'pink'])
 	function initial(): Theme {
 		if (typeof window === 'undefined') return 'system'
 		try {
 			const value = localStorage.getItem('nyanbin-theme')
-			return value === 'light' || value === 'dark' ? value : 'system'
+			return explicit.has(value as Theme) ? (value as Theme) : 'system'
 		} catch {
 			return 'system'
 		}
@@ -22,5 +23,5 @@
 	import { t } from 'svelte-intl-precompile'
 	function change(event: Event) { theme.set((event.currentTarget as HTMLSelectElement).value as Theme) }
 </script>
-<label class="theme"><span class="sr-only">{$t('theme.label')}</span><select value={$theme} onchange={change} aria-label={$t('theme.label')}><option value="system">{$t('theme.system')}</option><option value="light">{$t('theme.light')}</option><option value="dark">{$t('theme.dark')}</option></select></label>
+<label class="theme"><span class="sr-only">{$t('theme.label')}</span><select value={$theme} onchange={change} aria-label={$t('theme.label')}><option value="system">{$t('theme.system')}</option><option value="light">{$t('theme.light')}</option><option value="dark">{$t('theme.dark')}</option><option value="red">{$t('theme.red')}</option><option value="green">{$t('theme.green')}</option><option value="pink">{$t('theme.pink')}</option></select></label>
 <style>.theme select { min-height: 2.75rem; padding-block: var(--space-2); }</style>

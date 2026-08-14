@@ -22,7 +22,16 @@
 		"label": "Thème de couleurs",
 		"system": "Système",
 		"light": "Clair",
-		"dark": "Sombre"
+		"dark": "Sombre",
+		"red": "Rouge",
+		"green": "Vert",
+		"pink": "Rose"
+	},
+	"leave": {
+		"title": "Quitter la page du lien secret ?",
+		"body": "Cette page est le seul endroit où ce lien est affiché. Copiez-le ou enregistrez-le d'abord si vous en avez encore besoin — il ne pourra pas être récupéré plus tard.",
+		"stay": "Rester sur cette page",
+		"confirm": "Quitter sans enregistrer"
 	},
 	"footer": {
 		"label": "Navigation du pied de page",

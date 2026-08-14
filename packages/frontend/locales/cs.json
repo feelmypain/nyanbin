@@ -22,7 +22,16 @@
 		"label": "Barevný motiv",
 		"system": "Podle systému",
 		"light": "Světlý",
-		"dark": "Tmavý"
+		"dark": "Tmavý",
+		"red": "Červený",
+		"green": "Zelený",
+		"pink": "Růžový"
+	},
+	"leave": {
+		"title": "Opustit stránku s tajným odkazem?",
+		"body": "Tato stránka je jediné místo, kde se tento odkaz zobrazuje. Pokud jej ještě potřebujete, nejprve si jej zkopírujte nebo uložte — později jej nelze obnovit.",
+		"stay": "Zůstat na této stránce",
+		"confirm": "Odejít bez uložení"
 	},
 	"footer": {
 		"label": "Navigace v zápatí",

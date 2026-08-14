@@ -4,11 +4,17 @@ All notable changes to Nyanbin are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-08-14
+
+### Removed
+
+- The bin.oh.rip mirror is retired; nyan.ist is the only hosted instance. Documentation now references nyan.ist exclusively.
+
 ## [1.2.0] - 2026-08-14
 
 ### Added
 
-- Official hosted instance at [nyan.ist](https://nyan.ist), served behind Cloudflare with strict origin TLS, HSTS, and HTTP/3; bin.oh.rip remains as a mirror.
+- Official hosted instance at [nyan.ist](https://nyan.ist), served behind Cloudflare with strict origin TLS, HSTS, and HTTP/3.
 
 ### Changed
 
@@ -33,7 +39,7 @@ All notable changes to Nyanbin are documented here. The format follows [Keep a C
 ### Changed
 
 - "How the sealed envelope works" is now a proper card with an end-aligned chevron and a divided body.
-- Footer version badge and submit help text received breathing room; README points at the bin.oh.rip reference instance.
+- Footer version badge and submit help text received breathing room; README points at the official nyan.ist instance.
 
 ### Fixed
 

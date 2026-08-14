@@ -22,10 +22,13 @@
 <style>
 	header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding-block: var(--space-5); }
 	.brand { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--ink); text-decoration: none; font: 700 var(--text-xl)/1 var(--font-display); }
-	svg { width: 3.25rem; height: 2.9rem; overflow: visible; }
+	.brand:hover svg { transform: rotate(-4deg) translateY(-.1rem); }
+	svg { width: 3.25rem; height: 2.9rem; overflow: visible; transition: transform var(--duration-ui) var(--ease-out); }
 	.head { fill: var(--surface-strong); stroke: var(--blue-700); stroke-width: 3; stroke-linejoin: round; }
 	.face { fill: none; stroke: var(--blue-700); stroke-width: 3; stroke-linecap: round; }
 	nav { display: flex; align-items: center; gap: var(--space-4); }
+	nav a { display: inline-flex; align-items: center; min-height: 2.75rem; padding-inline: var(--space-3); border-radius: 99rem; color: var(--blue-700); font-weight: 700; text-decoration: none; transition: background var(--duration-ui) var(--ease-out); }
+	nav a:hover { background: var(--surface-blue); text-decoration: underline; }
 	nav select { min-height: 2.75rem; width: auto; padding: var(--space-2) var(--space-3); }
 	@media (max-width: 30rem) { header { align-items: flex-start; } .brand span { font-size: var(--text-lg); } nav { gap: var(--space-2); } nav a { display: none; } }
 </style>

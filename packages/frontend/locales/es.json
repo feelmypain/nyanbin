@@ -35,7 +35,8 @@
 	},
 	"footer": {
 		"label": "Navegación del pie de página",
-		"local_only": "El cifrado y la generación del código QR se realizan localmente en tu navegador."
+		"local_only": "El cifrado y la generación del código QR se realizan localmente en tu navegador.",
+		"source": "Código fuente en GitHub"
 	},
 	"formats": {
 		"plain": "Texto sin formato",
@@ -53,7 +54,13 @@
 	},
 	"create": {
 		"eyebrow": "Comparte en privado, sin complicaciones",
-		"title": "Guarda una nota en la caja azul.",
+		"title": "Guarda una nota en la caja {color}.",
+		"box_color": {
+			"blue": "azul",
+			"red": "roja",
+			"green": "verde",
+			"pink": "rosa"
+		},
 		"intro": "Escribe, adjunta y cifra en este navegador. El servidor solo recibe un sobre cifrado y autenticado, junto con su ciclo de vida.",
 		"format": "Formato del texto",
 		"edit": "Editar",

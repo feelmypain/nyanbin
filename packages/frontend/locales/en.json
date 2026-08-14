@@ -35,7 +35,8 @@
 	},
 	"footer": {
 		"label": "Footer navigation",
-		"local_only": "Encryption and QR generation happen locally in your browser."
+		"local_only": "Encryption and QR generation happen locally in your browser.",
+		"source": "Source on GitHub"
 	},
 	"formats": {
 		"plain": "Plain text",
@@ -53,7 +54,13 @@
 	},
 	"create": {
 		"eyebrow": "Private sharing, without the fuss",
-		"title": "Tuck a note into the blue box.",
+		"title": "Tuck a note into the {color} box.",
+		"box_color": {
+			"blue": "blue",
+			"red": "red",
+			"green": "green",
+			"pink": "pink"
+		},
 		"intro": "Write, attach, and encrypt in this browser. The server receives only an authenticated encrypted envelope and its lifecycle.",
 		"format": "Text format",
 		"edit": "Edit",

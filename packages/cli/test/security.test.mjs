@@ -72,7 +72,7 @@ test('delayed --password-stdin protects a created note with the exact intended f
     const body = []
     for await (const chunk of request) body.push(chunk)
     response.setHeader('Content-Type', 'application/json')
-    if (request.url === '/api/status') response.end(JSON.stringify({ protocol: 1, limits: { maxEnvelopeBytes: 10_000_000, maxExpiresIn: 86_400, maxReads: 100 }, defaults: { expiresIn: 3600, maxReads: 2 }, capabilities: { files: true, passwords: true, formats: ['plain', 'source', 'markdown'] }, branding: { name: '', description: '', logoUrl: '', imprintUrl: '' } }))
+    if (request.url === '/api/status') response.end(JSON.stringify({ protocol: 1, version: '1.0.0', limits: { maxEnvelopeBytes: 10_000_000, maxExpiresIn: 86_400, maxReads: 100 }, defaults: { expiresIn: 3600, maxReads: 2 }, capabilities: { files: true, passwords: true, formats: ['plain', 'source', 'markdown'] }, branding: { name: '', description: '', logoUrl: '', imprintUrl: '' } }))
     else if (request.url === '/api/notes/reserve') response.end(JSON.stringify({ id, deleteToken, lifecycle }))
     else if (request.url === `/api/notes/${id}` && request.method === 'PUT') { committed = JSON.parse(Buffer.concat(body).toString()); response.end(JSON.stringify({ id })) }
     else { response.statusCode = 404; response.end(JSON.stringify({ code: 'NOT_FOUND', message: 'not found' })) }

@@ -35,7 +35,8 @@
 	},
 	"footer": {
 		"label": "Navigace v zápatí",
-		"local_only": "Šifrování i vytváření QR kódu probíhá přímo ve vašem prohlížeči."
+		"local_only": "Šifrování i vytváření QR kódu probíhá přímo ve vašem prohlížeči.",
+		"source": "Zdrojový kód na GitHubu"
 	},
 	"formats": {
 		"plain": "Prostý text",
@@ -53,7 +54,13 @@
 	},
 	"create": {
 		"eyebrow": "Soukromé sdílení bez starostí",
-		"title": "Uložte zprávu do modré krabičky.",
+		"title": "Uložte zprávu do {color} krabičky.",
+		"box_color": {
+			"blue": "modré",
+			"red": "červené",
+			"green": "zelené",
+			"pink": "růžové"
+		},
 		"intro": "Napište zprávu, připojte soubory a vše zašifrujte přímo v tomto prohlížeči. Server obdrží jen autentizovanou šifrovanou obálku a údaje o její platnosti.",
 		"format": "Formát textu",
 		"edit": "Upravit",

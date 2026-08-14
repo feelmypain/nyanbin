@@ -4,6 +4,12 @@ All notable changes to Nyanbin are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-08-14
+
+### Changed
+
+- The dark theme is now a true black theme: near-black neutral canvas and surfaces with the kawaii blue accents kept for identity; the system-dark fallback matches exactly.
+
 ## [1.2.1] - 2026-08-14
 
 ### Removed

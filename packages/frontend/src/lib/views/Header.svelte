@@ -29,6 +29,6 @@
 	nav { display: flex; align-items: center; gap: var(--space-4); }
 	nav a { display: inline-flex; align-items: center; min-height: 2.75rem; padding-inline: var(--space-3); border-radius: 99rem; color: var(--blue-700); font-weight: 700; text-decoration: none; transition: background var(--duration-ui) var(--ease-out); }
 	nav a:hover { background: var(--surface-blue); text-decoration: underline; }
-	nav select { min-height: 2.75rem; width: auto; padding: var(--space-2) var(--space-3); }
+	nav select { min-height: 2.75rem; width: auto; padding: var(--space-2) var(--space-3); padding-inline-end: 2.4rem; }
 	@media (max-width: 30rem) { header { align-items: flex-start; } .brand span { font-size: var(--text-lg); } nav { gap: var(--space-2); } nav a { display: none; } }
 </style>

@@ -182,7 +182,13 @@
 		}
 	},
 	"about": {
-		"eyebrow": "A small blue privacy tool",
+		"eyebrow": "A small {color} privacy tool",
+		"color": {
+			"blue": "blue",
+			"red": "red",
+			"green": "green",
+			"pink": "pink"
+		},
 		"title": "About Nyanbin",
 		"lead": "Nyanbin shares text and files as authenticated encrypted envelopes with bounded lifecycles.",
 		"how_title": "What the server sees",

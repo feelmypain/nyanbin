@@ -182,7 +182,13 @@
 		}
 	},
 	"about": {
-		"eyebrow": "蓝色小巧的隐私工具",
+		"eyebrow": "{color}小巧的隐私工具",
+		"color": {
+			"blue": "蓝色",
+			"red": "红色",
+			"green": "绿色",
+			"pink": "粉色"
+		},
 		"title": "关于 Nyanbin",
 		"lead": "Nyanbin 将文本和文件封装为经过认证的加密数据，并在有限的生命周期内安全分享。",
 		"how_title": "服务器能看到什么",

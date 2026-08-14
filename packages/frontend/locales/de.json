@@ -182,7 +182,13 @@
 		}
 	},
 	"about": {
-		"eyebrow": "Ein kleines blaues Tool für Privatsphäre",
+		"eyebrow": "Ein kleines {color} Tool für Privatsphäre",
+		"color": {
+			"blue": "blaues",
+			"red": "rotes",
+			"green": "grünes",
+			"pink": "rosa"
+		},
 		"title": "Über Nyanbin",
 		"lead": "Nyanbin teilt Texte und Dateien als authentifiziert verschlüsselte Umschläge mit begrenzter Gültigkeit.",
 		"how_title": "Was der Server sieht",

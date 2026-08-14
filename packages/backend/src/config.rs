@@ -24,7 +24,8 @@ const DEFAULT_RATE_LIMIT_WINDOW_SECONDS: u64 = 60;
 const DEFAULT_RATE_LIMIT_GLOBAL_REQUESTS: u32 = 300;
 const DEFAULT_RATE_LIMIT_IPV6_PREFIX_BITS: u8 = 64;
 const DEFAULT_BRANDING_NAME: &str = "Nyanbin";
-const DEFAULT_BRANDING_DESCRIPTION: &str = "Encrypted notes with a tiny bit of magic.";
+// Empty by default so the frontend falls back to its localized instance description.
+const DEFAULT_BRANDING_DESCRIPTION: &str = "";
 
 #[derive(Clone, Debug)]
 pub struct Branding {

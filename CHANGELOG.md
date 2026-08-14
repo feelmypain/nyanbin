@@ -4,6 +4,16 @@ All notable changes to Nyanbin are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-08-14
+
+### Added
+
+- Official hosted instance at [nyan.ist](https://nyan.ist), served behind Cloudflare with strict origin TLS, HSTS, and HTTP/3; bin.oh.rip remains as a mirror.
+
+### Changed
+
+- The CLI default server is now the official instance `https://nyan.ist`; `--server` and `NYANBIN_SERVER` still select self-hosted instances.
+
 ## [1.1.1] - 2026-08-14
 
 ### Fixed

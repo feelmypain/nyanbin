@@ -9,7 +9,7 @@ npm install --global nyanbin
 nyanbin --help
 ```
 
-Node.js 22 or newer is required. The default server is `http://localhost:8000`; select another self-hosted server with `--server` or `NYANBIN_SERVER`. No public service URL is built in.
+Node.js 22 or newer is required. The default server is the official instance at `https://nyan.ist`; select a self-hosted server with `--server` or `NYANBIN_SERVER`.
 
 ## Create
 

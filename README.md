@@ -10,7 +10,7 @@ Nyanbin is a self-hostable, client-side-encrypted paste and file-sharing service
 
 Nyanbin is designed so that a correctly operating server stores and returns an authenticated encrypted envelope without receiving the link secret, optional password, plaintext, filenames, or file bytes in plaintext. This is a focused security property—not a claim of anonymity, audited security, or protection from a malicious web server.
 
-A reference instance runs at [bin.oh.rip](https://bin.oh.rip). There is no other official hosted instance or confirmed public Nyanbin domain; configure the web client or CLI to use an instance you trust.
+The official instance runs at [nyan.ist](https://nyan.ist) ([bin.oh.rip](https://bin.oh.rip) serves as a mirror). Self-hosting is fully supported; configure the web client or CLI to use an instance you trust.
 
 ## Features
 
@@ -192,7 +192,7 @@ Both reserve and commit are metered before JSON body decoding with per-client an
 
 ## CLI
 
-The package and executable are both named `nyanbin` and require Node.js 22 or newer. The default server is `http://localhost:8000`; set an instance explicitly for non-local use. There is no hard-coded public service:
+The package and executable are both named `nyanbin` and require Node.js 22 or newer. The default server is the official instance `https://nyan.ist`; point at a self-hosted instance with `--server` or `NYANBIN_SERVER`:
 
 ```sh
 npm install --global nyanbin

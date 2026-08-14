@@ -35,7 +35,8 @@
 	},
 	"footer": {
 		"label": "Navigazione a piè di pagina",
-		"local_only": "La cifratura e la generazione del codice QR avvengono localmente nel browser."
+		"local_only": "La cifratura e la generazione del codice QR avvengono localmente nel browser.",
+		"source": "Codice sorgente su GitHub"
 	},
 	"formats": {
 		"plain": "Testo semplice",
@@ -53,7 +54,13 @@
 	},
 	"create": {
 		"eyebrow": "Condivisione privata, senza complicazioni",
-		"title": "Metti una nota nella scatola blu.",
+		"title": "Metti una nota nella scatola {color}.",
+		"box_color": {
+			"blue": "blu",
+			"red": "rossa",
+			"green": "verde",
+			"pink": "rosa"
+		},
 		"intro": "Scrivi, allega e cifra direttamente in questo browser. Il server riceve soltanto una busta cifrata e autenticata, insieme al suo ciclo di vita.",
 		"format": "Formato del testo",
 		"edit": "Modifica",

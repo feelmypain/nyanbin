@@ -54,6 +54,7 @@ export type DeleteRequest = {
 
 export type Status = {
   protocol: typeof PROTOCOL_VERSION
+  version: string
   limits: {
     maxEnvelopeBytes: number
     maxExpiresIn: number
@@ -262,8 +263,9 @@ async function removeNote(client: Readonly<ClientOptions>, id: string, deleteTok
 
 async function status(client: Readonly<ClientOptions>): Promise<Status> {
   const data = objectAtBoundary(await call(client, { path: '/status', method: 'GET' }), 'status response')
-  exactKeys(data, ['protocol', 'limits', 'defaults', 'capabilities', 'branding'])
+  exactKeys(data, ['protocol', 'version', 'limits', 'defaults', 'capabilities', 'branding'])
   validateProtocol(data.protocol)
+  validateString(data.version, 'instance version')
   const limits = objectAtBoundary(data.limits, 'status limits')
   exactKeys(limits, ['maxEnvelopeBytes', 'maxExpiresIn', 'maxReads'])
   validatePositiveInteger(limits.maxEnvelopeBytes, 'maxEnvelopeBytes')
@@ -290,6 +292,7 @@ async function status(client: Readonly<ClientOptions>): Promise<Status> {
   validateString(branding.imprintUrl, 'branding imprintUrl')
   return {
     protocol: PROTOCOL_VERSION,
+    version: data.version,
     limits: {
       maxEnvelopeBytes: limits.maxEnvelopeBytes,
       maxExpiresIn: limits.maxExpiresIn,

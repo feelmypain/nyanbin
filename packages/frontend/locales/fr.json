@@ -35,7 +35,8 @@
 	},
 	"footer": {
 		"label": "Navigation du pied de page",
-		"local_only": "Le chiffrement et la génération du code QR s’effectuent localement dans votre navigateur."
+		"local_only": "Le chiffrement et la génération du code QR s’effectuent localement dans votre navigateur.",
+		"source": "Code source sur GitHub"
 	},
 	"formats": {
 		"plain": "Texte brut",
@@ -53,7 +54,13 @@
 	},
 	"create": {
 		"eyebrow": "Le partage privé, tout simplement",
-		"title": "Glissez une note dans la boîte bleue.",
+		"title": "Glissez une note dans la boîte {color}.",
+		"box_color": {
+			"blue": "bleue",
+			"red": "rouge",
+			"green": "verte",
+			"pink": "rose"
+		},
 		"intro": "Rédigez, joignez et chiffrez dans ce navigateur. Le serveur ne reçoit qu’une enveloppe chiffrée authentifiée et son cycle de vie.",
 		"format": "Format du texte",
 		"edit": "Modifier",

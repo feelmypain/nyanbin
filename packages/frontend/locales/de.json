@@ -35,7 +35,8 @@
 	},
 	"footer": {
 		"label": "Navigation in der Fußzeile",
-		"local_only": "Verschlüsselung und QR-Erstellung erfolgen lokal in deinem Browser."
+		"local_only": "Verschlüsselung und QR-Erstellung erfolgen lokal in deinem Browser.",
+		"source": "Quellcode auf GitHub"
 	},
 	"formats": {
 		"plain": "Nur Text",
@@ -53,7 +54,13 @@
 	},
 	"create": {
 		"eyebrow": "Privat teilen, ganz unkompliziert",
-		"title": "Leg eine Notiz in die blaue Box.",
+		"title": "Leg eine Notiz in die {color} Box.",
+		"box_color": {
+			"blue": "blaue",
+			"red": "rote",
+			"green": "grüne",
+			"pink": "rosa"
+		},
 		"intro": "Schreibe, hänge Dateien an und verschlüssele alles direkt in diesem Browser. Der Server erhält nur einen authentifiziert verschlüsselten Umschlag und seine Gültigkeitsregeln.",
 		"format": "Textformat",
 		"edit": "Bearbeiten",

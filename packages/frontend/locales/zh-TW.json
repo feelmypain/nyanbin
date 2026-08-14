@@ -35,7 +35,8 @@
 	},
 	"footer": {
 		"label": "頁尾導覽",
-		"local_only": "加密與 QR Code 產生作業都在您的瀏覽器中執行。"
+		"local_only": "加密與 QR Code 產生作業都在您的瀏覽器中執行。",
+		"source": "GitHub 原始碼"
 	},
 	"formats": {
 		"plain": "純文字",
@@ -53,7 +54,13 @@
 	},
 	"create": {
 		"eyebrow": "私密分享，輕鬆無負擔",
-		"title": "把內容收進藍色小盒子裡。",
+		"title": "把內容收進{color}小盒子裡。",
+		"box_color": {
+			"blue": "藍色",
+			"red": "紅色",
+			"green": "綠色",
+			"pink": "粉紅色"
+		},
 		"intro": "直接在此瀏覽器中撰寫、加入附件並加密。伺服器只會收到經驗證的加密信封及其存續資訊。",
 		"format": "文字格式",
 		"edit": "編輯",

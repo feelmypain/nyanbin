@@ -41,6 +41,7 @@ program
     const response = await api.status()
     console.table({
       protocol: response.protocol,
+      version: response.version,
       max_envelope: prettyBytes(response.limits.maxEnvelopeBytes),
       max_expiry_seconds: response.limits.maxExpiresIn,
       max_reads: response.limits.maxReads,

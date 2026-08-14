@@ -35,7 +35,8 @@
 	},
 	"footer": {
 		"label": "Nawigacja w stopce",
-		"local_only": "Szyfrowanie i generowanie kodu QR odbywa się lokalnie w Twojej przeglądarce."
+		"local_only": "Szyfrowanie i generowanie kodu QR odbywa się lokalnie w Twojej przeglądarce.",
+		"source": "Kod źródłowy na GitHubie"
 	},
 	"formats": {
 		"plain": "Zwykły tekst",
@@ -53,7 +54,13 @@
 	},
 	"create": {
 		"eyebrow": "Prywatne udostępnianie bez komplikacji",
-		"title": "Schowaj notatkę w niebieskim pudełku.",
+		"title": "Schowaj notatkę w {color} pudełku.",
+		"box_color": {
+			"blue": "niebieskim",
+			"red": "czerwonym",
+			"green": "zielonym",
+			"pink": "różowym"
+		},
 		"intro": "Napisz wiadomość, dodaj załączniki i zaszyfruj je w tej przeglądarce. Serwer otrzyma wyłącznie uwierzytelnioną, zaszyfrowaną kopertę oraz informacje o czasie jej ważności.",
 		"format": "Format tekstu",
 		"edit": "Edytuj",

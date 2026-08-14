@@ -41,6 +41,7 @@ pub struct Branding {
 #[serde(deny_unknown_fields)]
 pub struct Status {
     protocol: u8,
+    version: &'static str,
     limits: Limits,
     defaults: Defaults,
     capabilities: Capabilities,
@@ -50,6 +51,7 @@ pub struct Status {
 pub async fn get_status(State(state): State<Arc<AppState>>) -> Json<Status> {
     Json(Status {
         protocol: PROTOCOL_VERSION,
+        version: env!("CARGO_PKG_VERSION"),
         limits: Limits {
             max_envelope_bytes: state.config.max_envelope_bytes,
             max_expires_in: state.config.max_expires_in,

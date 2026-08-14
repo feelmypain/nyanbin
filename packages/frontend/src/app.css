@@ -83,11 +83,10 @@ option { background: var(--surface); color: var(--ink); }
 input[type='file']::file-selector-button { min-height: 2.25rem; margin-inline-end: var(--space-3); padding: var(--space-1) var(--space-3); border: 1px solid var(--accent-700); border-radius: 99rem; background: var(--accent-600); color: var(--on-primary); font: inherit; font-weight: 700; cursor: pointer; transition: background var(--duration-ui) var(--ease-out); }
 input[type='file']:hover:not(:disabled)::file-selector-button { background: var(--accent-700); }
 input[type='file']:disabled::file-selector-button { border-color: var(--border); background: var(--surface); color: var(--ink-muted); cursor: not-allowed; }
-summary { display: flex; align-items: center; gap: var(--space-2); list-style: none; }
+summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); list-style: none; }
 summary::-webkit-details-marker { display: none; }
-summary::before { content: ''; flex: 0 0 auto; width: .45em; height: .45em; border-inline-end: .17em solid var(--accent-600); border-block-end: .17em solid var(--accent-600); transform: rotate(-45deg); transition: transform var(--duration-ui) var(--ease-out); }
-[dir='rtl'] summary::before { transform: rotate(135deg); }
-details[open] > summary::before, [dir='rtl'] details[open] > summary::before { transform: rotate(45deg); }
+summary::after { content: ''; flex: 0 0 auto; width: .5em; height: .5em; border-inline-end: .17em solid var(--accent-600); border-block-end: .17em solid var(--accent-600); transform: rotate(45deg) translateY(-15%); transition: transform var(--duration-ui) var(--ease-out); }
+details[open] > summary::after { transform: rotate(225deg) translateY(-15%); }
 ::selection { background: color-mix(in srgb, var(--accent-500) 32%, transparent); }
 button { min-height: 2.75rem; padding: var(--space-2) var(--space-4); box-shadow: var(--shadow-keyline); cursor: pointer; font-weight: 700; transition: border-color var(--duration-ui) var(--ease-out), background var(--duration-ui) var(--ease-out), transform var(--duration-fast) var(--ease-out); }
 button:hover:not(:disabled) { border-color: var(--accent-600); background: var(--surface-accent); transform: translateY(-1px); }

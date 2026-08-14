@@ -35,6 +35,7 @@
 @media (prefers-color-scheme: dark) {
 	:root:not([theme='light']) {
 		color-scheme: dark; --canvas: #101a2d; --surface: #17243a; --surface-blue: #1c3050; --surface-strong: #28456f; --ink: #edf5ff; --ink-soft: #c7d9ee; --ink-muted: #abc3df; --blue-700: #a9cdff; --blue-600: #6fa9ed; --blue-500: #82b9f6; --border: #38577d; --border-strong: #7b9ec8; --success: #83dfb4; --success-surface: #163b31; --danger: #ff9eb0; --danger-surface: #4b2230; --warning: #f3cf83; --warning-surface: #44371e; --on-primary: #0c1b31; --qr-paper: #f8fbff; --qr-ink: #14233d;
+		--shadow-keyline: inset 0 1px 0 rgb(255 255 255 / .08), 0 2px 0 rgb(0 0 0 / .35); --shadow-panel: 0 2px 0 rgb(0 0 0 / .3), 0 14px 32px rgb(0 0 0 / .18);
 		--select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23a9cdff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 	}
 }

@@ -4,6 +4,13 @@ All notable changes to Nyanbin are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-08-14
+
+### Fixed
+
+- The /about eyebrow now interpolates the active theme's color word instead of hardcoding "blue" in every locale.
+- The default instance description is now empty on the backend, so the /about "This instance" text falls back to the localized `about.instance_default` string; operator-set `NYANBIN_BRANDING_DESCRIPTION` values are still shown verbatim.
+
 ## [1.1.0] - 2026-08-14
 
 ### Added

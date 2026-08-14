@@ -182,7 +182,13 @@
 		}
 	},
 	"about": {
-		"eyebrow": "Un petit outil bleu pour votre vie privée",
+		"eyebrow": "Un petit outil {color} pour votre vie privée",
+		"color": {
+			"blue": "bleu",
+			"red": "rouge",
+			"green": "vert",
+			"pink": "rose"
+		},
 		"title": "À propos de Nyanbin",
 		"lead": "Nyanbin partage textes et fichiers sous forme d’enveloppes chiffrées authentifiées à durée de vie limitée.",
 		"how_title": "Ce que voit le serveur",

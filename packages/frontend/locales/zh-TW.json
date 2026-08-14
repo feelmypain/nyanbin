@@ -182,7 +182,13 @@
 		}
 	},
 	"about": {
-		"eyebrow": "藍色小巧的隱私工具",
+		"eyebrow": "{color}小巧的隱私工具",
+		"color": {
+			"blue": "藍色",
+			"red": "紅色",
+			"green": "綠色",
+			"pink": "粉紅色"
+		},
 		"title": "關於 Nyanbin",
 		"lead": "Nyanbin 將文字與檔案封裝成經驗證的加密信封，並以有限的存續週期進行分享。",
 		"how_title": "伺服器看得到什麼",

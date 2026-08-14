@@ -182,7 +182,13 @@
 		}
 	},
 	"about": {
-		"eyebrow": "Un piccolo strumento blu per la privacy",
+		"eyebrow": "Un piccolo strumento {color} per la privacy",
+		"color": {
+			"blue": "blu",
+			"red": "rosso",
+			"green": "verde",
+			"pink": "rosa"
+		},
 		"title": "Informazioni su Nyanbin",
 		"lead": "Nyanbin condivide testi e file sotto forma di buste cifrate e autenticate con un ciclo di vita limitato.",
 		"how_title": "Cosa vede il server",

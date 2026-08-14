@@ -182,7 +182,13 @@
 		}
 	},
 	"about": {
-		"eyebrow": "Małe niebieskie narzędzie do ochrony prywatności",
+		"eyebrow": "Małe {color} narzędzie do ochrony prywatności",
+		"color": {
+			"blue": "niebieskie",
+			"red": "czerwone",
+			"green": "zielone",
+			"pink": "różowe"
+		},
 		"title": "O Nyanbin",
 		"lead": "Nyanbin udostępnia tekst i pliki jako uwierzytelnione, zaszyfrowane koperty o ograniczonym czasie ważności.",
 		"how_title": "Co widzi serwer",

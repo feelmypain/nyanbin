@@ -184,7 +184,7 @@ Configuration is by environment variable. Durations are seconds; `expiresAt` val
 | `NYANBIN_RATE_LIMIT_IPV6_PREFIX_BITS` | `64` | IPv6 prefix length grouped into one client bucket (`0`–`128`) |
 | `NYANBIN_TRUSTED_PROXY_CIDRS` | empty | Comma-separated proxy CIDRs allowed to supply forwarded client addresses |
 | `NYANBIN_BRANDING_NAME` | `Nyanbin` | Safe text instance name |
-| `NYANBIN_BRANDING_DESCRIPTION` | `Encrypted notes with a tiny bit of magic.` | Safe text instance description |
+| `NYANBIN_BRANDING_DESCRIPTION` | empty | Safe text instance description; when empty the web client shows a localized default |
 | `NYANBIN_BRANDING_LOGO_URL` | empty | Optional branding URL |
 | `NYANBIN_BRANDING_IMPRINT_URL` | empty | Optional imprint URL |
 

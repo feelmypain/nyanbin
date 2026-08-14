@@ -182,7 +182,13 @@
 		}
 	},
 	"about": {
-		"eyebrow": "Malý modrý nástroj pro soukromí",
+		"eyebrow": "Malý {color} nástroj pro soukromí",
+		"color": {
+			"blue": "modrý",
+			"red": "červený",
+			"green": "zelený",
+			"pink": "růžový"
+		},
 		"title": "O aplikaci Nyanbin",
 		"lead": "Nyanbin sdílí text a soubory v podobě autentizovaných šifrovaných obálek s omezenou životností.",
 		"how_title": "Co vidí server",

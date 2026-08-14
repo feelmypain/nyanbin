@@ -10,7 +10,7 @@ Nyanbin is a self-hostable, client-side-encrypted paste and file-sharing service
 
 Nyanbin is designed so that a correctly operating server stores and returns an authenticated encrypted envelope without receiving the link secret, optional password, plaintext, filenames, or file bytes in plaintext. This is a focused security property—not a claim of anonymity, audited security, or protection from a malicious web server.
 
-There is no official hosted instance or confirmed public Nyanbin domain. Configure the web client or CLI to use an instance you trust.
+A reference instance runs at [bin.oh.rip](https://bin.oh.rip). There is no other official hosted instance or confirmed public Nyanbin domain; configure the web client or CLI to use an instance you trust.
 
 ## Features
 
@@ -309,7 +309,7 @@ Nyanbin makes no third-party runtime requests by default. QR generation, renderi
 
 Do not publish an unpatched vulnerability, exploit, secret, or live note in a public issue. Use the repository host's private vulnerability-reporting channel when one is advertised. If no private channel is currently listed, contact a maintainer through the repository host and ask for a private channel **without including sensitive details in the first public message**. Include affected revision, impact, reproduction steps, and a minimal proof once a private channel is established.
 
-There is intentionally no unconfirmed security email address or hosted-service URL in this document.
+There is intentionally no unconfirmed security email address in this document.
 
 ## Scope and roadmap
 

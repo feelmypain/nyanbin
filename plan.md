@@ -112,5 +112,5 @@ Build **Nyanbin**, an original blue/kawaii, self-hostable, zero-knowledge paste 
 ## Delivery
 
 - [x] Create `mana/nyanbin` on `git.oh.rip` without exposing credentials in repository files or remote URLs.
-- [ ] Push the verified source and history.
-- [ ] Confirm the remote default branch, README, license, plan, and latest commit through the Forgejo API.
+- [x] Push the verified source and history.
+- [x] Confirm the remote default branch, README, license, plan, and latest commit through the Forgejo API.

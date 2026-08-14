@@ -22,7 +22,16 @@
 		"label": "Motyw kolorystyczny",
 		"system": "Systemowy",
 		"light": "Jasny",
-		"dark": "Ciemny"
+		"dark": "Ciemny",
+		"red": "Czerwony",
+		"green": "Zielony",
+		"pink": "Różowy"
+	},
+	"leave": {
+		"title": "Opuścić stronę z tajnym łączem?",
+		"body": "Ta strona to jedyne miejsce, w którym widoczne jest to łącze. Skopiuj je lub zapisz, jeśli nadal go potrzebujesz — później nie da się go odzyskać.",
+		"stay": "Zostań na tej stronie",
+		"confirm": "Wyjdź bez zapisywania"
 	},
 	"footer": {
 		"label": "Nawigacja w stopce",

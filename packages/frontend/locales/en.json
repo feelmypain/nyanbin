@@ -22,7 +22,16 @@
 		"label": "Color theme",
 		"system": "System",
 		"light": "Light",
-		"dark": "Dark"
+		"dark": "Dark",
+		"red": "Red",
+		"green": "Green",
+		"pink": "Pink"
+	},
+	"leave": {
+		"title": "Leave your secret link?",
+		"body": "This page is the only place this link is shown. Copy or save it first if you still need it — it cannot be recovered later.",
+		"stay": "Stay on this page",
+		"confirm": "Leave without saving"
 	},
 	"footer": {
 		"label": "Footer navigation",

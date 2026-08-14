@@ -22,7 +22,16 @@
 		"label": "Farbschema",
 		"system": "System",
 		"light": "Hell",
-		"dark": "Dunkel"
+		"dark": "Dunkel",
+		"red": "Rot",
+		"green": "Grün",
+		"pink": "Rosa"
+	},
+	"leave": {
+		"title": "Seite mit dem geheimen Link verlassen?",
+		"body": "Diese Seite ist der einzige Ort, an dem dieser Link angezeigt wird. Kopiere oder speichere ihn zuerst, falls du ihn noch brauchst — er kann später nicht wiederhergestellt werden.",
+		"stay": "Auf dieser Seite bleiben",
+		"confirm": "Ohne Speichern verlassen"
 	},
 	"footer": {
 		"label": "Navigation in der Fußzeile",

@@ -1,6 +1,7 @@
 <script lang="ts">
+	import prettyBytes from 'pretty-bytes'
 	import { API, NyanbinError, PROTOCOL_VERSION, buildNoteUrl, decodeBase64Url, encodeBase64Url, encryptPayload, generateSecret, hashDeleteToken, type PrivatePayload } from 'nyanbin/shared'
-	import { t } from 'svelte-intl-precompile'
+	import { locale, t } from 'svelte-intl-precompile'
 	import { status, init as reloadStatus } from '$lib/stores/status'
 	import Button from '$lib/ui/Button.svelte'
 	import FileUpload from '$lib/ui/FileUpload.svelte'
@@ -17,6 +18,7 @@
 
 	type Format = PrivatePayload['format']
 	const fallbackExpiry = 86_400
+	const readableBytes = (count: number) => prettyBytes(count, { locale: $locale || undefined })
 	let text = $state('')
 	let format = $state<Format>('plain')
 	let files = $state<File[]>([])
@@ -94,7 +96,7 @@
 		if (hasReadCap && (maxReads < 1 || maxReads > $status.value.limits.maxReads)) { error = $t('create.errors.reads'); return }
 		if (hasPassword && password.length === 0) { error = $t('create.errors.password'); return }
 		if (tooLarge) {
-			error = $t('create.errors.too_large_detail', { values: { overage: overageBytes.toLocaleString(), name: fileIsLargest && largestFile ? safeFilename(largestFile.name, $t('files.unnamed')) : $t('create.note_content') } })
+			error = $t('create.errors.too_large_detail', { values: { overage: readableBytes(overageBytes), name: fileIsLargest && largestFile ? safeFilename(largestFile.name, $t('files.unnamed')) : $t('create.note_content') } })
 			return
 		}
 		const attachmentNames = new Set<string>()
@@ -150,7 +152,7 @@
 			{#if passwordsEnabled}<Switch id="password-toggle" data-testid="password-toggle" label={$t('create.password_toggle')} help={$t('create.password_help')} bind:value={hasPassword}/>{/if}
 			{#if passwordsEnabled && hasPassword}<TextInput id="password" data-testid="password" type="password" reveal autocomplete="new-password" label={$t('common.password')} bind:value={password}/>{/if}
 			<details><summary>{$t('create.how_title')}</summary><p>{$t('create.how_body')}</p></details>
-			<div class="summary"><span>{files.length} {$t('create.files_count')}</span><span>{$t('create.envelope_size', { values: { bytes: envelopeBytes.toLocaleString() } })}</span>{#if maxEnvelopeBytes}<span>{$t('create.limit', { values: { bytes: maxEnvelopeBytes.toLocaleString() } })}</span>{/if}{#if tooLarge}<strong class="size-error" role="alert">{$t('create.over_limit', { values: { overage: overageBytes.toLocaleString(), name: fileIsLargest && largestFile ? safeFilename(largestFile.name, $t('files.unnamed')) : $t('create.note_content') } })}</strong>{/if}</div>
+			<div class="summary"><span>{files.length} {$t('create.files_count')}</span><span>{$t('create.envelope_size', { values: { bytes: readableBytes(envelopeBytes) } })}</span>{#if maxEnvelopeBytes}<span>{$t('create.limit', { values: { bytes: readableBytes(maxEnvelopeBytes) } })}</span>{/if}{#if tooLarge}<strong class="size-error" role="alert">{$t('create.over_limit', { values: { overage: readableBytes(overageBytes), name: fileIsLargest && largestFile ? safeFilename(largestFile.name, $t('files.unnamed')) : $t('create.note_content') } })}</strong>{/if}</div>
 			<div class="create"><Button variant="primary" style="width:100%" data-testid="create-button" type="submit" disabled={empty || busy || tooLarge || $status.state !== 'ready' || (hasPassword && password.length === 0)}>{#if phase !== 'idle'}<Loader/> {$t(`create.phase.${phase}`)}{:else}{$t('create.submit')}{/if}</Button>{#if empty}<p class="help">{$t('create.add_something')}</p>{:else if hasPassword && password.length === 0}<p class="help">{$t('create.password_required')}</p>{/if}</div>
 		</aside>
 	</fieldset>

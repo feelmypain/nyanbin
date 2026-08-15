@@ -4,6 +4,12 @@ All notable changes to Nyanbin are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-08-15
+
+### Changed
+
+- Envelope sizes, server limits, and over-limit amounts now display in human-readable units (e.g. "10.5 MB" instead of "10,485,760 bytes"), localized to the active language across all 12 locales.
+
 ## [1.3.0] - 2026-08-14
 
 ### Changed

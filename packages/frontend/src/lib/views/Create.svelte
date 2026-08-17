@@ -117,8 +117,9 @@
 			phase = 'encrypting'
 			const privateFiles = await Promise.all(files.map(async (file) => ({ name: file.name, type: file.type || 'application/octet-stream', size: file.size, data: encodeBase64Url(new Uint8Array(await file.arrayBuffer())) })))
 			const payload: PrivatePayload = { kind: 'text', format, text, files: privateFiles }
-			const secret = generateSecret()
-			const envelope = await encryptPayload(payload, { id: reservation.id, lifecycle: reservation.lifecycle, secret, ...(hasPassword ? { password } : {}) })
+			// Password notes are keyed by the password alone; their links stay bare (no secret fragment).
+			const secret = hasPassword ? undefined : generateSecret()
+			const envelope = await encryptPayload(payload, { id: reservation.id, lifecycle: reservation.lifecycle, ...(secret === undefined ? {} : { secret }), ...(hasPassword ? { password } : {}) })
 			if (decodeBase64Url(envelope).byteLength > $status.value.limits.maxEnvelopeBytes) throw new NyanbinError('API_ERROR', 'payload_too_large')
 			phase = 'uploading'
 			await API.commit(reservation.id, { protocol: PROTOCOL_VERSION, envelope, lifecycle: reservation.lifecycle, deleteTokenHash: await hashDeleteToken(reservation.deleteToken), ...(hasPassword ? { passwordProtected: true } : {}) })

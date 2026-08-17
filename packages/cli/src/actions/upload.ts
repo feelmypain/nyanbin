@@ -72,12 +72,14 @@ export async function uploadPayload(payload: PrivatePayload, options: ReserveReq
     expiresIn: options.expiresIn,
     ...(options.maxReads === undefined ? {} : { maxReads: options.maxReads }),
   })
-  const secret = generateSecret()
+  const passwordProtected = options.password !== undefined && options.password !== ''
+  // Password notes are keyed by the password alone; their links stay bare (no secret fragment).
+  const secret = passwordProtected ? undefined : generateSecret()
   const envelope = await encryptPayload(payload, {
     id: reservation.id,
     lifecycle: reservation.lifecycle,
-    secret,
-    ...(options.password === undefined ? {} : { password: options.password }),
+    ...(secret === undefined ? {} : { secret }),
+    ...(passwordProtected ? { password: options.password } : {}),
   })
   const deleteTokenHash = await hashDeleteToken(reservation.deleteToken)
   await api.commit(reservation.id, {
@@ -85,7 +87,7 @@ export async function uploadPayload(payload: PrivatePayload, options: ReserveReq
     envelope,
     lifecycle: reservation.lifecycle,
     deleteTokenHash,
-    ...(options.password === undefined ? {} : { passwordProtected: true }),
+    ...(passwordProtected ? { passwordProtected: true } : {}),
   })
   return {
     id: reservation.id,

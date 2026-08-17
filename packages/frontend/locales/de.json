@@ -77,7 +77,7 @@
 		"read_cap_help": "Ein einzelner Abruf löscht die Notiz nach dem Lesen. Der Abruf wird bereits vor der lokalen Entschlüsselung verbraucht.",
 		"max_reads": "Maximale Abrufe",
 		"password_toggle": "Zusätzliches Passwort verlangen",
-		"password_help": "Das zufällige Link-Geheimnis bleibt erforderlich. Teile dieses Passwort auf einem anderen Weg.",
+		"password_help": "Der Link bleibt ohne Geheimnis: Nur dieses Passwort kann die Notiz entschlüsseln. Teilen Sie es separat.",
 		"how_title": "So funktioniert der versiegelte Umschlag",
 		"how_body": "Nyanbin reserviert eine ID und genaue Gültigkeitsregeln, verschlüsselt lokal mit AES-256-GCM, bindet diese öffentlichen Regeln als authentifizierte Daten ein und lädt den Umschlag dann hoch. Wer den vollständigen Link und das Passwort hat, kann ihn öffnen.",
 		"files_count": "Anhänge",
@@ -143,7 +143,7 @@
 		"short_help": "Erzeuge einen kompakten /s/-Code für diese Notiz. Nur mit zusätzlichem Passwort verfügbar, denn Kurzcodes sind erratbar und erst das Passwort hält die Notiz versiegelt.",
 		"short_create": "Kurzlink erstellen",
 		"short_failed": "Der Kurzlink konnte nicht erstellt werden. Der Server ist möglicherweise nicht erreichbar oder das Limit wurde erreicht.",
-		"short_link": "Kurzlink (enthält weiterhin das Geheimnis)"
+		"short_link": "Kurzlink (ohne Geheimnis)"
 	},
 	"show": {
 		"page_title": "Notiz abrufen",
@@ -154,6 +154,9 @@
 		"remaining": "Verbleibende Abrufe",
 		"password_optional": "Zusätzliches Passwort, falls vom Absender festgelegt",
 		"password_help": "Lass das Feld leer, wenn kein Passwort festgelegt wurde.",
+		"password_required_label": "Passwort",
+		"password_required_help": "Diese Notiz ist mit einem Passwort versiegelt. Zum Entschlüsseln eingeben.",
+		"password_shared_help": "Dieser Link enthält kein Geheimnis. Nur das separat geteilte Passwort kann die Notiz entschlüsseln.",
 		"reveal": "Einen Abruf verbrauchen und entschlüsseln",
 		"revealing": "Ein Abruf wird verbraucht…",
 		"decrypting": "Wird lokal entschlüsselt…",
@@ -182,7 +185,8 @@
 			"consumed": "Die Notiz ist nicht mehr verfügbar. Möglicherweise ist sie abgelaufen, wurde zurückgezogen oder hat ihr Abruflimit erreicht.",
 			"network": "Beim Abrufen ist ein Netzwerkfehler aufgetreten. Der Server hat möglicherweise bereits einen Abruf verbraucht; frage vor einem erneuten Versuch bei einer Einmal-Notiz den Absender.",
 			"reveal_consumed": "Der Abruf ist fehlgeschlagen, nachdem er möglicherweise bereits verbraucht wurde. Prüfe die Verfügbarkeit, bevor du es bewusst erneut versuchst.",
-			"reveal": "Der Server konnte diese Notiz nicht bereitstellen."
+			"reveal": "Der Server konnte diese Notiz nicht bereitstellen.",
+			"password_required": "Geben Sie das Passwort ein, um diese Notiz zu entschlüsseln."
 		}
 	},
 	"short": {

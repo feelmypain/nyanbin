@@ -21,7 +21,7 @@
 		shortError = ''
 		try {
 			const { code } = await API.createShort(result.id, result.deleteToken)
-			shortUrl = buildShortUrl(window.location.origin, code) + new URL(result.url).hash
+			shortUrl = buildShortUrl(window.location.origin, code)
 		} catch {
 			shortError = $t('result.short_failed')
 		} finally {

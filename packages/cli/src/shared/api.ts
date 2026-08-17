@@ -43,6 +43,7 @@ export type InfoLifecycle = {
 export type NoteInfo = {
   protocol: typeof PROTOCOL_VERSION
   lifecycle: InfoLifecycle
+  passwordProtected: boolean
 }
 
 export type RevealResponse = {
@@ -240,13 +241,16 @@ async function commit(client: Readonly<ClientOptions>, id: string, request: Crea
 async function info(client: Readonly<ClientOptions>, id: string): Promise<NoteInfo> {
   validateId(id)
   const data = objectAtBoundary(await call(client, { path: `/notes/${id}`, method: 'GET' }), 'note info')
-  exactKeys(data, ['protocol', 'lifecycle'])
+  exactKeys(data, ['protocol', 'lifecycle', 'passwordProtected'])
   validateProtocol(data.protocol)
   const lifecycle = objectAtBoundary(data.lifecycle, 'note lifecycle')
   exactKeys(lifecycle, ['expiresAt'], ['maxReads', 'remainingReads'])
   validatePositiveInteger(lifecycle.expiresAt, 'expiresAt')
   if (lifecycle.maxReads !== undefined) validatePositiveInteger(lifecycle.maxReads, 'maxReads')
   if (lifecycle.remainingReads !== undefined) validatePositiveInteger(lifecycle.remainingReads, 'remainingReads', true)
+  if (typeof data.passwordProtected !== 'boolean') {
+    throw new NyanbinError('INVALID_RESPONSE', 'note info passwordProtected must be a boolean')
+  }
   return {
     protocol: PROTOCOL_VERSION,
     lifecycle: {
@@ -254,6 +258,7 @@ async function info(client: Readonly<ClientOptions>, id: string): Promise<NoteIn
       ...(lifecycle.maxReads === undefined ? {} : { maxReads: lifecycle.maxReads }),
       ...(lifecycle.remainingReads === undefined ? {} : { remainingReads: lifecycle.remainingReads }),
     },
+    passwordProtected: data.passwordProtected,
   }
 }
 

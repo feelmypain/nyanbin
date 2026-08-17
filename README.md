@@ -18,14 +18,14 @@ The official instance runs at [nyan.ist](https://nyan.ist). Self-hosting is full
 | --- | --- |
 | Content | Plain text, source text, sanitized Markdown, multiple files, or text and files together |
 | Client-side encryption | One authenticated envelope containing content, format, filenames, MIME hints, sizes, and attachments |
-| Link secret | 256-bit random bearer secret kept in the URL fragment |
-| Optional password | A second factor; it does not replace the random link secret |
+| Link secret | 256-bit random bearer secret kept in the URL fragment of notes without a password |
+| Optional password | Password notes are keyed by the password alone; their share and short URLs stay bare (no fragment) |
 | Retention | Required absolute expiry, bounded by the instance |
 | Read limits | Optional atomic read cap; one read is burn-after-reading |
 | Reveal | Explicit `POST`; navigation, metadata checks, and link previews do not consume a read |
 | Revocation | Independent random creator delete capability |
 | Clients | Responsive web UI and interoperable `nyanbin` CLI |
-| Sharing | Local copy and QR generation; optional 6-digit `/s/` short codes for password-protected notes (no external shortener) |
+| Sharing | Local copy and QR generation; optional bare 6-digit `/s/` short codes for password-protected notes (no external shortener) |
 | Rendering | Literal plain text, source presentation, sanitized Markdown, safe local previews, and forced downloads |
 | Appearance | Light, dark, and system themes; reduced-motion and keyboard-conscious UI |
 | Runtime privacy | No analytics, third-party runtime assets, remote Markdown resources, or arbitrary operator HTML |
@@ -38,7 +38,7 @@ Under an honest, unmodified client and server implementation:
 
 - note contents and encrypted metadata are confidential from the server and Valkey;
 - envelope tampering and lifecycle/header substitution are detected during decryption;
-- the optional password adds a second factor to the high-entropy link secret;
+- notes without a password are keyed by a high-entropy link secret; password notes are keyed by the password alone so their URLs carry no secret at all;
 - expiry and read limits are applied atomically by the shared Valkey store, including across multiple app replicas;
 - passive page loads, crawlers, and link scanners cannot consume a note because reveal is an explicit action;
 - the server stores only a SHA-256 verifier for the creator's delete capability after creation.
@@ -51,8 +51,8 @@ Nyanbin also cannot protect against:
 
 - a compromised browser, CLI host, extension, clipboard, terminal history, or recipient device;
 - a recipient copying, photographing, or redistributing content before a read limit destroys it;
-- disclosure of the complete share URL, its fragment, the password, or the delete token;
-- weak user-chosen passwords—the link secret is deliberately still required;
+- disclosure of the complete share URL, its fragment (when present), the password, or the delete token;
+- weak user-chosen passwords—for password notes the password is the only key, so its strength is the entire defense against an attacker who reaches the reveal endpoint;
 - denial of service, storage eviction, operator deletion, rollback, or loss of an ephemeral Valkey instance;
 - plaintext already exposed before encryption or after local decryption;
 - a malicious instance serving a modified client, lying about policy, or correlating metadata;
@@ -60,7 +60,7 @@ Nyanbin also cannot protect against:
 
 A reveal consumes a read **before** local decryption. A wrong password, damaged URL, corrupt envelope, or incompatible client can therefore spend a limited read. The web UI must present this consequence before reveal.
 
-Treat the complete share URL and the delete token as bearer credentials. Send the password through a different channel when the second factor matters.
+Treat the complete share URL and the delete token as bearer credentials. For password notes the URL itself reveals nothing; send the password through a different channel.
 
 ## Architecture and data flow
 
@@ -79,9 +79,9 @@ Creation is deliberately two-step because the server-generated note ID is authen
 
 1. The client reads `/api/status`, chooses a duration and optional read cap within the advertised limits, and reserves a note.
 2. The server generates a 32-character base62 ID, an independent 32-byte delete token, and the exact absolute lifecycle. The reservation is short-lived.
-3. The client generates a 32-byte link secret, builds the complete private payload, and encrypts it locally. Protocol version, note ID, and exact lifecycle are authenticated as AAD.
+3. For a note without a password, the client generates a 32-byte link secret and derives the AES key from it. For a password note, the AES key is derived from the password alone (domain-separated PBKDF2; the salt travels in the envelope header). Protocol version, note ID, and exact lifecycle are authenticated as AAD.
 4. The client commits the encrypted envelope and the delete-token verifier to the reserved ID. Valkey installs the note and TTL atomically.
-5. The share URL is `/note/{id}#{secret}`. URL fragments are not included in normal HTTP requests, so the server receives the ID but not the link secret.
+5. The share URL is `/note/{id}#{secret}` for secret-keyed notes and a bare `/note/{id}` for password notes. URL fragments are not included in normal HTTP requests, so the server never receives key material either way.
 6. A recipient may inspect public lifecycle information without consuming a read. Explicit reveal atomically consumes a read and returns the envelope; decryption then happens locally.
 7. The creator may revoke the note by presenting the independent delete token. The server compares it with its stored verifier.
 
@@ -93,8 +93,8 @@ Nyanbin v1 is a closed protocol and is not wire-compatible with Cryptgeon or Pri
 - **Content encryption:** AES-256-GCM
 - **Nonce/IV:** 12 random bytes per envelope
 - **Authentication tag:** 128 bits
-- **Link secret:** 32 CSPRNG bytes, encoded as unpadded base64url in the URL fragment
-- **Password mode:** PBKDF2-HMAC-SHA-256, 600,000 iterations, 16-byte salt; the password is an additional factor alongside the link secret
+- **Link secret:** 32 CSPRNG bytes, encoded as unpadded base64url in the URL fragment (notes without a password)
+- **Password mode:** the AES key is derived from the password alone via PBKDF2-HMAC-SHA-256, 600,000 iterations, 16-byte envelope salt, with a domain-separated derivation path; share and short URLs stay bare
 - **Authenticated data:** canonical protocol version, 32-character note ID, and exact server-issued lifecycle
 - **Delete capability:** 32 random bytes, encoded as base64url; only its SHA-256 hexadecimal verifier is retained after creation
 - **Private payload:** content kind and format, text, and every file's name, MIME hint, size, and base64url bytes are encrypted together
@@ -261,7 +261,7 @@ Delete uses:
 { "deleteToken": "<canonical-base64url-token>" }
 ```
 
-`POST .../reveal` has an empty body. The public info lifecycle can include `remainingReads`; it never returns the envelope. Reserve accepts a relative duration, but the server returns the exact lifecycle used for encryption and commit. The server will not let commit mutate the reserved lifecycle or verifier. `passwordProtected` is optional and defaults to `false`; short codes (`POST .../short`, body `{ "deleteToken": "..." }`) are refused with `409 short_link_requires_password` unless the commit declared it, because a 6-digit code is guessable and the password is what keeps a discovered note sealed. The short URL is `/s/{code}#{secret}` — the fragment still never reaches the server.
+`POST .../reveal` has an empty body. The public info lifecycle can include `remainingReads`, and info reports `passwordProtected`; it never returns the envelope. Reserve accepts a relative duration, but the server returns the exact lifecycle used for encryption and commit. The server will not let commit mutate the reserved lifecycle or verifier. `passwordProtected` is optional and defaults to `false`; short codes (`POST .../short`, body `{ "deleteToken": "..." }`) are refused with `409 short_link_requires_password` unless the commit declared it, because a 6-digit code is guessable and the password is what keeps a discovered note sealed. The short URL is a bare `/s/{code}` — it carries no secret because the password alone is the key.
 
 Use the shared TypeScript implementation rather than reimplementing cryptography from this overview. The wire contract includes strict canonical serialization and validation details that prose and example JSON do not fully specify.
 

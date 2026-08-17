@@ -36,7 +36,12 @@ export async function createNoteSuccessfully(page: Page, options: CreateOptions)
   await page.getByTestId('create-button').click()
   await expect(page.getByTestId('create-result')).toBeVisible()
   const link = await page.getByTestId('share-link').inputValue()
-  expect(link).toMatch(/^https?:\/\/[^\s]+\/note\/[A-Za-z0-9]{32}#[A-Za-z0-9_-]{43}$/)
+  if (options.password) {
+    // Password notes are keyed by the password alone; their links stay bare.
+    expect(link).toMatch(/^https?:\/\/[^\s]+\/note\/[A-Za-z0-9]{32}$/)
+  } else {
+    expect(link).toMatch(/^https?:\/\/[^\s]+\/note\/[A-Za-z0-9]{32}#[A-Za-z0-9_-]{43}$/)
+  }
   return link
 }
 
@@ -71,11 +76,11 @@ export async function checkLinkForDownload(
   expect(await getFileChecksum(path)).toBe(options.checksum)
 }
 
-export function parseNoteLink(link: string): { server: string; id: string; secret: string } {
+export function parseNoteLink(link: string): { server: string; id: string; secret?: string } {
   const url = new URL(link)
   const match = /^\/note\/([A-Za-z0-9]{32})$/.exec(url.pathname)
-  if (!match || !url.hash) throw new Error(`Invalid Nyanbin note link: ${link}`)
-  return { server: url.origin, id: match[1], secret: url.hash.slice(1) }
+  if (!match) throw new Error(`Invalid Nyanbin note link: ${link}`)
+  return { server: url.origin, id: match[1], ...(url.hash ? { secret: url.hash.slice(1) } : {}) }
 }
 
 export async function expectNoteMissing(link: string): Promise<void> {

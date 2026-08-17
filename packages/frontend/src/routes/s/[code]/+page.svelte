@@ -20,7 +20,8 @@
 		}
 		try {
 			const { id } = await API.resolveShort(data.code)
-			await goto(`/note/${id}${window.location.hash}`, { replaceState: true })
+			// Short links are always bare; the note page prompts for the password. Any fragment is dropped deliberately.
+			await goto(`/note/${id}`, { replaceState: true })
 		} catch (cause) {
 			phase = cause instanceof NyanbinError && (cause.code === 'note_not_found' || cause.status === 404) ? 'missing' : 'error'
 			requestAnimationFrame(() => document.querySelector<HTMLElement>('#short-error-title')?.focus())

@@ -6,7 +6,7 @@ import type { Writable } from 'node:stream'
 import pretty from 'pretty-bytes'
 
 import { createAPI } from '../shared/api.js'
-import { decodeBase64Url, decryptPayload, parseNoteLink, validatePayload, type PrivatePayload } from '../shared/protocol.js'
+import { NyanbinError, decodeBase64Url, decryptPayload, parseNoteReference, validatePayload, type PrivatePayload } from '../shared/protocol.js'
 
 export type DownloadOptions = {
   all?: boolean
@@ -101,16 +101,24 @@ export async function saveFiles(payload: PrivatePayload, all: boolean, directory
 export async function download(input: URL | string, allOrOptions: boolean | DownloadOptions = false, suggestedPassword?: string) {
   const options: DownloadOptions =
     typeof allOrOptions === 'boolean' ? { all: allOrOptions, password: suggestedPassword } : allOrOptions
-  const link = parseNoteLink(input.toString())
+  const link = parseNoteReference(input.toString())
   const api = createAPI({ server: link.server })
 
   // Info is passive and catches malformed links before consuming a read. Reveal consumes atomically before decryption.
   const noteInfo = await api.info(link.id)
+  if (link.secret === undefined && (options.password === undefined || options.password === '')) {
+    throw new NyanbinError(
+      'INVALID_LINK',
+      noteInfo.passwordProtected
+        ? 'this note is password protected; pass the password to decrypt it'
+        : 'note link is missing its secret fragment'
+    )
+  }
   const revealed = await api.reveal(link.id)
   const payload = await decryptPayload(revealed.envelope, {
     id: link.id,
     lifecycle: { expiresAt: noteInfo.lifecycle.expiresAt, ...(noteInfo.lifecycle.maxReads === undefined ? {} : { maxReads: noteInfo.lifecycle.maxReads }) },
-    secret: link.secret,
+    ...(link.secret === undefined ? {} : { secret: link.secret }),
     ...(options.password === undefined ? {} : { password: options.password }),
   })
 

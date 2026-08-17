@@ -35,12 +35,12 @@ return 'ok'
 
 const INFO_SCRIPT: &str = r#"
 if redis.call('EXISTS', KEYS[1]) == 0 then return {'missing'} end
-local v = redis.call('HMGET', KEYS[1], 'protocol', 'expires_at', 'max_reads', 'remaining_reads')
+local v = redis.call('HMGET', KEYS[1], 'protocol', 'expires_at', 'max_reads', 'remaining_reads', 'password_protected')
 if v[1] ~= '1' or not v[2] or v[3] == false or v[4] == false then return {'corrupt'} end
 local now = redis.call('TIME')
 local now_ms = tonumber(now[1]) * 1000 + math.floor(tonumber(now[2]) / 1000)
 if tonumber(v[2]) <= now_ms then redis.call('DEL', KEYS[1]); return {'missing'} end
-return {'ok', v[2], v[3], v[4]}
+return {'ok', v[2], v[3], v[4], v[5] or '0'}
 "#;
 
 const REVEAL_SCRIPT: &str = r#"
@@ -275,14 +275,16 @@ impl Store {
             .await?;
         match values.first().map(String::as_str) {
             Some("missing") => Ok(None),
-            Some("ok") if values.len() == 4 => {
+            Some("ok") if values.len() == 5 => {
                 let expires_at = values[1].parse().map_err(|_| ())?;
                 let max_reads = optional_u32(&values[2])?;
                 let remaining_reads = optional_u32(&values[3])?;
+                let password_protected = values[4] == "1";
                 Ok(Some(StoredInfo {
                     expires_at,
                     max_reads,
                     remaining_reads,
+                    password_protected,
                 }))
             }
             _ => Err(()),

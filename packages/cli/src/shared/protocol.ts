@@ -17,6 +17,7 @@ const SHORT_CODE_PATTERN = /^[0-9]{6}$/
 const encoder = new TextEncoder()
 const decoder = new TextDecoder('utf-8', { fatal: true })
 const KEY_DOMAIN = encoder.encode('nyanbin-v1\0')
+const KEY_DOMAIN_PASSWORD = encoder.encode('nyanbin-v1-password\0')
 
 export type NyanbinErrorCode =
   | 'INVALID_BASE64URL'
@@ -74,7 +75,7 @@ export type ParsedEnvelope = {
 export type EncryptOptions = {
   id: string
   lifecycle: Lifecycle
-  secret: Uint8Array | string
+  secret?: Uint8Array | string
   password?: string
 }
 
@@ -251,22 +252,26 @@ function normalizeSecret(secret: Uint8Array | string): Uint8Array<ArrayBuffer> {
     ? new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength)
     : new Uint8Array(bytes)
 }
-async function deriveAesKey(
-  secret: Uint8Array<ArrayBuffer>,
-  password: string,
-  salt: Uint8Array<ArrayBuffer>
-): Promise<CryptoKey> {
-  const passwordMaterial = await globalThis.crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits'])
-  const passwordFactor = new Uint8Array(
-    await globalThis.crypto.subtle.deriveBits(
-      { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: PBKDF2_ITERATIONS },
-      passwordMaterial,
-      256
-    )
+async function passwordFactor(password: string, salt: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> {
+  const material = await globalThis.crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits'])
+  return new Uint8Array(
+    await globalThis.crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: PBKDF2_ITERATIONS }, material, 256)
   )
-  const combined = concatBytes(KEY_DOMAIN, secret, passwordFactor)
-  const rawKey = await globalThis.crypto.subtle.digest('SHA-256', combined)
+}
+
+async function importAesKey(preimage: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
+  const rawKey = await globalThis.crypto.subtle.digest('SHA-256', preimage)
   return globalThis.crypto.subtle.importKey('raw', rawKey, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt'])
+}
+
+// Password-protected notes are keyed by the password alone, so bare links (no #fragment) can decrypt.
+async function derivePasswordKey(password: string, salt: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
+  return importAesKey(concatBytes(KEY_DOMAIN_PASSWORD, await passwordFactor(password, salt)))
+}
+
+// v1.4.0 envelopes mixed the link secret with the (possibly empty) password; kept so outstanding links decrypt.
+async function deriveSecretKey(secret: Uint8Array<ArrayBuffer>, password: string, salt: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
+  return importAesKey(concatBytes(KEY_DOMAIN, secret, await passwordFactor(password, salt)))
 }
 
 export function parseEnvelope(envelope: string): ParsedEnvelope {
@@ -303,12 +308,13 @@ export async function encryptPayload(payload: PrivatePayload, options: EncryptOp
   validatePayload(payload)
   validateId(options.id)
   validateLifecycle(options.lifecycle)
-  const secret = normalizeSecret(options.secret)
+  const password = options.password ?? ''
+  if (password === '' && options.secret === undefined) fail('INVALID_LINK', 'a link secret is required when no password is set')
   const salt = new Uint8Array(PBKDF2_SALT_BYTES)
   const iv = new Uint8Array(AES_GCM_IV_BYTES)
   globalThis.crypto.getRandomValues(salt)
   globalThis.crypto.getRandomValues(iv)
-  const key = await deriveAesKey(secret, options.password ?? '', salt)
+  const key = password === '' ? await deriveSecretKey(normalizeSecret(options.secret!), '', salt) : await derivePasswordKey(password, salt)
   const plaintext = encoder.encode(JSON.stringify(payload))
   const ciphertext = new Uint8Array(
     await globalThis.crypto.subtle.encrypt(
@@ -343,22 +349,34 @@ export async function decryptPayload(envelope: string, options: DecryptOptions):
       fail('INVALID_ENVELOPE', 'encrypted envelope read limit does not match note information')
     }
   }
-  const secret = normalizeSecret(options.secret)
-  const key = await deriveAesKey(secret, options.password ?? '', parsed.salt)
-  let plaintext: ArrayBuffer
-  try {
-    plaintext = await globalThis.crypto.subtle.decrypt(
-      {
-        name: 'AES-GCM',
-        iv: parsed.iv,
-        additionalData: canonicalAad(parsed.id, parsed.lifecycle),
-        tagLength: AES_GCM_TAG_BYTES * 8,
-      },
-      key,
-      parsed.ciphertext
-    )
-  } catch (cause) {
-    throw new NyanbinError('AUTHENTICATION_FAILED', 'envelope authentication failed; the link, password, or ciphertext is incorrect', { cause })
+  const password = options.password ?? ''
+  const secret = options.secret === undefined ? undefined : normalizeSecret(options.secret)
+  if (password === '' && secret === undefined) fail('INVALID_LINK', 'a link secret or password is required to decrypt')
+  const candidates: Promise<CryptoKey>[] = []
+  if (password !== '') candidates.push(derivePasswordKey(password, parsed.salt))
+  // Legacy v1.4.0 path: link secret mixed with the (possibly empty) password.
+  if (secret !== undefined) candidates.push(deriveSecretKey(secret, password, parsed.salt))
+  let plaintext: ArrayBuffer | undefined
+  let lastCause: unknown
+  for (const candidate of candidates) {
+    try {
+      plaintext = await globalThis.crypto.subtle.decrypt(
+        {
+          name: 'AES-GCM',
+          iv: parsed.iv,
+          additionalData: canonicalAad(parsed.id, parsed.lifecycle),
+          tagLength: AES_GCM_TAG_BYTES * 8,
+        },
+        await candidate,
+        parsed.ciphertext
+      )
+      break
+    } catch (cause) {
+      lastCause = cause
+    }
+  }
+  if (plaintext === undefined) {
+    throw new NyanbinError('AUTHENTICATION_FAILED', 'envelope authentication failed; the link, password, or ciphertext is incorrect', { cause: lastCause })
   }
   let value: unknown
   try {
@@ -390,12 +408,11 @@ function serverOrigin(server: string): URL {
   return url
 }
 
-export function buildNoteUrl(server: string, id: string, secret: Uint8Array | string): string {
+export function buildNoteUrl(server: string, id: string, secret?: Uint8Array | string): string {
   validateId(id)
-  const encodedSecret = encodeBase64Url(normalizeSecret(secret))
   const url = serverOrigin(server)
   url.pathname = `/note/${id}`
-  url.hash = encodedSecret
+  if (secret !== undefined) url.hash = encodeBase64Url(normalizeSecret(secret))
   return url.toString()
 }
 

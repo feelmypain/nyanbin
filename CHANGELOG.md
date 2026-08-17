@@ -4,6 +4,12 @@ All notable changes to Nyanbin are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-08-17
+
+### Fixed
+
+- The password gate on the note view no longer renders the input behind the in-field "Show" toggle. A page-level `form :global(button) { width: 100% }` rule was stretching every button in the form — including the reveal toggle inside the password field — across the whole input. The rule now targets only the form's direct child (the submit button); the toggle keeps its compact size across all themes and viewport widths.
+
 ## [1.4.1] - 2026-08-17
 
 ### Changed

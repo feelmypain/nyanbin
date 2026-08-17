@@ -77,7 +77,7 @@
 		"read_cap_help": "Při jediném zobrazení zpráva po přečtení zanikne. Zobrazení se započítá ještě před místním dešifrováním.",
 		"max_reads": "Nejvyšší počet zobrazení",
 		"password_toggle": "Vyžadovat heslo jako druhý faktor",
-		"password_help": "Náhodný tajný klíč v odkazu je nutný i nadále. Toto heslo sdílejte odděleně.",
+		"password_help": "Odkaz zůstává holý: poznámku dešifruje pouze toto heslo. Sdílejte ho zvlášť.",
 		"how_title": "Jak zapečetěná obálka funguje",
 		"how_body": "Nyanbin vyhradí ID a přesnou dobu platnosti, data zašifruje přímo v prohlížeči pomocí AES-256-GCM, sváže veřejná pravidla jako autentizovaná data a obálku odešle. Zobrazit ji může každý, kdo má úplný odkaz a heslo.",
 		"files_count": "přílohy",
@@ -143,7 +143,7 @@
 		"short_help": "Vytvořte kompaktní kód /s/ pro tuto zprávu. Je k dispozici jen s heslem druhého faktoru, protože krátké kódy lze uhodnout a zprávu drží zapečetěnou právě heslo.",
 		"short_create": "Vytvořit krátký odkaz",
 		"short_failed": "Krátký odkaz se nepodařilo vytvořit. Server může být nedostupný, nebo byl dosažen limit.",
-		"short_link": "Krátký odkaz (stále obsahuje tajný klíč)"
+		"short_link": "Krátký odkaz (bez tajemství)"
 	},
 	"show": {
 		"page_title": "Zobrazit zprávu",
@@ -154,6 +154,9 @@
 		"remaining": "Zbývající zobrazení",
 		"password_optional": "Heslo pro druhý faktor, pokud ho odesílatel nastavil",
 		"password_help": "Pokud odesílatel heslo nenastavil, ponechte pole prázdné.",
+		"password_required_label": "Heslo",
+		"password_required_help": "Tato poznámka je zapečetěna heslem. Zadejte ho pro dešifrování.",
+		"password_shared_help": "Tento odkaz nenese žádné tajemství. Poznámku dešifruje pouze heslo sdílené odesílatelem zvlášť.",
 		"reveal": "Spotřebovat jedno zobrazení a dešifrovat",
 		"revealing": "Spotřebovává se jedno zobrazení…",
 		"decrypting": "Dešifrování v prohlížeči…",
@@ -182,7 +185,8 @@
 			"consumed": "Zpráva už není dostupná. Mohla vypršet, být zneplatněna nebo dosáhnout limitu zobrazení.",
 			"network": "Při zobrazování došlo k chybě sítě. Server už mohl zobrazení spotřebovat; před dalším pokusem o jednorázovou zprávu se poraďte s odesílatelem.",
 			"reveal_consumed": "Zobrazení selhalo poté, co už mohlo být spotřebováno. Před vědomým dalším pokusem ověřte dostupnost.",
-			"reveal": "Server tuto zprávu nemohl zobrazit."
+			"reveal": "Server tuto zprávu nemohl zobrazit.",
+			"password_required": "Zadejte heslo pro dešifrování této poznámky."
 		}
 	},
 	"short": {

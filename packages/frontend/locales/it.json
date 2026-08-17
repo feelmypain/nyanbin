@@ -77,7 +77,7 @@
 		"read_cap_help": "Con una sola visualizzazione, la nota si distrugge dopo la lettura. La visualizzazione viene conteggiata prima della decifratura locale.",
 		"max_reads": "Visualizzazioni massime",
 		"password_toggle": "Richiedi una password come secondo fattore",
-		"password_help": "Il segreto casuale del link resta necessario. Condividi questa password separatamente.",
+		"password_help": "Il link resta pulito: solo questa password può decifrare la nota. Condividila separatamente.",
 		"how_title": "Come funziona la busta sigillata",
 		"how_body": "Nyanbin riserva un ID e un ciclo di vita preciso, cifra localmente con AES-256-GCM, vincola i criteri pubblici come dati autenticati e infine carica la busta. Chiunque abbia il link completo e la password può visualizzarla.",
 		"files_count": "allegati",
@@ -143,7 +143,7 @@
 		"short_help": "Genera un codice /s/ compatto per questa nota. Disponibile solo con la password del secondo fattore, perché i codici brevi sono indovinabili e solo la password tiene la nota sigillata.",
 		"short_create": "Crea link breve",
 		"short_failed": "Impossibile creare il link breve. Il server potrebbe non essere disponibile o il limite è stato raggiunto.",
-		"short_link": "Link breve (include ancora il segreto)"
+		"short_link": "Link breve (senza segreto)"
 	},
 	"show": {
 		"page_title": "Visualizza nota",
@@ -154,6 +154,9 @@
 		"remaining": "Visualizzazioni rimaste",
 		"password_optional": "Password del secondo fattore, se impostata dal mittente",
 		"password_help": "Lascia vuoto se il mittente non ha impostato una password.",
+		"password_required_label": "Password",
+		"password_required_help": "Questa nota è sigillata con una password. Inseriscila per decifrare.",
+		"password_shared_help": "Questo link non contiene alcun segreto. Solo la password, condivisa separatamente, può decifrare la nota.",
 		"reveal": "Consuma una visualizzazione e decifra",
 		"revealing": "Utilizzo di una visualizzazione…",
 		"decrypting": "Decifratura locale in corso…",
@@ -182,7 +185,8 @@
 			"consumed": "La nota non è più disponibile. Potrebbe essere scaduta, revocata o aver raggiunto il limite di visualizzazioni.",
 			"network": "Si è verificato un errore di rete durante la visualizzazione. Il server potrebbe avere già consumato una visualizzazione; prima di riprovare con una nota monouso, chiedi al mittente.",
 			"reveal_consumed": "La visualizzazione non è riuscita e potrebbe essere stata consumata. Verifica la disponibilità prima di riprovare intenzionalmente.",
-			"reveal": "Il server non è riuscito a mostrare questa nota."
+			"reveal": "Il server non è riuscito a mostrare questa nota.",
+			"password_required": "Inserisci la password per decifrare questa nota."
 		}
 	},
 	"short": {

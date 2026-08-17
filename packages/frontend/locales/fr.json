@@ -77,7 +77,7 @@
 		"read_cap_help": "Une seule ouverture permet une lecture unique. Elle est décomptée avant le déchiffrement local.",
 		"max_reads": "Nombre maximal d’ouvertures",
 		"password_toggle": "Exiger un mot de passe de second facteur",
-		"password_help": "Le secret aléatoire du lien reste indispensable. Communiquez ce mot de passe séparément.",
+		"password_help": "Le lien reste nu : seul ce mot de passe peut déchiffrer la note. Partagez-le séparément.",
 		"how_title": "Fonctionnement de l’enveloppe scellée",
 		"how_body": "Nyanbin réserve un identifiant et un cycle de vie précis, chiffre localement avec AES-256-GCM, lie cette politique publique comme données authentifiées, puis envoie le tout. Toute personne disposant du lien complet et du mot de passe peut ouvrir la note.",
 		"files_count": "pièces jointes",
@@ -143,7 +143,7 @@
 		"short_help": "Générez un code /s/ compact pour cette note. Disponible uniquement avec un mot de passe de second facteur, car les codes courts sont devinables et seul le mot de passe garde la note scellée.",
 		"short_create": "Créer un lien court",
 		"short_failed": "Le lien court n’a pas pu être créé. Le serveur est peut-être indisponible ou la limite atteinte.",
-		"short_link": "Lien court (contient toujours le secret)"
+		"short_link": "Lien court (sans secret)"
 	},
 	"show": {
 		"page_title": "Ouvrir la note",
@@ -154,6 +154,9 @@
 		"remaining": "Ouvertures restantes",
 		"password_optional": "Mot de passe de second facteur, si l’expéditeur en a défini un",
 		"password_help": "Laissez ce champ vide si l’expéditeur n’a pas défini de mot de passe.",
+		"password_required_label": "Mot de passe",
+		"password_required_help": "Cette note est scellée par un mot de passe. Saisissez-le pour déchiffrer.",
+		"password_shared_help": "Ce lien ne contient aucun secret. Seul le mot de passe, partagé séparément par l’expéditeur, peut déchiffrer la note.",
 		"reveal": "Utiliser une ouverture et déchiffrer",
 		"revealing": "Utilisation d’une ouverture…",
 		"decrypting": "Déchiffrement local…",
@@ -182,7 +185,8 @@
 			"consumed": "La note n’est plus disponible. Elle a peut-être expiré, été révoquée ou atteint sa limite d’ouvertures.",
 			"network": "Une erreur réseau s’est produite pendant l’ouverture. Le serveur a peut-être déjà décompté une ouverture ; consultez l’expéditeur avant de réessayer pour une note à lecture unique.",
 			"reveal_consumed": "L’ouverture a échoué alors qu’elle a peut-être été décomptée. Vérifiez la disponibilité avant de réessayer délibérément.",
-			"reveal": "Le serveur n’a pas pu ouvrir cette note."
+			"reveal": "Le serveur n’a pas pu ouvrir cette note.",
+			"password_required": "Saisissez le mot de passe pour déchiffrer cette note."
 		}
 	},
 	"short": {

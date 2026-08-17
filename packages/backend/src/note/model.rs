@@ -62,10 +62,11 @@ pub struct InfoLifecycle {
 }
 
 #[derive(Debug, Serialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct InfoResponse {
     pub protocol: u8,
     pub lifecycle: InfoLifecycle,
+    pub password_protected: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -104,6 +105,7 @@ pub struct StoredInfo {
     pub expires_at: u64,
     pub max_reads: Option<u32>,
     pub remaining_reads: Option<u32>,
+    pub password_protected: bool,
 }
 
 pub fn validate_id(id: &str) -> Result<(), ApiError> {

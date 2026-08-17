@@ -132,6 +132,7 @@ pub async fn info(
             max_reads: info.max_reads,
             remaining_reads: info.remaining_reads,
         },
+        password_protected: info.password_protected,
     }))
 }
 

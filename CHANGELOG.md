@@ -4,6 +4,14 @@ All notable changes to Nyanbin are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-08-17
+
+### Changed
+
+- **Bare short links.** Password-protected notes are now keyed by the password alone (domain-separated PBKDF2-HMAC-SHA-256, 600,000 iterations, 16-byte envelope salt). Their share URLs are a bare `/note/{id}` and short URLs a bare `/s/{code}` — no `#{secret}` fragment — so a short code printed on paper or read aloud is the complete link. The note page gates on a required password field when the public info reports `passwordProtected`, and decryption falls back to the legacy secret+password key so links minted by v1.4.0 still open.
+- The public info endpoint (`GET /api/notes/{id}`) now reports `passwordProtected` so clients can request the password before consuming a reveal.
+- CLI: `open` on a bare password link works with `--password`/`--password-stdin`; `create --password` prints a bare link.
+
 ## [1.4.0] - 2026-08-17
 
 ### Added

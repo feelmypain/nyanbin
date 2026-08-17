@@ -15,12 +15,15 @@ test.describe('web short links', () => {
     await createNoteSuccessfully(page, { text, password })
     await page.getByTestId('create-short').click()
     const shortUrl = await page.getByTestId('short-link').inputValue()
-    expect(shortUrl).toMatch(/^https?:\/\/[^\s]+\/s\/[0-9]{6}#[A-Za-z0-9_-]{43}$/)
+    // Bare short URL: the 6-digit code alone reveals nothing; only the password decrypts.
+    expect(shortUrl).toMatch(/^https?:\/\/[^\s]+\/s\/[0-9]{6}$/)
+    expect(shortUrl).not.toContain('#')
 
     await page.goto('about:blank')
     await page.goto(shortUrl)
     await expect(page.getByTestId('reveal-gate')).toBeVisible()
-    expect(page.url()).toMatch(/\/note\/[A-Za-z0-9]{32}#[A-Za-z0-9_-]{43}$/)
+    // The redirect target carries no fragment either.
+    expect(page.url()).toMatch(/\/note\/[A-Za-z0-9]{32}$/)
     await page.getByTestId('show-note-password').fill(password)
     await page.getByTestId('show-note-button').click()
     await expect(page.getByTestId('result')).toContainText(text)

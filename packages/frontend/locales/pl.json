@@ -77,7 +77,7 @@
 		"read_cap_help": "Jeden odczyt oznacza usunięcie po przeczytaniu. Odczyt jest zużywany przed lokalnym odszyfrowaniem.",
 		"max_reads": "Maksymalna liczba odczytów",
 		"password_toggle": "Wymagaj dodatkowego hasła",
-		"password_help": "Losowy sekret z łącza nadal jest wymagany. Hasło przekaż osobno.",
+		"password_help": "Link pozostaje czysty: notatkę odszyfruje tylko to hasło. Przekaż je osobno.",
 		"how_title": "Jak działa zapieczętowana koperta",
 		"how_body": "Nyanbin rezerwuje identyfikator i dokładny okres ważności, szyfruje dane lokalnie za pomocą AES-256-GCM, wiąże te publiczne zasady jako dane uwierzytelnione, a następnie przesyła kopertę. Każda osoba mająca pełne łącze i hasło może ją odczytać.",
 		"files_count": "załączniki",
@@ -143,7 +143,7 @@
 		"short_help": "Utwórz kompaktowy kod /s/ dla tej notatki. Dostępne tylko z dodatkowym hasłem, bo krótkie kody można odgadnąć, a notatkę zapieczętowaną trzyma właśnie hasło.",
 		"short_create": "Utwórz krótki link",
 		"short_failed": "Nie udało się utworzyć krótkiego linku. Serwer może być niedostępny albo osiągnięto limit.",
-		"short_link": "Krótki link (nadal zawiera sekret)"
+		"short_link": "Krótki link (bez sekretu)"
 	},
 	"show": {
 		"page_title": "Odczytaj notatkę",
@@ -154,6 +154,9 @@
 		"remaining": "Pozostałe odczyty",
 		"password_optional": "Dodatkowe hasło, jeśli zostało ustawione przez nadawcę",
 		"password_help": "Pozostaw puste, jeśli nadawca nie ustawił hasła.",
+		"password_required_label": "Hasło",
+		"password_required_help": "Ta notatka jest zapieczętowana hasłem. Wpisz je, aby odszyfrować.",
+		"password_shared_help": "Ten link nie zawiera żadnego sekretu. Notatkę odszyfruje tylko hasło przekazane osobno przez nadawcę.",
 		"reveal": "Zużyj jeden odczyt i odszyfruj",
 		"revealing": "Zużywanie jednego odczytu…",
 		"decrypting": "Odszyfrowywanie lokalne…",
@@ -182,7 +185,8 @@
 			"consumed": "Notatka nie jest już dostępna. Mogła wygasnąć, zostać unieważniona lub osiągnąć limit odczytów.",
 			"network": "Podczas odczytu wystąpił błąd sieci. Serwer mógł już zużyć odczyt; przed ponowną próbą otwarcia jednorazowej notatki skontaktuj się z nadawcą.",
 			"reveal_consumed": "Odczyt nie powiódł się i mógł zostać zużyty. Przed świadomą ponowną próbą sprawdź dostępność notatki.",
-			"reveal": "Serwer nie mógł udostępnić tej notatki."
+			"reveal": "Serwer nie mógł udostępnić tej notatki.",
+			"password_required": "Wpisz hasło, aby odszyfrować tę notatkę."
 		}
 	},
 	"short": {

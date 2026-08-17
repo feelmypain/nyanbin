@@ -2,6 +2,7 @@ export const PROTOCOL_VERSION = 1 as const
 export const SECRET_BYTES = 32
 export const DELETE_TOKEN_BYTES = 32
 export const ID_LENGTH = 32
+export const SHORT_CODE_LENGTH = 6
 export const PBKDF2_ITERATIONS = 600_000
 export const PBKDF2_SALT_BYTES = 16
 export const AES_GCM_IV_BYTES = 12
@@ -12,6 +13,7 @@ export const MAX_HEADER_READS = 0xffff_ffff
 const BASE64URL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
 const ID_PATTERN = /^[A-Za-z0-9]{32}$/
 const HEX_HASH_PATTERN = /^[0-9a-f]{64}$/
+const SHORT_CODE_PATTERN = /^[0-9]{6}$/
 const encoder = new TextEncoder()
 const decoder = new TextDecoder('utf-8', { fatal: true })
 const KEY_DOMAIN = encoder.encode('nyanbin-v1\0')
@@ -153,6 +155,12 @@ export function decodeBase64Url(value: string, options: { length?: number; label
 
 export function validateId(id: unknown): asserts id is string {
   if (typeof id !== 'string' || !ID_PATTERN.test(id)) fail('INVALID_ID', `note id must be ${ID_LENGTH} base62 characters`)
+}
+
+export function validateShortCode(code: unknown): asserts code is string {
+  if (typeof code !== 'string' || !SHORT_CODE_PATTERN.test(code)) {
+    fail('INVALID_LINK', `short code must be ${SHORT_CODE_LENGTH} digits`)
+  }
 }
 
 export function validateLifecycle(value: unknown): asserts value is Lifecycle {
@@ -368,9 +376,7 @@ export async function hashDeleteToken(token: string): Promise<string> {
   return Array.from(digest, (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
-export function buildNoteUrl(server: string, id: string, secret: Uint8Array | string): string {
-  validateId(id)
-  const encodedSecret = encodeBase64Url(normalizeSecret(secret))
+function serverOrigin(server: string): URL {
   let url: URL
   try {
     url = new URL(server)
@@ -381,8 +387,22 @@ export function buildNoteUrl(server: string, id: string, secret: Uint8Array | st
   if (url.username || url.password || url.search || url.hash || (url.pathname !== '' && url.pathname !== '/')) {
     fail('INVALID_LINK', 'server URL must be a bare HTTP(S) origin')
   }
+  return url
+}
+
+export function buildNoteUrl(server: string, id: string, secret: Uint8Array | string): string {
+  validateId(id)
+  const encodedSecret = encodeBase64Url(normalizeSecret(secret))
+  const url = serverOrigin(server)
   url.pathname = `/note/${id}`
   url.hash = encodedSecret
+  return url.toString()
+}
+
+export function buildShortUrl(server: string, code: string): string {
+  validateShortCode(code)
+  const url = serverOrigin(server)
+  url.pathname = `/s/${code}`
   return url.toString()
 }
 

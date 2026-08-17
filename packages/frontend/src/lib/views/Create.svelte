@@ -121,8 +121,8 @@
 			const envelope = await encryptPayload(payload, { id: reservation.id, lifecycle: reservation.lifecycle, secret, ...(hasPassword ? { password } : {}) })
 			if (decodeBase64Url(envelope).byteLength > $status.value.limits.maxEnvelopeBytes) throw new NyanbinError('API_ERROR', 'payload_too_large')
 			phase = 'uploading'
-			await API.commit(reservation.id, { protocol: PROTOCOL_VERSION, envelope, lifecycle: reservation.lifecycle, deleteTokenHash: await hashDeleteToken(reservation.deleteToken) })
-			result = { id: reservation.id, url: buildNoteUrl(window.location.origin, reservation.id, secret), deleteToken: reservation.deleteToken, lifecycle: reservation.lifecycle }
+			await API.commit(reservation.id, { protocol: PROTOCOL_VERSION, envelope, lifecycle: reservation.lifecycle, deleteTokenHash: await hashDeleteToken(reservation.deleteToken), ...(hasPassword ? { passwordProtected: true } : {}) })
+			result = { id: reservation.id, url: buildNoteUrl(window.location.origin, reservation.id, secret), deleteToken: reservation.deleteToken, lifecycle: reservation.lifecycle, passwordProtected: hasPassword }
 			requestAnimationFrame(() => document.querySelector<HTMLElement>('#result-title')?.focus())
 		} catch (cause) {
 			if (cause instanceof NyanbinError && (cause.message.includes('payload_too_large') || cause.message.includes('too large'))) error = $t('create.errors.too_large')

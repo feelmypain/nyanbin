@@ -85,6 +85,7 @@ export async function uploadPayload(payload: PrivatePayload, options: ReserveReq
     envelope,
     lifecycle: reservation.lifecycle,
     deleteTokenHash,
+    ...(options.password === undefined ? {} : { passwordProtected: true }),
   })
   return {
     id: reservation.id,

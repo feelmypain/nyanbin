@@ -138,7 +138,12 @@
 		"revoke_failed": "Nie udało się unieważnić notatki. Mogła już zniknąć albo serwer jest niedostępny.",
 		"revoked_title": "Notatka unieważniona.",
 		"revoked_body": "Zaszyfrowana koperta nie jest już dostępna na serwerze.",
-		"create_another": "Utwórz kolejną notatkę"
+		"create_another": "Utwórz kolejną notatkę",
+		"short_summary": "Krótki link",
+		"short_help": "Utwórz kompaktowy kod /s/ dla tej notatki. Dostępne tylko z dodatkowym hasłem, bo krótkie kody można odgadnąć, a notatkę zapieczętowaną trzyma właśnie hasło.",
+		"short_create": "Utwórz krótki link",
+		"short_failed": "Nie udało się utworzyć krótkiego linku. Serwer może być niedostępny albo osiągnięto limit.",
+		"short_link": "Krótki link (nadal zawiera sekret)"
 	},
 	"show": {
 		"page_title": "Odczytaj notatkę",
@@ -179,6 +184,16 @@
 			"reveal_consumed": "Odczyt nie powiódł się i mógł zostać zużyty. Przed świadomą ponowną próbą sprawdź dostępność notatki.",
 			"reveal": "Serwer nie mógł udostępnić tej notatki."
 		}
+	},
+	"short": {
+		"page_title": "Krótki link",
+		"resolving": "Wyszukiwanie tego krótkiego kodu…",
+		"missing_title": "Ten krótki kod prowadzi donikąd.",
+		"missing_body": "Notatka mogła wygasnąć, zostać odczytana lub unieważniona.",
+		"invalid_title": "Ten krótki kod jest nieprawidłowy.",
+		"invalid_body": "Krótkie kody mają 6 cyfr, na przykład nyan.ist/s/123456.",
+		"error_title": "Wyszukiwanie nie powiodło się.",
+		"error_body": "Sieć lub serwer zawiodły podczas rozpoznawania tego kodu. Spróbuj ponownie."
 	},
 	"about": {
 		"eyebrow": "Małe {color} narzędzie do ochrony prywatności",

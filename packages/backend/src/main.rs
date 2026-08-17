@@ -74,12 +74,26 @@ async fn run() -> Result<(), String> {
                 .get(note::info)
                 .delete(note::delete_note),
         )
-        .route("/{id}/reveal", post(note::reveal));
+        .route("/{id}/reveal", post(note::reveal))
+        .route(
+            "/{id}/short",
+            post(note::create_short).route_layer(middleware::from_fn_with_state(
+                state.clone(),
+                note::short_rate_limit,
+            )),
+        );
     let api = Router::new()
         .nest("/notes", notes)
         .route("/live", get(health::live))
         .route("/ready", get(health::ready))
         .route("/status", get(status::get_status))
+        .route(
+            "/short/{code}",
+            get(note::resolve_short).route_layer(middleware::from_fn_with_state(
+                state.clone(),
+                note::short_rate_limit,
+            )),
+        )
         .fallback(api_not_found);
 
     let index = frontend_path.join("index.html");

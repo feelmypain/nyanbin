@@ -138,7 +138,12 @@
 		"revoke_failed": "Impossible de révoquer la note. Elle a peut-être déjà disparu, ou le serveur est indisponible.",
 		"revoked_title": "Note révoquée.",
 		"revoked_body": "L’enveloppe chiffrée n’est plus disponible sur le serveur.",
-		"create_another": "Créer une autre note"
+		"create_another": "Créer une autre note",
+		"short_summary": "Lien court",
+		"short_help": "Générez un code /s/ compact pour cette note. Disponible uniquement avec un mot de passe de second facteur, car les codes courts sont devinables et seul le mot de passe garde la note scellée.",
+		"short_create": "Créer un lien court",
+		"short_failed": "Le lien court n’a pas pu être créé. Le serveur est peut-être indisponible ou la limite atteinte.",
+		"short_link": "Lien court (contient toujours le secret)"
 	},
 	"show": {
 		"page_title": "Ouvrir la note",
@@ -179,6 +184,16 @@
 			"reveal_consumed": "L’ouverture a échoué alors qu’elle a peut-être été décomptée. Vérifiez la disponibilité avant de réessayer délibérément.",
 			"reveal": "Le serveur n’a pas pu ouvrir cette note."
 		}
+	},
+	"short": {
+		"page_title": "Lien court",
+		"resolving": "Recherche de ce code court…",
+		"missing_title": "Ce code court ne mène nulle part.",
+		"missing_body": "La note a peut-être expiré, été consultée ou révoquée.",
+		"invalid_title": "Ce code court est invalide.",
+		"invalid_body": "Les codes courts comportent 6 chiffres, par exemple nyan.ist/s/123456.",
+		"error_title": "La recherche a échoué.",
+		"error_body": "Le réseau ou le serveur a échoué lors de la résolution de ce code. Réessayez."
 	},
 	"about": {
 		"eyebrow": "Un petit outil {color} pour votre vie privée",

@@ -25,7 +25,7 @@ The official instance runs at [nyan.ist](https://nyan.ist). Self-hosting is full
 | Reveal | Explicit `POST`; navigation, metadata checks, and link previews do not consume a read |
 | Revocation | Independent random creator delete capability |
 | Clients | Responsive web UI and interoperable `nyanbin` CLI |
-| Sharing | Local copy and QR generation; no external shortener |
+| Sharing | Local copy and QR generation; optional 6-digit `/s/` short codes for password-protected notes (no external shortener) |
 | Rendering | Literal plain text, source presentation, sanitized Markdown, safe local previews, and forced downloads |
 | Appearance | Light, dark, and system themes; reduced-motion and keyboard-conscious UI |
 | Runtime privacy | No analytics, third-party runtime assets, remote Markdown resources, or arbitrary operator HTML |
@@ -182,6 +182,8 @@ Configuration is by environment variable. Durations are seconds; `expiresAt` val
 | `NYANBIN_RATE_LIMIT_GLOBAL_REQUESTS` | `300` | Global reserve and commit ceiling per fixed window across rotating clients |
 | `NYANBIN_RATE_LIMIT_WINDOW_SECONDS` | `60` | Write rate-limit window |
 | `NYANBIN_RATE_LIMIT_IPV6_PREFIX_BITS` | `64` | IPv6 prefix length grouped into one client bucket (`0`–`128`) |
+| `NYANBIN_RATE_LIMIT_SHORT_CREATE_REQUESTS` | `10` | Short-code creation attempts allowed per client bucket and fixed window |
+| `NYANBIN_RATE_LIMIT_SHORT_RESOLVE_REQUESTS` | `60` | Short-code resolutions allowed per client bucket and fixed window |
 | `NYANBIN_TRUSTED_PROXY_CIDRS` | empty | Comma-separated proxy CIDRs allowed to supply forwarded client addresses |
 | `NYANBIN_BRANDING_NAME` | `Nyanbin` | Safe text instance name |
 | `NYANBIN_BRANDING_DESCRIPTION` | empty | Safe text instance description; when empty the web client shows a localized default |
@@ -230,6 +232,8 @@ The API is JSON under `/api`. Errors use `{ "code": "...", "message": "..." }`. 
 | `GET /api/notes/{id}` | Inspect lifecycle without consuming a read | `200 { protocol: 1, lifecycle }` |
 | `POST /api/notes/{id}/reveal` | Atomically consume and return the envelope | `200 { protocol: 1, envelope }` |
 | `DELETE /api/notes/{id}` | Delete with creator capability | `204` |
+| `POST /api/notes/{id}/short` | Mint a 6-digit short code (password-protected notes only) | `201 { code }`, `200` when it already exists |
+| `GET /api/short/{code}` | Resolve a short code to its note ID | `200 { id }` |
 
 Representative request bodies follow. Reserve uses:
 
@@ -246,7 +250,8 @@ Commit uses:
   "protocol": 1,
   "envelope": "<canonical-base64url-envelope>",
   "lifecycle": { "expiresAt": 1786669200000, "maxReads": 1 },
-  "deleteTokenHash": "<sha256-hex>"
+  "deleteTokenHash": "<sha256-hex>",
+  "passwordProtected": true
 }
 ```
 
@@ -256,7 +261,7 @@ Delete uses:
 { "deleteToken": "<canonical-base64url-token>" }
 ```
 
-`POST .../reveal` has an empty body. The public info lifecycle can include `remainingReads`; it never returns the envelope. Reserve accepts a relative duration, but the server returns the exact lifecycle used for encryption and commit. The server will not let commit mutate the reserved lifecycle or verifier.
+`POST .../reveal` has an empty body. The public info lifecycle can include `remainingReads`; it never returns the envelope. Reserve accepts a relative duration, but the server returns the exact lifecycle used for encryption and commit. The server will not let commit mutate the reserved lifecycle or verifier. `passwordProtected` is optional and defaults to `false`; short codes (`POST .../short`, body `{ "deleteToken": "..." }`) are refused with `409 short_link_requires_password` unless the commit declared it, because a 6-digit code is guessable and the password is what keeps a discovered note sealed. The short URL is `/s/{code}#{secret}` — the fragment still never reaches the server.
 
 Use the shared TypeScript implementation rather than reimplementing cryptography from this overview. The wire contract includes strict canonical serialization and validation details that prose and example JSON do not fully specify.
 
@@ -313,7 +318,7 @@ There is intentionally no unconfirmed security email address in this document.
 
 ## Scope and roadmap
 
-Nyanbin v1 deliberately excludes discussions/comments, never-expiring notes, multiple storage engines, URL shorteners, analytics, arbitrary operator HTML, external runtime assets, and Cryptgeon/PrivateBin wire compatibility. These are not hidden configuration flags.
+Nyanbin v1 deliberately excludes discussions/comments, never-expiring notes, multiple storage engines, external URL shorteners, analytics, arbitrary operator HTML, external runtime assets, and Cryptgeon/PrivateBin wire compatibility. These are not hidden configuration flags. The built-in `/s/` short codes are first-party, expire with their note, and are limited to password-protected notes.
 
 The v1 roadmap is conservative: maintain deterministic browser/Node interoperability, strengthen validation and accessibility, keep atomic lifecycle behavior under concurrency, improve deployment observability without collecting secrets, and obtain independent security review. Multi-writer discussion would require a separate protocol and conflict analysis rather than an extension of the v1 envelope.
 

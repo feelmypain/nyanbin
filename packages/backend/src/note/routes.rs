@@ -15,13 +15,14 @@ use std::{
 
 use super::{
     CommitRequest, CreateResponse, DeleteRequest, InfoLifecycle, InfoResponse, Lifecycle,
-    ReserveRequest, ReserveResponse, RevealResponse, generate_delete_token, generate_id,
-    sha256_hex, validate_commit, validate_delete_token, validate_id, validate_reserve,
+    ReserveRequest, ReserveResponse, RevealResponse, ShortRequest, ShortResolveResponse,
+    ShortResponse, generate_delete_token, generate_id, generate_short_code, sha256_hex,
+    validate_commit, validate_delete_token, validate_id, validate_reserve, validate_short_code,
 };
 use crate::{
     AppState,
     error::{ApiError, json_rejection},
-    store::{CommitResult, DeleteResult, ReserveResult},
+    store::{CommitResult, DeleteResult, ReserveResult, ShortCreateResult},
 };
 
 const MAX_ID_ATTEMPTS: usize = 16;
@@ -89,6 +90,7 @@ pub async fn commit(
             &request.lifecycle,
             &request.delete_token_hash,
             &request.envelope,
+            request.password_protected,
         )
         .await
         .map_err(|_| ApiError::storage())?
@@ -175,6 +177,69 @@ pub async fn delete_note(
     }
 }
 
+pub async fn create_short(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+    payload: Result<Json<ShortRequest>, JsonRejection>,
+) -> Result<Response, ApiError> {
+    validate_id(&id)?;
+    let Json(request) = payload.map_err(json_rejection)?;
+    let token = validate_delete_token(&request.delete_token)?;
+    let candidate = sha256_hex(&token);
+    let random = SystemRandom::new();
+    for _ in 0..MAX_ID_ATTEMPTS {
+        let code = generate_short_code(&random)?;
+        match state
+            .store
+            .create_short(&id, &candidate, &code)
+            .await
+            .map_err(|_| ApiError::storage())?
+        {
+            ShortCreateResult::Created => {
+                return Ok((StatusCode::CREATED, Json(ShortResponse { code })).into_response());
+            }
+            ShortCreateResult::Exists { code } => {
+                return Ok((StatusCode::OK, Json(ShortResponse { code })).into_response());
+            }
+            ShortCreateResult::Collision => continue,
+            ShortCreateResult::Missing => return Err(ApiError::not_found()),
+            ShortCreateResult::Invalid => {
+                return Err(ApiError::new(
+                    StatusCode::FORBIDDEN,
+                    "invalid_delete_token",
+                    "Delete capability is invalid",
+                ));
+            }
+            ShortCreateResult::Unprotected => {
+                return Err(ApiError::new(
+                    StatusCode::CONFLICT,
+                    "short_link_requires_password",
+                    "Short links are only available for password-protected notes",
+                ));
+            }
+        }
+    }
+    Err(ApiError::new(
+        StatusCode::SERVICE_UNAVAILABLE,
+        "short_code_space_exhausted",
+        "Could not allocate a short code",
+    ))
+}
+
+pub async fn resolve_short(
+    State(state): State<Arc<AppState>>,
+    Path(code): Path<String>,
+) -> Result<Json<ShortResolveResponse>, ApiError> {
+    validate_short_code(&code)?;
+    let id = state
+        .store
+        .resolve_short(&code)
+        .await
+        .map_err(|_| ApiError::storage())?
+        .ok_or_else(ApiError::not_found)?;
+    Ok(Json(ShortResolveResponse { id }))
+}
+
 pub async fn write_rate_limit(
     State(state): State<Arc<AppState>>,
     ConnectInfo(peer): ConnectInfo<SocketAddr>,
@@ -182,17 +247,47 @@ pub async fn write_rate_limit(
     next: Next,
 ) -> Result<Response, ApiError> {
     let Some(operation) = metered_write_operation(request.method()) else {
-        return Err(ApiError::new(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "internal_error",
-            "Rate limiter applied to an unsupported operation",
-        ));
+        return Err(unsupported_rate_limit_operation());
     };
-    let ip = client_ip(
-        peer.ip(),
-        request.headers(),
-        &state.config.trusted_proxy_cidrs,
-    );
+    let limit = state.config.rate_limit_requests;
+    enforce_rate_limit(&state, peer, request.headers(), operation, limit).await?;
+    Ok(next.run(request).await)
+}
+
+pub async fn short_rate_limit(
+    State(state): State<Arc<AppState>>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    request: Request,
+    next: Next,
+) -> Result<Response, ApiError> {
+    let (operation, limit) = match *request.method() {
+        Method::POST => ("short_create", state.config.rate_limit_short_create_requests),
+        Method::GET => (
+            "short_resolve",
+            state.config.rate_limit_short_resolve_requests,
+        ),
+        _ => return Err(unsupported_rate_limit_operation()),
+    };
+    enforce_rate_limit(&state, peer, request.headers(), operation, limit).await?;
+    Ok(next.run(request).await)
+}
+
+fn unsupported_rate_limit_operation() -> ApiError {
+    ApiError::new(
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "internal_error",
+        "Rate limiter applied to an unsupported operation",
+    )
+}
+
+async fn enforce_rate_limit(
+    state: &AppState,
+    peer: SocketAddr,
+    headers: &HeaderMap,
+    operation: &'static str,
+    address_limit: u32,
+) -> Result<(), ApiError> {
+    let ip = client_ip(peer.ip(), headers, &state.config.trusted_proxy_cidrs);
     let bucket = pseudonymous_bucket(normalize_client_ip(
         ip,
         state.config.rate_limit_ipv6_prefix_bits,
@@ -203,7 +298,7 @@ pub async fn write_rate_limit(
             operation,
             &bucket,
             state.config.rate_limit_window,
-            state.config.rate_limit_requests,
+            address_limit,
             state.config.rate_limit_global_requests,
         )
         .await
@@ -212,10 +307,10 @@ pub async fn write_rate_limit(
         return Err(ApiError::new(
             StatusCode::TOO_MANY_REQUESTS,
             "rate_limited",
-            "Too many note write attempts; try again later",
+            "Too many requests for this operation; try again later",
         ));
     }
-    Ok(next.run(request).await)
+    Ok(())
 }
 
 fn metered_write_operation(method: &Method) -> Option<&'static str> {

@@ -138,7 +138,12 @@
 		"revoke_failed": "Zprávu se nepodařilo zneplatnit. Možná už neexistuje nebo server není dostupný.",
 		"revoked_title": "Zpráva byla zneplatněna.",
 		"revoked_body": "Šifrovaná obálka již na serveru není dostupná.",
-		"create_another": "Vytvořit další zprávu"
+		"create_another": "Vytvořit další zprávu",
+		"short_summary": "Krátký odkaz",
+		"short_help": "Vytvořte kompaktní kód /s/ pro tuto zprávu. Je k dispozici jen s heslem druhého faktoru, protože krátké kódy lze uhodnout a zprávu drží zapečetěnou právě heslo.",
+		"short_create": "Vytvořit krátký odkaz",
+		"short_failed": "Krátký odkaz se nepodařilo vytvořit. Server může být nedostupný, nebo byl dosažen limit.",
+		"short_link": "Krátký odkaz (stále obsahuje tajný klíč)"
 	},
 	"show": {
 		"page_title": "Zobrazit zprávu",
@@ -179,6 +184,16 @@
 			"reveal_consumed": "Zobrazení selhalo poté, co už mohlo být spotřebováno. Před vědomým dalším pokusem ověřte dostupnost.",
 			"reveal": "Server tuto zprávu nemohl zobrazit."
 		}
+	},
+	"short": {
+		"page_title": "Krátký odkaz",
+		"resolving": "Vyhledávání tohoto krátkého kódu…",
+		"missing_title": "Tento krátký kód nikam nevede.",
+		"missing_body": "Zpráva mohla vypršet, být zobrazena nebo zneplatněna.",
+		"invalid_title": "Tento krátký kód je neplatný.",
+		"invalid_body": "Krátké kódy mají 6 číslic, například nyan.ist/s/123456.",
+		"error_title": "Vyhledání se nezdařilo.",
+		"error_body": "Síť nebo server při překladu tohoto kódu selhaly. Zkuste to znovu."
 	},
 	"about": {
 		"eyebrow": "Malý {color} nástroj pro soukromí",

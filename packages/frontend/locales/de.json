@@ -138,7 +138,12 @@
 		"revoke_failed": "Die Notiz konnte nicht zurückgezogen werden. Möglicherweise ist sie bereits nicht mehr vorhanden oder der Server ist nicht erreichbar.",
 		"revoked_title": "Notiz zurückgezogen.",
 		"revoked_body": "Der verschlüsselte Umschlag ist nicht mehr auf dem Server verfügbar.",
-		"create_another": "Weitere Notiz erstellen"
+		"create_another": "Weitere Notiz erstellen",
+		"short_summary": "Kurzlink",
+		"short_help": "Erzeuge einen kompakten /s/-Code für diese Notiz. Nur mit zusätzlichem Passwort verfügbar, denn Kurzcodes sind erratbar und erst das Passwort hält die Notiz versiegelt.",
+		"short_create": "Kurzlink erstellen",
+		"short_failed": "Der Kurzlink konnte nicht erstellt werden. Der Server ist möglicherweise nicht erreichbar oder das Limit wurde erreicht.",
+		"short_link": "Kurzlink (enthält weiterhin das Geheimnis)"
 	},
 	"show": {
 		"page_title": "Notiz abrufen",
@@ -179,6 +184,16 @@
 			"reveal_consumed": "Der Abruf ist fehlgeschlagen, nachdem er möglicherweise bereits verbraucht wurde. Prüfe die Verfügbarkeit, bevor du es bewusst erneut versuchst.",
 			"reveal": "Der Server konnte diese Notiz nicht bereitstellen."
 		}
+	},
+	"short": {
+		"page_title": "Kurzlink",
+		"resolving": "Kurzcode wird nachgeschlagen…",
+		"missing_title": "Dieser Kurzcode führt ins Leere.",
+		"missing_body": "Die Notiz ist möglicherweise abgelaufen, wurde abgerufen oder zurückgezogen.",
+		"invalid_title": "Dieser Kurzcode ist ungültig.",
+		"invalid_body": "Kurzcodes bestehen aus 6 Ziffern, etwa nyan.ist/s/123456.",
+		"error_title": "Die Suche ist fehlgeschlagen.",
+		"error_body": "Netzwerk oder Server haben beim Auflösen dieses Codes versagt. Versuche es erneut."
 	},
 	"about": {
 		"eyebrow": "Ein kleines {color} Tool für Privatsphäre",

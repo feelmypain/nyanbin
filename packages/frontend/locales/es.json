@@ -138,7 +138,12 @@
 		"revoke_failed": "No se pudo revocar la nota. Puede que ya no exista o que el servidor no esté disponible.",
 		"revoked_title": "Nota revocada.",
 		"revoked_body": "El sobre cifrado ya no está disponible en el servidor.",
-		"create_another": "Crear otra nota"
+		"create_another": "Crear otra nota",
+		"short_summary": "Enlace corto",
+		"short_help": "Genera un código /s/ compacto para esta nota. Solo está disponible con una segunda contraseña, porque los códigos cortos se pueden adivinar y la contraseña mantiene la nota sellada.",
+		"short_create": "Crear enlace corto",
+		"short_failed": "No se pudo crear el enlace corto. Puede que el servidor no esté disponible o se haya alcanzado el límite.",
+		"short_link": "Enlace corto (sigue incluyendo el secreto)"
 	},
 	"show": {
 		"page_title": "Abrir nota",
@@ -179,6 +184,16 @@
 			"reveal_consumed": "La apertura falló después de que el acceso pudiera haberse consumido. Comprueba la disponibilidad antes de volver a intentarlo deliberadamente.",
 			"reveal": "El servidor no pudo abrir esta nota."
 		}
+	},
+	"short": {
+		"page_title": "Enlace corto",
+		"resolving": "Buscando este código corto…",
+		"missing_title": "Este código corto no lleva a ninguna parte.",
+		"missing_body": "La nota puede haber caducado, haberse consumido o haberse revocado.",
+		"invalid_title": "Este código corto no es válido.",
+		"invalid_body": "Los códigos cortos tienen 6 dígitos, por ejemplo nyan.ist/s/123456.",
+		"error_title": "La búsqueda falló.",
+		"error_body": "La red o el servidor fallaron al resolver este código. Inténtalo de nuevo."
 	},
 	"about": {
 		"eyebrow": "Una pequeña herramienta {color} de privacidad",

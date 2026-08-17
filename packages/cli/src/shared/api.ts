@@ -7,6 +7,7 @@ import {
   validateDeleteTokenHash,
   validateId,
   validateLifecycle,
+  validateShortCode,
   type Lifecycle,
 } from './protocol.js'
 
@@ -26,6 +27,7 @@ export type CreateRequest = {
   envelope: string
   lifecycle: Lifecycle
   deleteTokenHash: string
+  passwordProtected?: boolean
 }
 
 export type CreateResponse = {
@@ -50,6 +52,14 @@ export type RevealResponse = {
 
 export type DeleteRequest = {
   deleteToken: string
+}
+
+export type ShortCreateResponse = {
+  code: string
+}
+
+export type ShortResolveResponse = {
+  id: string
 }
 
 export type Status = {
@@ -88,8 +98,9 @@ export type APIClient = {
   readonly commit: (id: string, request: CreateRequest) => Promise<CreateResponse>
   readonly info: (id: string) => Promise<NoteInfo>
   readonly reveal: (id: string) => Promise<RevealResponse>
-  readonly delete: (id: string, deleteToken: string) => Promise<void>
   readonly deleteNote: (id: string, deleteToken: string) => Promise<void>
+  readonly createShort: (id: string, deleteToken: string) => Promise<ShortCreateResponse>
+  readonly resolveShort: (code: string) => Promise<ShortResolveResponse>
   readonly status: () => Promise<Status>
 }
 
@@ -207,7 +218,10 @@ async function commit(client: Readonly<ClientOptions>, id: string, request: Crea
   if (request.protocol !== PROTOCOL_VERSION) throw new NyanbinError('INVALID_ENVELOPE', 'create protocol must be 1')
   validateLifecycle(request.lifecycle)
   validateDeleteTokenHash(request.deleteTokenHash)
-  if (!Object.keys(request).every((key) => key === 'protocol' || key === 'envelope' || key === 'lifecycle' || key === 'deleteTokenHash')) {
+  if (request.passwordProtected !== undefined && typeof request.passwordProtected !== 'boolean') {
+    throw new NyanbinError('INVALID_ENVELOPE', 'passwordProtected must be a boolean')
+  }
+  if (!Object.keys(request).every((key) => key === 'protocol' || key === 'envelope' || key === 'lifecycle' || key === 'deleteTokenHash' || key === 'passwordProtected')) {
     throw new NyanbinError('INVALID_ENVELOPE', 'create request contains unknown fields')
   }
   const header = parseEnvelope(request.envelope)
@@ -259,6 +273,26 @@ async function removeNote(client: Readonly<ClientOptions>, id: string, deleteTok
   decodeBase64Url(deleteToken, { length: DELETE_TOKEN_BYTES, label: 'delete token' })
   const body: DeleteRequest = { deleteToken }
   await call(client, { path: `/notes/${id}`, method: 'DELETE', body, empty: true })
+}
+
+async function createShort(client: Readonly<ClientOptions>, id: string, deleteToken: string): Promise<ShortCreateResponse> {
+  validateId(id)
+  decodeBase64Url(deleteToken, { length: DELETE_TOKEN_BYTES, label: 'delete token' })
+  const data = objectAtBoundary(
+    await call(client, { path: `/notes/${id}/short`, method: 'POST', body: { deleteToken } }),
+    'short link response',
+  )
+  exactKeys(data, ['code'])
+  validateShortCode(data.code)
+  return { code: data.code }
+}
+
+async function resolveShort(client: Readonly<ClientOptions>, code: string): Promise<ShortResolveResponse> {
+  validateShortCode(code)
+  const data = objectAtBoundary(await call(client, { path: `/short/${code}`, method: 'GET' }), 'short resolve response')
+  exactKeys(data, ['id'])
+  validateId(data.id)
+  return { id: data.id }
 }
 
 async function status(client: Readonly<ClientOptions>): Promise<Status> {
@@ -328,8 +362,9 @@ class ImmutableAPIClient implements APIClient {
   commit(id: string, request: CreateRequest): Promise<CreateResponse> { return commit(this.client, id, request) }
   info(id: string): Promise<NoteInfo> { return info(this.client, id) }
   reveal(id: string): Promise<RevealResponse> { return reveal(this.client, id) }
-  delete(id: string, deleteToken: string): Promise<void> { return removeNote(this.client, id, deleteToken) }
   deleteNote(id: string, deleteToken: string): Promise<void> { return removeNote(this.client, id, deleteToken) }
+  createShort(id: string, deleteToken: string): Promise<ShortCreateResponse> { return createShort(this.client, id, deleteToken) }
+  resolveShort(code: string): Promise<ShortResolveResponse> { return resolveShort(this.client, code) }
   status(): Promise<Status> { return status(this.client) }
 }
 

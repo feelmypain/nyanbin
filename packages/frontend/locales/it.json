@@ -138,7 +138,12 @@
 		"revoke_failed": "Impossibile revocare la nota. Potrebbe essere già stata eliminata oppure il server potrebbe non essere disponibile.",
 		"revoked_title": "Nota revocata.",
 		"revoked_body": "La busta cifrata non è più disponibile sul server.",
-		"create_another": "Crea un'altra nota"
+		"create_another": "Crea un'altra nota",
+		"short_summary": "Link breve",
+		"short_help": "Genera un codice /s/ compatto per questa nota. Disponibile solo con la password del secondo fattore, perché i codici brevi sono indovinabili e solo la password tiene la nota sigillata.",
+		"short_create": "Crea link breve",
+		"short_failed": "Impossibile creare il link breve. Il server potrebbe non essere disponibile o il limite è stato raggiunto.",
+		"short_link": "Link breve (include ancora il segreto)"
 	},
 	"show": {
 		"page_title": "Visualizza nota",
@@ -179,6 +184,16 @@
 			"reveal_consumed": "La visualizzazione non è riuscita e potrebbe essere stata consumata. Verifica la disponibilità prima di riprovare intenzionalmente.",
 			"reveal": "Il server non è riuscito a mostrare questa nota."
 		}
+	},
+	"short": {
+		"page_title": "Link breve",
+		"resolving": "Ricerca di questo codice breve…",
+		"missing_title": "Questo codice breve non porta da nessuna parte.",
+		"missing_body": "La nota potrebbe essere scaduta, già visualizzata o revocata.",
+		"invalid_title": "Questo codice breve non è valido.",
+		"invalid_body": "I codici brevi sono composti da 6 cifre, ad esempio nyan.ist/s/123456.",
+		"error_title": "La ricerca non è riuscita.",
+		"error_body": "La rete o il server hanno avuto un problema nel risolvere questo codice. Riprova."
 	},
 	"about": {
 		"eyebrow": "Un piccolo strumento {color} per la privacy",

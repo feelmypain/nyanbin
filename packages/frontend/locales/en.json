@@ -138,7 +138,12 @@
 		"revoke_failed": "The note could not be revoked. It may already be gone, or the server may be unavailable.",
 		"revoked_title": "Note revoked.",
 		"revoked_body": "The encrypted envelope is no longer available from the server.",
-		"create_another": "Create another note"
+		"create_another": "Create another note",
+		"short_summary": "Short link",
+		"short_help": "Mint a compact /s/ code for this note. Available only with a second-factor password, because short codes are guessable and the password keeps the note sealed.",
+		"short_create": "Create short link",
+		"short_failed": "The short link could not be created. The server may be unavailable or rate limited.",
+		"short_link": "Short link (still includes the secret)"
 	},
 	"show": {
 		"page_title": "Reveal note",
@@ -179,6 +184,16 @@
 			"reveal_consumed": "The reveal failed after it may have been consumed. Check availability before deliberately trying again.",
 			"reveal": "The server could not reveal this note."
 		}
+	},
+	"short": {
+		"page_title": "Short link",
+		"resolving": "Looking up this short code…",
+		"missing_title": "This short code points nowhere.",
+		"missing_body": "The note may have expired, been consumed, or been revoked.",
+		"invalid_title": "This short code is malformed.",
+		"invalid_body": "Short codes are 6 digits, like nyan.ist/s/123456.",
+		"error_title": "The lookup failed.",
+		"error_body": "The network or server failed while resolving this code. Try again."
 	},
 	"about": {
 		"eyebrow": "A small {color} privacy tool",

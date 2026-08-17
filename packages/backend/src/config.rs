@@ -3,6 +3,7 @@ use std::{env, net::SocketAddr, path::PathBuf, str::FromStr, time::Duration};
 
 pub const PROTOCOL_VERSION: u8 = 1;
 pub const NOTE_ID_LENGTH: usize = 32;
+pub const SHORT_CODE_LENGTH: usize = 6;
 pub const DELETE_TOKEN_BYTES: usize = 32;
 pub const ENVELOPE_HEADER_BYTES: usize = 73;
 pub const ENVELOPE_TAG_BYTES: usize = 16;
@@ -23,6 +24,8 @@ const DEFAULT_RATE_LIMIT_REQUESTS: u32 = 30;
 const DEFAULT_RATE_LIMIT_WINDOW_SECONDS: u64 = 60;
 const DEFAULT_RATE_LIMIT_GLOBAL_REQUESTS: u32 = 300;
 const DEFAULT_RATE_LIMIT_IPV6_PREFIX_BITS: u8 = 64;
+const DEFAULT_RATE_LIMIT_SHORT_CREATE_REQUESTS: u32 = 10;
+const DEFAULT_RATE_LIMIT_SHORT_RESOLVE_REQUESTS: u32 = 60;
 const DEFAULT_BRANDING_NAME: &str = "Nyanbin";
 // Empty by default so the frontend falls back to its localized instance description.
 const DEFAULT_BRANDING_DESCRIPTION: &str = "";
@@ -51,6 +54,8 @@ pub struct Config {
     pub rate_limit_requests: u32,
     pub rate_limit_window: Duration,
     pub rate_limit_global_requests: u32,
+    pub rate_limit_short_create_requests: u32,
+    pub rate_limit_short_resolve_requests: u32,
     pub rate_limit_ipv6_prefix_bits: u8,
     pub trusted_proxy_cidrs: Vec<IpNet>,
     pub branding: Branding,
@@ -114,6 +119,24 @@ impl Config {
         if rate_limit_global_requests == 0 || rate_limit_global_requests > 10_000_000 {
             return Err("NYANBIN_RATE_LIMIT_GLOBAL_REQUESTS must be between 1 and 10000000".into());
         }
+        let rate_limit_short_create_requests = parse_env(
+            "NYANBIN_RATE_LIMIT_SHORT_CREATE_REQUESTS",
+            DEFAULT_RATE_LIMIT_SHORT_CREATE_REQUESTS,
+        )?;
+        if rate_limit_short_create_requests == 0 || rate_limit_short_create_requests > 100_000 {
+            return Err(
+                "NYANBIN_RATE_LIMIT_SHORT_CREATE_REQUESTS must be between 1 and 100000".into(),
+            );
+        }
+        let rate_limit_short_resolve_requests = parse_env(
+            "NYANBIN_RATE_LIMIT_SHORT_RESOLVE_REQUESTS",
+            DEFAULT_RATE_LIMIT_SHORT_RESOLVE_REQUESTS,
+        )?;
+        if rate_limit_short_resolve_requests == 0 || rate_limit_short_resolve_requests > 100_000 {
+            return Err(
+                "NYANBIN_RATE_LIMIT_SHORT_RESOLVE_REQUESTS must be between 1 and 100000".into(),
+            );
+        }
         let rate_limit_ipv6_prefix_bits = parse_env(
             "NYANBIN_RATE_LIMIT_IPV6_PREFIX_BITS",
             DEFAULT_RATE_LIMIT_IPV6_PREFIX_BITS,
@@ -158,6 +181,8 @@ impl Config {
             rate_limit_requests,
             rate_limit_window: Duration::from_secs(rate_limit_window_seconds),
             rate_limit_global_requests,
+            rate_limit_short_create_requests,
+            rate_limit_short_resolve_requests,
             rate_limit_ipv6_prefix_bits,
             trusted_proxy_cidrs,
             branding,

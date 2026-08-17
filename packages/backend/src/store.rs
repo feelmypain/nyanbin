@@ -27,7 +27,7 @@ if tonumber(ARGV[1]) <= now_ms then
   redis.call('DEL', KEYS[1])
   return 'missing'
 end
-redis.call('HSET', KEYS[2], 'protocol', '1', 'envelope', ARGV[4], 'expires_at', ARGV[1], 'max_reads', ARGV[2], 'remaining_reads', ARGV[2], 'delete_hash', ARGV[3])
+redis.call('HSET', KEYS[2], 'protocol', '1', 'envelope', ARGV[4], 'expires_at', ARGV[1], 'max_reads', ARGV[2], 'remaining_reads', ARGV[2], 'delete_hash', ARGV[3], 'password_protected', ARGV[5])
 redis.call('PEXPIREAT', KEYS[2], ARGV[1])
 redis.call('DEL', KEYS[1])
 return 'ok'
@@ -71,6 +71,40 @@ redis.call('DEL', KEYS[1])
 return 'deleted'
 "#;
 
+const SHORT_CREATE_SCRIPT: &str = r#"
+if redis.call('EXISTS', KEYS[1]) == 0 then return {'missing'} end
+local v = redis.call('HMGET', KEYS[1], 'expires_at', 'delete_hash', 'password_protected', 'short_code')
+if not v[1] or not v[2] then return {'corrupt'} end
+local now = redis.call('TIME')
+local now_ms = tonumber(now[1]) * 1000 + math.floor(tonumber(now[2]) / 1000)
+if tonumber(v[1]) <= now_ms then redis.call('DEL', KEYS[1]); return {'missing'} end
+if string.len(v[2]) ~= 64 or string.len(ARGV[1]) ~= 64 then return {'invalid'} end
+local different = 0
+for index = 1, 64 do
+  if string.byte(v[2], index) ~= string.byte(ARGV[1], index) then different = 1 end
+end
+if different ~= 0 then return {'invalid'} end
+if v[3] ~= '1' then return {'unprotected'} end
+if v[4] then return {'exists', v[4]} end
+if redis.call('EXISTS', KEYS[2]) ~= 0 then return {'collision'} end
+redis.call('SET', KEYS[2], ARGV[3])
+redis.call('PEXPIREAT', KEYS[2], v[1])
+redis.call('HSET', KEYS[1], 'short_code', ARGV[2])
+return {'ok'}
+"#;
+
+const SHORT_RESOLVE_SCRIPT: &str = r#"
+local id = redis.call('GET', KEYS[1])
+if not id then return {'missing'} end
+local note_key = ARGV[1] .. 'note:' .. id
+local v = redis.call('HMGET', note_key, 'protocol', 'expires_at')
+if v[1] ~= '1' or not v[2] then redis.call('DEL', KEYS[1]); return {'missing'} end
+local now = redis.call('TIME')
+local now_ms = tonumber(now[1]) * 1000 + math.floor(tonumber(now[2]) / 1000)
+if tonumber(v[2]) <= now_ms then redis.call('DEL', note_key); redis.call('DEL', KEYS[1]); return {'missing'} end
+return {'ok', id}
+"#;
+
 const RATE_LIMIT_SCRIPT: &str = r#"
 local global_count = tonumber(redis.call('GET', KEYS[2])) or 0
 if global_count >= tonumber(ARGV[3]) then return {-1, global_count} end
@@ -100,6 +134,15 @@ pub enum CommitResult {
     Missing,
     Mismatch,
     Collision,
+}
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ShortCreateResult {
+    Created,
+    Exists { code: String },
+    Collision,
+    Missing,
+    Invalid,
+    Unprotected,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DeleteResult {
@@ -132,6 +175,9 @@ impl Store {
     }
     fn note_key(&self, id: &str) -> String {
         format!("{}note:{id}", self.prefix)
+    }
+    fn short_key(&self, code: &str) -> String {
+        format!("{}short:{code}", self.prefix)
     }
     fn rate_key(&self, operation: &str, bucket: &str) -> String {
         format!("{}rate:{operation}:{bucket}", self.prefix)
@@ -189,6 +235,7 @@ impl Store {
         lifecycle: &Lifecycle,
         delete_hash: &str,
         envelope: &str,
+        password_protected: bool,
     ) -> Result<CommitResult, ()> {
         let mut connection = self.manager.clone();
         let max_reads = lifecycle
@@ -204,6 +251,7 @@ impl Store {
                     .arg(max_reads)
                     .arg(delete_hash)
                     .arg(envelope)
+                    .arg(if password_protected { "1" } else { "0" })
                     .invoke_async(&mut connection),
             )
             .await?;
@@ -275,6 +323,54 @@ impl Store {
         }
     }
 
+    pub async fn create_short(
+        &self,
+        id: &str,
+        candidate_hash: &str,
+        code: &str,
+    ) -> Result<ShortCreateResult, ()> {
+        let mut connection = self.manager.clone();
+        let result: Vec<String> = self
+            .timed(
+                redis::Script::new(SHORT_CREATE_SCRIPT)
+                    .key(self.note_key(id))
+                    .key(self.short_key(code))
+                    .arg(candidate_hash)
+                    .arg(code)
+                    .arg(id)
+                    .invoke_async(&mut connection),
+            )
+            .await?;
+        match result.first().map(String::as_str) {
+            Some("ok") if result.len() == 1 => Ok(ShortCreateResult::Created),
+            Some("exists") if result.len() == 2 => Ok(ShortCreateResult::Exists {
+                code: result[1].clone(),
+            }),
+            Some("collision") if result.len() == 1 => Ok(ShortCreateResult::Collision),
+            Some("missing") if result.len() == 1 => Ok(ShortCreateResult::Missing),
+            Some("invalid") if result.len() == 1 => Ok(ShortCreateResult::Invalid),
+            Some("unprotected") if result.len() == 1 => Ok(ShortCreateResult::Unprotected),
+            _ => Err(()),
+        }
+    }
+
+    pub async fn resolve_short(&self, code: &str) -> Result<Option<String>, ()> {
+        let mut connection = self.manager.clone();
+        let values: Vec<String> = self
+            .timed(
+                redis::Script::new(SHORT_RESOLVE_SCRIPT)
+                    .key(self.short_key(code))
+                    .arg(&self.prefix)
+                    .invoke_async(&mut connection),
+            )
+            .await?;
+        match values.first().map(String::as_str) {
+            Some("missing") if values.len() == 1 => Ok(None),
+            Some("ok") if values.len() == 2 => Ok(Some(values[1].clone())),
+            _ => Err(()),
+        }
+    }
+
     pub async fn rate_limit(
         &self,
         operation: &str,
@@ -341,6 +437,23 @@ mod tests {
         let delete = REVEAL_SCRIPT.find("redis.call('DEL', KEYS[1])").unwrap();
         let returned = REVEAL_SCRIPT.rfind("return {'ok', v[2]}").unwrap();
         assert!(delete < returned);
+    }
+    #[test]
+    fn short_create_script_gates_on_password_protection() {
+        let gate = SHORT_CREATE_SCRIPT
+            .find("if v[3] ~= '1' then return {'unprotected'} end")
+            .unwrap();
+        let set = SHORT_CREATE_SCRIPT.find("redis.call('SET', KEYS[2]").unwrap();
+        assert!(gate < set);
+    }
+    #[test]
+    fn short_resolve_script_self_heals_dead_notes() {
+        assert!(SHORT_RESOLVE_SCRIPT.contains("redis.call('DEL', KEYS[1])"));
+        assert!(SHORT_RESOLVE_SCRIPT.contains("return {'ok', id}"));
+    }
+    #[test]
+    fn short_key_stores_the_note_id() {
+        assert!(SHORT_CREATE_SCRIPT.contains("redis.call('SET', KEYS[2], ARGV[3])"));
     }
     #[test]
     fn global_limit_bounds_rotating_address_buckets() {

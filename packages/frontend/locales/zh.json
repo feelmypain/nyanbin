@@ -138,7 +138,12 @@
 		"revoke_failed": "无法撤销便笺。它可能已不存在，或服务器当前不可用。",
 		"revoked_title": "便笺已撤销。",
 		"revoked_body": "服务器已不再提供此加密封装。",
-		"create_another": "再创建一个便笺"
+		"create_another": "再创建一个便笺",
+		"short_summary": "短链接",
+		"short_help": "为这张便笺生成一个简短的 /s/ 代码。仅在设置了二重验证密码时可用，因为短代码可以被猜出，只有密码能让便笺保持密封。",
+		"short_create": "创建短链接",
+		"short_failed": "无法创建短链接。服务器可能不可用，或已达到限制。",
+		"short_link": "短链接（仍包含密钥）"
 	},
 	"show": {
 		"page_title": "查看便笺",
@@ -179,6 +184,16 @@
 			"reveal_consumed": "查看失败，且此次查看次数可能已经消耗。请先确认便笺仍可用，再决定是否重试。",
 			"reveal": "服务器无法显示此便笺。"
 		}
+	},
+	"short": {
+		"page_title": "短链接",
+		"resolving": "正在查询此短代码…",
+		"missing_title": "此短代码没有指向任何内容。",
+		"missing_body": "便笺可能已过期、已被查看或已被撤销。",
+		"invalid_title": "此短代码无效。",
+		"invalid_body": "短代码为 6 位数字，例如 nyan.ist/s/123456。",
+		"error_title": "查询失败。",
+		"error_body": "解析此代码时网络或服务器出错。请重试。"
 	},
 	"about": {
 		"eyebrow": "{color}小巧的隐私工具",

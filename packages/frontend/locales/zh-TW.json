@@ -138,7 +138,12 @@
 		"revoke_failed": "無法撤銷此內容。內容可能已不存在，或伺服器目前無法使用。",
 		"revoked_title": "內容已撤銷。",
 		"revoked_body": "伺服器已不再提供此加密信封。",
-		"create_another": "建立另一則內容"
+		"create_another": "建立另一則內容",
+		"short_summary": "短連結",
+		"short_help": "為這則內容產生精簡的 /s/ 代碼。僅在設定第二重密碼時可用，因為短代碼可能被猜中，唯有密碼能讓內容保持密封。",
+		"short_create": "建立短連結",
+		"short_failed": "無法建立短連結。伺服器可能無法使用，或已達上限。",
+		"short_link": "短連結（仍包含密鑰）"
 	},
 	"show": {
 		"page_title": "查看內容",
@@ -179,6 +184,16 @@
 			"reveal_consumed": "查看失敗，且可能已使用一次次數。請先確認是否仍可查看，再決定是否重試。",
 			"reveal": "伺服器無法開啟此內容。"
 		}
+	},
+	"short": {
+		"page_title": "短連結",
+		"resolving": "正在查詢此短代碼…",
+		"missing_title": "此短代碼沒有指向任何內容。",
+		"missing_body": "內容可能已到期、已被查看或遭撤銷。",
+		"invalid_title": "此短代碼無效。",
+		"invalid_body": "短代碼為 6 位數字，例如 nyan.ist/s/123456。",
+		"error_title": "查詢失敗。",
+		"error_body": "解析此代碼時網路或伺服器發生錯誤。請再試一次。"
 	},
 	"about": {
 		"eyebrow": "{color}小巧的隱私工具",

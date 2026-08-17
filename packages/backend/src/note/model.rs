@@ -4,7 +4,10 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 use crate::{
-    config::{Config, DELETE_TOKEN_BYTES, MIN_ENVELOPE_BYTES, NOTE_ID_LENGTH, PROTOCOL_VERSION},
+    config::{
+        Config, DELETE_TOKEN_BYTES, MIN_ENVELOPE_BYTES, NOTE_ID_LENGTH, PROTOCOL_VERSION,
+        SHORT_CODE_LENGTH,
+    },
     error::ApiError,
 };
 
@@ -38,6 +41,8 @@ pub struct CommitRequest {
     pub envelope: String,
     pub lifecycle: Lifecycle,
     pub delete_token_hash: String,
+    #[serde(default)]
+    pub password_protected: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -74,6 +79,24 @@ pub struct RevealResponse {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct DeleteRequest {
     pub delete_token: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ShortRequest {
+    pub delete_token: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ShortResponse {
+    pub code: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ShortResolveResponse {
+    pub id: String,
 }
 
 #[derive(Debug)]
@@ -264,6 +287,41 @@ pub fn generate_id(random: &SystemRandom) -> Result<String, ApiError> {
     Ok(output)
 }
 
+pub fn generate_short_code(random: &SystemRandom) -> Result<String, ApiError> {
+    let mut output = String::with_capacity(SHORT_CODE_LENGTH);
+    let mut random_bytes = [0_u8; 16];
+    while output.len() < SHORT_CODE_LENGTH {
+        random.fill(&mut random_bytes).map_err(|_| {
+            ApiError::new(
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "internal_error",
+                "Secure random generation failed",
+            )
+        })?;
+        for byte in random_bytes {
+            if byte < 250 {
+                output.push((b'0' + byte % 10) as char);
+                if output.len() == SHORT_CODE_LENGTH {
+                    break;
+                }
+            }
+        }
+    }
+    Ok(output)
+}
+
+pub fn validate_short_code(code: &str) -> Result<(), ApiError> {
+    if code.len() == SHORT_CODE_LENGTH && code.bytes().all(|byte| byte.is_ascii_digit()) {
+        Ok(())
+    } else {
+        Err(ApiError::new(
+            axum::http::StatusCode::BAD_REQUEST,
+            "invalid_short_code",
+            "Short code must be 6 digits",
+        ))
+    }
+}
+
 fn is_base62(byte: u8) -> bool {
     byte.is_ascii_alphanumeric()
 }
@@ -304,5 +362,14 @@ mod tests {
         assert_eq!(normalize_max_reads(Some(0), Some(1), 100).unwrap(), None);
         assert_eq!(normalize_max_reads(None, Some(1), 100).unwrap(), Some(1));
         assert!(normalize_max_reads(Some(101), Some(1), 100).is_err());
+    }
+
+    #[test]
+    fn short_codes_are_fixed_six_digits() {
+        let code = generate_short_code(&SystemRandom::new()).unwrap();
+        assert_eq!(code.len(), 6);
+        assert!(validate_short_code(&code).is_ok());
+        assert!(validate_short_code("12345").is_err());
+        assert!(validate_short_code("12345a").is_err());
     }
 }

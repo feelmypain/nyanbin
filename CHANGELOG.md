@@ -4,6 +4,18 @@ All notable changes to Nyanbin are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-08-17
+
+### Added
+
+- Optional first-party short links: password-protected notes can mint a 6-digit `/s/{code}` alias from the result view (`POST /api/notes/{id}/short`, resolved by `GET /api/short/{code}`). Codes require the creator delete capability, are idempotent per note, expire with the note, and die with revocation or the final read. Notes without a second-factor password are refused (`409 short_link_requires_password`) because a 6-digit code is guessable; the password keeps a discovered note sealed. The share URL keeps the secret in the fragment: `/s/{code}#{secret}`.
+- Dedicated short-code rate limits: `NYANBIN_RATE_LIMIT_SHORT_CREATE_REQUESTS` (default 10/min per client) and `NYANBIN_RATE_LIMIT_SHORT_RESOLVE_REQUESTS` (default 60/min per client).
+- The commit API accepts an optional `passwordProtected` flag so the server can gate short-code minting without learning the password.
+
+### Changed
+
+- The API client's `delete` method is renamed `deleteNote`; `createShort` and `resolveShort` are new.
+
 ## [1.3.1] - 2026-08-15
 
 ### Changed

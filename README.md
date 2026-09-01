@@ -197,8 +197,10 @@ Both reserve and commit are metered before JSON body decoding with per-client an
 The package and executable are both named `nyanbin` and require Node.js 22 or newer. Versioned packages are published as GitHub release assets; the CLI is not currently published in the npm registry. The default server is the official instance `https://nyan.ist`; point at a self-hosted instance with `--server` or `NYANBIN_SERVER`:
 
 ```sh
-NYANBIN_VERSION=1.5.3
-npm install --global "https://github.com/feelmypain/nyanbin/releases/download/v${NYANBIN_VERSION}/nyanbin-${NYANBIN_VERSION}.tgz"
+NYANBIN_VERSION=1.5.4
+curl --fail --location --output "nyanbin-${NYANBIN_VERSION}.tgz" \
+  "https://github.com/feelmypain/nyanbin/releases/download/v${NYANBIN_VERSION}/nyanbin-${NYANBIN_VERSION}.tgz"
+npm install --global "./nyanbin-${NYANBIN_VERSION}.tgz"
 export NYANBIN_SERVER=https://paste.example
 
 nyanbin info

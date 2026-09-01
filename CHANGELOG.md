@@ -4,6 +4,12 @@ All notable changes to Nyanbin are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.5.4] - 2026-09-01
+
+### Fixed
+
+- Download the GitHub release tarball before installing the CLI so the documented command works even when npm policy disables direct remote-package fetches.
+
 ## [1.5.3] - 2026-09-01
 
 ### Fixed

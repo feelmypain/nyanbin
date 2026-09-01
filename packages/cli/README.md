@@ -7,8 +7,10 @@ The Nyanbin CLI creates, reveals, and deletes Nyanbin v1 notes. Encryption and d
 The CLI is published as a versioned GitHub release asset, not in the npm registry:
 
 ```sh
-NYANBIN_VERSION=1.5.3
-npm install --global "https://github.com/feelmypain/nyanbin/releases/download/v${NYANBIN_VERSION}/nyanbin-${NYANBIN_VERSION}.tgz"
+NYANBIN_VERSION=1.5.4
+curl --fail --location --output "nyanbin-${NYANBIN_VERSION}.tgz" \
+  "https://github.com/feelmypain/nyanbin/releases/download/v${NYANBIN_VERSION}/nyanbin-${NYANBIN_VERSION}.tgz"
+npm install --global "./nyanbin-${NYANBIN_VERSION}.tgz"
 nyanbin --help
 ```
 

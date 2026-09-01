@@ -1,6 +1,6 @@
 [package]
 name = "nyanbin"
-version = "1.5.3"
+version = "1.5.4"
 authors = ["cupcakearmy <hi@nicco.io>", "Nyanbin contributors"]
 edition = "2024"
 rust-version = "1.85"

@@ -4,6 +4,12 @@ All notable changes to Nyanbin are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-09-01
+
+### Fixed
+
+- Restore the tracked `nyanbin-admin` binary source required by the declared Cargo target and production Docker image, and narrow the overly broad `bin/` ignore rule that omitted it from the v1.5.0 release. The restored CLI validates note IDs and pseudonymous bucket identifiers, requires explicit confirmation for revocation, and provides the documented `stats`, `switch`, `revoke`, `block`, `unblock`, and `resync` operations.
+
 ## [1.5.0] - 2026-09-01
 
 ### Added

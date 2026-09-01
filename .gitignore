@@ -5,7 +5,7 @@
 node_modules/
 .pnpm-store/
 dist/
-bin/
+/bin/
 target/
 .svelte-kit/
 packages/frontend/build/

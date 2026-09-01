@@ -11,7 +11,7 @@
     "build": "pnpm --recursive run build",
     "licenses:generate": "node scripts/generate-dependency-licenses.mjs",
     "openapi:generate": "node scripts/openapi-json.mjs",
-    "check": "pnpm --recursive --if-present run check",
+    "check": "pnpm --filter nyanbin build && pnpm --recursive --if-present run check",
     "test": "playwright test",
     "test:local": "playwright test --project=chromium",
     "test:prepare": "run-p build docker:build test:install-browsers",

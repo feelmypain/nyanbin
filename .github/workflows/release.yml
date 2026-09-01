@@ -10,8 +10,8 @@ permissions:
   packages: write
 
 env:
-  REGISTRY: ${{ vars.CONTAINER_REGISTRY || 'git.oh.rip' }}
-  IMAGE_NAME: ${{ vars.CONTAINER_REGISTRY || 'git.oh.rip' }}/${{ github.repository }}
+  REGISTRY: ${{ vars.CONTAINER_REGISTRY || 'ghcr.io' }}
+  IMAGE_NAME: ${{ vars.CONTAINER_REGISTRY || 'ghcr.io' }}/${{ github.repository }}
 
 jobs:
   release:
@@ -35,7 +35,7 @@ jobs:
           path: ${{ runner.temp }}/release/*.tgz
           if-no-files-found: error
       - name: Publish CLI to npm
-        if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+        if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && vars.PUBLISH_NPM == 'true' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish "$RUNNER_TEMP"/release/*.tgz --access public --ignore-scripts
@@ -45,8 +45,8 @@ jobs:
         if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.REGISTRY_TOKEN || secrets.FORGEJO_TOKEN || secrets.GITHUB_TOKEN }}
+          username: ${{ vars.CONTAINER_USERNAME || github.actor }}
+          password: ${{ secrets.REGISTRY_TOKEN || secrets.GITHUB_TOKEN }}
       - id: meta
         uses: docker/metadata-action@v6
         with:
@@ -65,14 +65,10 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           provenance: mode=max
           sbom: true
-      - name: Create Forgejo release
-        if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
-        uses: https://code.forgejo.org/actions/forgejo-release@v2.13.4
+      - name: Create GitHub release
+        if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && github.server_url == 'https://github.com' }}
+        uses: softprops/action-gh-release@v2
         with:
-          url: ${{ github.server_url }}
-          repo: ${{ github.repository }}
-          direction: upload
-          release-dir: ${{ runner.temp }}/release
-          token: ${{ secrets.FORGEJO_TOKEN || secrets.GITHUB_TOKEN }}
-          tag: ${{ github.ref_name }}
-          release-notes: Nyanbin ${{ github.ref_name }}
+          name: Nyanbin ${{ github.ref_name }}
+          generate_release_notes: true
+          files: ${{ runner.temp }}/release/*.tgz

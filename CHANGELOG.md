@@ -4,6 +4,13 @@ All notable changes to Nyanbin are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.5.2] - 2026-09-01
+
+### Fixed
+
+- Make `pnpm run check` build the workspace CLI dependency first, so frontend type checks resolve `nyanbin/shared` on a clean checkout rather than relying on a stale local `dist/` directory.
+- Make the GitHub release workflow portable on GitHub-hosted runners: publish containers to GHCR by default, gate optional npm publication behind `PUBLISH_NPM`, and create releases with a GitHub-native action instead of an unsupported Forgejo action URL.
+
 ## [1.5.1] - 2026-09-01
 
 ### Fixed

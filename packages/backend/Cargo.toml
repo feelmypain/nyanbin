@@ -1,14 +1,22 @@
 [package]
 name = "nyanbin"
-version = "1.4.2"
+version = "1.5.0"
 authors = ["cupcakearmy <hi@nicco.io>", "Nyanbin contributors"]
 edition = "2024"
 rust-version = "1.85"
 license = "MIT"
 
+[lib]
+name = "nyanbin"
+path = "src/lib.rs"
+
 [[bin]]
 name = "nyanbin"
 path = "src/main.rs"
+
+[[bin]]
+name = "nyanbin-admin"
+path = "src/bin/nyanbin-admin.rs"
 
 [dependencies]
 axum = { version = "0.8", features = ["json"] }

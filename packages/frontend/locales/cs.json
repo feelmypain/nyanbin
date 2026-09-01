@@ -34,9 +34,11 @@
 		"confirm": "Odejít bez uložení"
 	},
 	"footer": {
+		"api": "API",
 		"label": "Navigace v zápatí",
 		"local_only": "Šifrování i vytváření QR kódu probíhá přímo ve vašem prohlížeči.",
-		"source": "Zdrojový kód na GitHubu"
+		"source": "Zdrojový kód na GitHubu",
+		"abuse": "Nahlásit zneužití"
 	},
 	"formats": {
 		"plain": "Prostý text",

@@ -1,0 +1,1201 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Nyanbin API",
+    "version": "1",
+    "summary": "Zero-knowledge encrypted note sharing.",
+    "description": "Nyanbin is a zero-knowledge pastebin. All encryption and decryption happens\non the client; the server only ever stores an **opaque envelope** and can\nnever read note contents or passwords. Delete tokens are transient bearer\ncapabilities: the server generates or receives them when required but\nnever logs or stores them; only their SHA-256 digests are persisted.\n\n## Creating a note: reserve → encrypt → commit\n\n1. `POST /api/notes/reserve` with the desired lifecycle. The server mints a\n   note ID, a `deleteToken` capability, and the authoritative lifecycle\n   (`expiresAt` in milliseconds since the Unix epoch, optional `maxReads`).\n2. The client encrypts the note **locally** into a protocol-v1 envelope and\n   binds the returned lifecycle into it.\n3. `PUT /api/notes/{id}` commits the envelope together with the **same**\n   lifecycle and the SHA-256 hex digest of the delete token.\n\nA reservation lives for the instance-configured reservation TTL (10–600\nseconds; 120 seconds by default). If it is not committed in time it\nsilently expires and the ID is never published.\n\n## Idempotency and retries\n\nReserve is **not idempotent**: a lost response is harmless (the unused\nreservation simply expires) and the correct retry is a fresh reserve call.\nCommit is naturally safe to retry against races: a second commit to the\nsame ID is rejected with `409 reservation_mismatch`, so at most one\nenvelope is ever published per reservation. There is **no\nidempotency-key mechanism** and none is needed.\n\n## The envelope is opaque\n\nThe `envelope` field is canonical base64url produced only by the published\nprotocol implementation (npm package `nyanbin`, export\n`./shared/protocol`). Clients **must not** send plaintext or ad-hoc\nciphertext; the server validates canonical envelope framing but by design\ncannot inspect the contents.\n\n## Reading is consuming\n\n`POST /api/notes/{id}/reveal` atomically burns one read **before** the\nclient decrypts anything locally. If the note is password protected and\nthe reader enters a wrong password, the read is already consumed — clients\nmust not blindly retry reveals. Use `GET /api/notes/{id}` (metadata only,\nnon-consuming) to inspect lifecycle and remaining reads.\n\n## Delete tokens are capabilities\n\nDeletion requires presenting the original `deleteToken`. The server stores\nonly its SHA-256 hex digest, so a database leak does not leak the\ncapability itself.\n\n## Short links\n\nShort codes are only issued for **password-protected** notes, because a\nshort code is guessable and the password is the remaining secret. Requests\nfor unprotected notes fail with `409 short_link_requires_password`.\n\n## Rate limits and storage pressure\n\nAll `429 rate_limited` responses carry a `Retry-After` header (integer\nseconds, at least 1). This includes the per-client hourly upload byte\nquota, whose `Retry-After` points at the next hour boundary.\n\nUnder storage pressure the service browns out gracefully: near the storage\nbudget, large commits are rejected with `507 storage_pressure`; when the\nbudget is effectively full, all commits are rejected with `507`. Reads,\nreveals, and deletes keep working throughout.\n\n## Operator kill switches\n\nOperators can temporarily disable subsets of the API. These conditions\nsurface as `503 writes_disabled` (reserve and commit paused),\n`503 short_disabled` (short-link create/resolve paused), or a\nrestriction of large commits to `507 storage_pressure`. They are\ntemporary operational measures, not permanent API changes.\n\n## Versioning\n\n`info.version` tracks the public API surface (v1), decoupled from the\napplication's own release version reported by `GET /api/status`. See the\npublished stability policy for compatibility guarantees: the wire\n`protocol` field governs cryptographic compatibility, while this HTTP\nsurface governs transport compatibility.\n",
+    "license": {
+      "name": "MIT",
+      "identifier": "MIT"
+    },
+    "contact": {
+      "name": "Nyanbin",
+      "url": "https://nyan.ist"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://nyan.ist",
+      "description": "Public instance."
+    },
+    {
+      "url": "{origin}",
+      "description": "Self-hosted instance.",
+      "variables": {
+        "origin": {
+          "default": "http://127.0.0.1:3000",
+          "description": "Origin of a self-hosted Nyanbin deployment."
+        }
+      }
+    }
+  ],
+  "security": [],
+  "tags": [
+    {
+      "name": "notes",
+      "description": "Reserve, commit, read, and delete encrypted notes."
+    },
+    {
+      "name": "short",
+      "description": "Short links for password-protected notes."
+    },
+    {
+      "name": "meta",
+      "description": "Instance metadata, health, and this specification."
+    }
+  ],
+  "paths": {
+    "/api/status": {
+      "get": {
+        "operationId": "getStatus",
+        "tags": [
+          "meta"
+        ],
+        "summary": "Instance status, limits, and branding",
+        "description": "Returns the protocol version, application version, effective limits\nand defaults, capability flags, and instance branding. Clients should\nread limits from here instead of hard-coding them.\n",
+        "responses": {
+          "200": {
+            "description": "Instance status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Status"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/live": {
+      "get": {
+        "operationId": "getLive",
+        "tags": [
+          "meta"
+        ],
+        "summary": "Liveness probe",
+        "description": "Always returns 200 while the process is running.",
+        "responses": {
+          "200": {
+            "description": "Process is live.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ready": {
+      "get": {
+        "operationId": "getReady",
+        "tags": [
+          "meta"
+        ],
+        "summary": "Readiness probe",
+        "description": "Returns 200 when the backing store is reachable.",
+        "responses": {
+          "200": {
+            "description": "Ready to serve traffic.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Backing store unreachable (`storage_unavailable`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/openapi.json": {
+      "get": {
+        "operationId": "getOpenApi",
+        "tags": [
+          "meta"
+        ],
+        "summary": "This specification as JSON",
+        "description": "Returns this OpenAPI document rendered as canonical JSON. The JSON is\ngenerated from the authoritative YAML source and served verbatim.\n",
+        "responses": {
+          "200": {
+            "description": "The OpenAPI 3.1 document describing this API.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "OpenAPI 3.1 document."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notes/reserve": {
+      "post": {
+        "operationId": "reserveNote",
+        "tags": [
+          "notes"
+        ],
+        "summary": "Reserve a note ID and delete token",
+        "description": "Mints a fresh note ID, a `deleteToken` capability, and the\nauthoritative lifecycle. The reservation lives for the\ninstance-configured TTL (10–600 seconds; 120 seconds by default);\ncommit promptly or the ID silently expires.\n\nReserve is **not idempotent**. If the response is lost, simply\nreserve again — the abandoned reservation expires harmlessly and is\nnever published.\n\nIn the request, omitting `maxReads` applies the instance default and\nan explicit `0` requests unlimited reads. In the response lifecycle,\n`maxReads` is either a positive count or absent (unlimited) — never 0.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReserveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Reservation created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReserveResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request (`invalid_request`, `invalid_json`) or lifecycle outside the instance limits (`invalid_lifecycle`).\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large (`payload_too_large`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "description": "Writes temporarily paused by the operator (`writes_disabled`), backing store unreachable (`storage_unavailable`), or no free ID could be minted (`id_space_exhausted`). All are temporary; retry later.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notes/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/NoteId"
+        }
+      ],
+      "put": {
+        "operationId": "commitNote",
+        "tags": [
+          "notes"
+        ],
+        "summary": "Commit an encrypted envelope to a reservation",
+        "description": "Publishes the note by attaching the locally encrypted envelope to a\nprior reservation. The lifecycle **must equal** the lifecycle returned\nby reserve, and `deleteTokenHash` must be the SHA-256 hex digest of\nthe reserved delete token. Commit transmits only that digest, not the\nraw token.\n\nThe envelope is opaque canonical base64url produced by the published\nprotocol implementation (npm package `nyanbin`, export\n`./shared/protocol`). Never send plaintext.\n\nCommit is safe against duplicate delivery: a second commit to the same\nID yields `409 reservation_mismatch`, so at most one envelope is ever\npublished per reservation.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Note published.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request (`invalid_request`, `invalid_json`), malformed ID (`invalid_id`), lifecycle mismatch or out of range (`invalid_lifecycle`), or non-canonical envelope (`invalid_envelope`).\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Reservation expired or unknown (`reservation_not_found`). Reserve again.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Commit does not match the reservation, or an envelope was already committed for this ID (`reservation_mismatch`).\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Envelope exceeds the instance size limit (`payload_too_large`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "description": "Writes temporarily paused by the operator (`writes_disabled`) or backing store unreachable (`storage_unavailable`).\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "507": {
+            "description": "Storage pressure brownout (`storage_pressure`): near the storage budget only small commits are accepted; at the budget all commits are rejected. Temporary; retry later or with a smaller note.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "getNoteInfo",
+        "tags": [
+          "notes"
+        ],
+        "summary": "Note metadata (non-consuming)",
+        "description": "Returns lifecycle metadata and whether the note is password protected\n**without** consuming a read. Use this to inspect `remainingReads`\nbefore revealing.\n",
+        "responses": {
+          "200": {
+            "description": "Note metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InfoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed note ID (`invalid_id`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Note unknown, expired, or fully consumed (`note_not_found`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "description": "Backing store unreachable (`storage_unavailable`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteNote",
+        "tags": [
+          "notes"
+        ],
+        "summary": "Delete a note with its delete token",
+        "description": "Deletes the note when the presented `deleteToken` matches the SHA-256\ndigest stored at commit time. The token is a bearer capability: the\nserver never stores it in the clear.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Note deleted."
+          },
+          "400": {
+            "description": "Malformed note ID (`invalid_id`) or body (`invalid_json`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Delete token is malformed or does not match (`invalid_delete_token`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Note unknown, expired, or fully consumed (`note_not_found`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large (`payload_too_large`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "description": "Backing store unreachable (`storage_unavailable`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notes/{id}/reveal": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/NoteId"
+        }
+      ],
+      "post": {
+        "operationId": "revealNote",
+        "tags": [
+          "notes"
+        ],
+        "summary": "Reveal the envelope (consumes one read)",
+        "description": "Returns the encrypted envelope and **atomically burns one read** —\nthe burn happens on the server before any local decryption. If the\nnote is password protected and the reader supplies a wrong password\nafterwards, the read is already consumed; clients must not blindly\nretry reveals. Once the last read is consumed the note is gone and\nsubsequent requests return 404.\n",
+        "responses": {
+          "200": {
+            "description": "Envelope revealed; one read consumed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevealResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed note ID (`invalid_id`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Note unknown, expired, or fully consumed (`note_not_found`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "description": "Backing store unreachable (`storage_unavailable`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notes/{id}/short": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/NoteId"
+        }
+      ],
+      "post": {
+        "operationId": "createShortLink",
+        "tags": [
+          "short"
+        ],
+        "summary": "Create or fetch a short code for a note",
+        "description": "Issues a 6-character short code for a **password-protected** note.\nRequires the note's delete token as proof of ownership. Returns 201\nwith a fresh code, or 200 with the existing code if one was already\nissued. Notes without password protection are refused with\n`409 short_link_requires_password`, because a short code is guessable\nand the password must remain as the protecting secret.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShortRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Short code already existed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShortResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Short code created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShortResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed note ID (`invalid_id`) or body (`invalid_json`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Delete token is malformed or does not match (`invalid_delete_token`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Note unknown, expired, or fully consumed (`note_not_found`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Note is not password protected (`short_link_requires_password`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body too large (`payload_too_large`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "description": "Short links temporarily paused by the operator (`short_disabled`), backing store unreachable (`storage_unavailable`), or no free code could be allocated (`short_code_space_exhausted`). All are temporary; retry later.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/short/{code}": {
+      "parameters": [
+        {
+          "name": "code",
+          "in": "path",
+          "required": true,
+          "description": "Short code (6 digits).",
+          "schema": {
+            "type": "string",
+            "pattern": "^[0-9]{6}$",
+            "minLength": 6,
+            "maxLength": 6
+          }
+        }
+      ],
+      "get": {
+        "operationId": "resolveShortLink",
+        "tags": [
+          "short"
+        ],
+        "summary": "Resolve a short code to a note ID",
+        "description": "Resolves a short code to the full note ID. Resolution is\nnon-consuming; reading the note still requires the reveal endpoint\nand the note's password.\n",
+        "responses": {
+          "200": {
+            "description": "Short code resolved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShortResolveResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed short code (`invalid_short_code`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown short code or expired note (`note_not_found`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "description": "Short links temporarily paused by the operator (`short_disabled`) or backing store unreachable (`storage_unavailable`).\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "NoteId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Note ID (32 base62 characters).",
+        "schema": {
+          "type": "string",
+          "pattern": "^[0-9A-Za-z]{32}$",
+          "minLength": 32,
+          "maxLength": 32
+        }
+      }
+    },
+    "headers": {
+      "RetryAfter": {
+        "description": "Seconds to wait before retrying (integer, at least 1).",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "format": "int64",
+          "minimum": 1
+        }
+      }
+    },
+    "responses": {
+      "RateLimited": {
+        "description": "Too many requests (`rate_limited`). Also returned when the per-client hourly upload byte quota is exhausted; then `Retry-After` points at the next hour boundary.\n",
+        "headers": {
+          "Retry-After": {
+            "$ref": "#/components/headers/RetryAfter"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Lifecycle": {
+        "type": "object",
+        "description": "Authoritative note lifecycle. `maxReads` is a positive count or absent for unlimited reads — never 0.\n",
+        "additionalProperties": false,
+        "required": [
+          "expiresAt"
+        ],
+        "properties": {
+          "expiresAt": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "description": "Expiry as milliseconds since the Unix epoch (uint64)."
+          },
+          "maxReads": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 1,
+            "maximum": 4294967295,
+            "description": "Maximum read count; absent means unlimited. Never 0."
+          }
+        }
+      },
+      "InfoLifecycle": {
+        "type": "object",
+        "description": "Lifecycle as reported by the info endpoint.",
+        "additionalProperties": false,
+        "required": [
+          "expiresAt"
+        ],
+        "properties": {
+          "expiresAt": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "description": "Expiry as milliseconds since the Unix epoch (uint64)."
+          },
+          "maxReads": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 1,
+            "maximum": 4294967295,
+            "description": "Maximum read count; absent means unlimited."
+          },
+          "remainingReads": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "maximum": 4294967295,
+            "description": "Reads left before the note is consumed; absent when unlimited."
+          }
+        }
+      },
+      "ReserveRequest": {
+        "type": "object",
+        "description": "Requested lifecycle for a new note.",
+        "additionalProperties": false,
+        "required": [
+          "expiresIn"
+        ],
+        "properties": {
+          "expiresIn": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "description": "Requested time to live in seconds, capped by instance limits."
+          },
+          "maxReads": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0,
+            "maximum": 4294967295,
+            "description": "Requested read cap. Omitted or null applies the instance default; an explicit 0 requests unlimited reads.\n"
+          }
+        }
+      },
+      "ReserveResponse": {
+        "type": "object",
+        "description": "A reservation valid for the instance-configured TTL.",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "deleteToken",
+          "lifecycle"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-Za-z]{32}$",
+            "minLength": 32,
+            "maxLength": 32,
+            "description": "Note ID (32 base62 characters)."
+          },
+          "deleteToken": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$",
+            "minLength": 43,
+            "maxLength": 43,
+            "description": "Delete capability: base64url of 32 random bytes. Shown once; the server stores only its SHA-256 digest after commit.\n"
+          },
+          "lifecycle": {
+            "$ref": "#/components/schemas/Lifecycle"
+          }
+        }
+      },
+      "CommitRequest": {
+        "type": "object",
+        "description": "Envelope commit for a prior reservation.",
+        "additionalProperties": false,
+        "required": [
+          "protocol",
+          "envelope",
+          "lifecycle",
+          "deleteTokenHash"
+        ],
+        "properties": {
+          "protocol": {
+            "type": "integer",
+            "const": 1,
+            "description": "Wire protocol version. Must be 1."
+          },
+          "envelope": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "description": "Opaque canonical base64url envelope produced by the published protocol implementation (npm package `nyanbin`, export `./shared/protocol`). Never plaintext.\n"
+          },
+          "lifecycle": {
+            "$ref": "#/components/schemas/Lifecycle"
+          },
+          "deleteTokenHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "minLength": 64,
+            "maxLength": 64,
+            "description": "SHA-256 of the reserved delete token, lowercase hex."
+          },
+          "passwordProtected": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether the envelope additionally requires a password to decrypt."
+          }
+        }
+      },
+      "CreateResponse": {
+        "type": "object",
+        "description": "Confirmation that the note was published.",
+        "additionalProperties": false,
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-Za-z]{32}$",
+            "minLength": 32,
+            "maxLength": 32,
+            "description": "Note ID (32 base62 characters)."
+          }
+        }
+      },
+      "InfoResponse": {
+        "type": "object",
+        "description": "Non-consuming note metadata.",
+        "additionalProperties": false,
+        "required": [
+          "protocol",
+          "lifecycle",
+          "passwordProtected"
+        ],
+        "properties": {
+          "protocol": {
+            "type": "integer",
+            "const": 1,
+            "description": "Wire protocol version."
+          },
+          "lifecycle": {
+            "$ref": "#/components/schemas/InfoLifecycle"
+          },
+          "passwordProtected": {
+            "type": "boolean",
+            "description": "Whether decryption additionally requires a password."
+          }
+        }
+      },
+      "RevealResponse": {
+        "type": "object",
+        "description": "The encrypted envelope. Receiving this consumed one read.",
+        "additionalProperties": false,
+        "required": [
+          "protocol",
+          "envelope"
+        ],
+        "properties": {
+          "protocol": {
+            "type": "integer",
+            "const": 1,
+            "description": "Wire protocol version."
+          },
+          "envelope": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "description": "Opaque canonical base64url envelope; decrypt locally."
+          }
+        }
+      },
+      "DeleteRequest": {
+        "type": "object",
+        "description": "Delete capability presentation.",
+        "additionalProperties": false,
+        "required": [
+          "deleteToken"
+        ],
+        "properties": {
+          "deleteToken": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$",
+            "minLength": 43,
+            "maxLength": 43,
+            "description": "The delete token returned by reserve."
+          }
+        }
+      },
+      "ShortRequest": {
+        "type": "object",
+        "description": "Proof of ownership for short-code issuance.",
+        "additionalProperties": false,
+        "required": [
+          "deleteToken"
+        ],
+        "properties": {
+          "deleteToken": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{43}$",
+            "minLength": 43,
+            "maxLength": 43,
+            "description": "The delete token returned by reserve."
+          }
+        }
+      },
+      "ShortResponse": {
+        "type": "object",
+        "description": "Issued short code.",
+        "additionalProperties": false,
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[0-9]{6}$",
+            "minLength": 6,
+            "maxLength": 6,
+            "description": "Short code (6 digits)."
+          }
+        }
+      },
+      "ShortResolveResponse": {
+        "type": "object",
+        "description": "Short-code resolution.",
+        "additionalProperties": false,
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-Za-z]{32}$",
+            "minLength": 32,
+            "maxLength": 32,
+            "description": "Note ID (32 base62 characters)."
+          }
+        }
+      },
+      "Status": {
+        "type": "object",
+        "description": "Instance status, limits, defaults, capabilities, and branding.",
+        "additionalProperties": false,
+        "required": [
+          "protocol",
+          "version",
+          "limits",
+          "defaults",
+          "capabilities",
+          "branding"
+        ],
+        "properties": {
+          "protocol": {
+            "type": "integer",
+            "const": 1,
+            "description": "Wire protocol version supported by this instance."
+          },
+          "version": {
+            "type": "string",
+            "description": "Application release version (semver), decoupled from the API surface version."
+          },
+          "limits": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "maxEnvelopeBytes",
+              "maxExpiresIn",
+              "maxReads"
+            ],
+            "properties": {
+              "maxEnvelopeBytes": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 1,
+                "description": "Maximum decoded envelope size in bytes."
+              },
+              "maxExpiresIn": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 1,
+                "description": "Maximum allowed `expiresIn` in seconds."
+              },
+              "maxReads": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 1,
+                "maximum": 4294967295,
+                "description": "Maximum allowed `maxReads`."
+              }
+            }
+          },
+          "defaults": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "expiresIn"
+            ],
+            "properties": {
+              "expiresIn": {
+                "type": "integer",
+                "format": "int64",
+                "minimum": 1,
+                "description": "Default `expiresIn` in seconds when omitted."
+              },
+              "maxReads": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 1,
+                "maximum": 4294967295,
+                "description": "Default read cap when omitted; absent means unlimited by default."
+              }
+            }
+          },
+          "capabilities": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "files",
+              "passwords",
+              "formats"
+            ],
+            "properties": {
+              "files": {
+                "type": "boolean",
+                "description": "Whether file notes are supported."
+              },
+              "passwords": {
+                "type": "boolean",
+                "description": "Whether password protection is supported."
+              },
+              "formats": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "plain",
+                    "source",
+                    "markdown"
+                  ]
+                },
+                "description": "Supported text formats."
+              }
+            }
+          },
+          "branding": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "description",
+              "logoUrl",
+              "imprintUrl",
+              "abuseContact"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Instance display name."
+              },
+              "description": {
+                "type": "string",
+                "description": "Instance description."
+              },
+              "logoUrl": {
+                "type": "string",
+                "description": "Logo URL; may be empty."
+              },
+              "imprintUrl": {
+                "type": "string",
+                "description": "Imprint / legal notice URL; may be empty."
+              },
+              "abuseContact": {
+                "type": "string",
+                "description": "Abuse contact email address; may be empty."
+              }
+            }
+          }
+        }
+      },
+      "Health": {
+        "type": "object",
+        "description": "Health probe response.",
+        "additionalProperties": false,
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "description": "Uniform error body. `code` is machine-readable and append-only across the v1 surface; `message` is human-readable and may change.\n",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "invalid_request",
+              "invalid_json",
+              "payload_too_large",
+              "invalid_id",
+              "invalid_lifecycle",
+              "invalid_envelope",
+              "invalid_delete_token",
+              "invalid_short_code",
+              "reservation_not_found",
+              "reservation_mismatch",
+              "note_not_found",
+              "route_not_found",
+              "method_not_allowed",
+              "rate_limited",
+              "short_link_requires_password",
+              "short_code_space_exhausted",
+              "id_space_exhausted",
+              "storage_unavailable",
+              "storage_pressure",
+              "writes_disabled",
+              "short_disabled",
+              "internal_error"
+            ],
+            "description": "Machine-readable error code."
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable explanation. Not part of the stable surface."
+          }
+        }
+      }
+    }
+  }
+}

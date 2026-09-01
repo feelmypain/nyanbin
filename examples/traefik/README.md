@@ -27,8 +27,8 @@ services:
       NYANBIN_TRUSTED_PROXY_CIDRS: ""
       # Per-client writes share a bucket across this many IPv6 prefix bits (/64 by default).
       NYANBIN_RATE_LIMIT_IPV6_PREFIX_BITS: "64"
-      # Global writes per window cap abuse even when clients rotate addresses.
-      NYANBIN_RATE_LIMIT_GLOBAL_REQUESTS: "300"
+      # Global per-operation ceiling holds even when clients rotate addresses.
+      NYANBIN_RATE_LIMIT_GLOBAL_REQUESTS: "600"
     depends_on:
       valkey:
         condition: service_healthy

@@ -12,6 +12,7 @@ COPY packages/backend/package.json packages/backend/package.json
 RUN pnpm install --frozen-lockfile --ignore-scripts
 COPY packages/cli packages/cli
 COPY packages/frontend packages/frontend
+COPY packages/backend/openapi.json packages/backend/openapi.json
 RUN pnpm --filter ./packages/frontend exec svelte-kit sync \
     && pnpm --filter ./packages/cli build \
     && pnpm --filter ./packages/frontend build
@@ -28,6 +29,7 @@ RUN apk add --no-cache ca-certificates curl libgcc \
     && adduser -S -D -H -u 10001 -G nyanbin nyanbin
 WORKDIR /app
 COPY --from=backend --chown=nyanbin:nyanbin /build/target/release/nyanbin /app/nyanbin
+COPY --from=backend --chown=nyanbin:nyanbin /build/target/release/nyanbin-admin /usr/local/bin/nyanbin-admin
 COPY --from=web --chown=nyanbin:nyanbin /build/packages/frontend/build /app/frontend
 COPY --chown=nyanbin:nyanbin LICENSE THIRD_PARTY_NOTICES DEPENDENCY_LICENSES.csv /app/
 ENV NYANBIN_FRONTEND_PATH=/app/frontend \

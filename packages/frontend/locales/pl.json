@@ -34,9 +34,11 @@
 		"confirm": "Wyjdź bez zapisywania"
 	},
 	"footer": {
+		"api": "API",
 		"label": "Nawigacja w stopce",
 		"local_only": "Szyfrowanie i generowanie kodu QR odbywa się lokalnie w Twojej przeglądarce.",
-		"source": "Kod źródłowy na GitHubie"
+		"source": "Kod źródłowy na GitHubie",
+		"abuse": "Zgłoś nadużycie"
 	},
 	"formats": {
 		"plain": "Zwykły tekst",

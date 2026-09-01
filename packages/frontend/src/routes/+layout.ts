@@ -1,4 +1,4 @@
-import { getLocaleFromNavigator, init } from 'svelte-intl-precompile'
+import { getLocaleFromNavigator, init, waitLocale } from 'svelte-intl-precompile'
 // @ts-ignore
 import { availableLocales, registerAll } from '$locales'
 
@@ -21,3 +21,9 @@ if (storedLocale !== null && storedLocale !== initialLocale && typeof window !==
 	try { window.localStorage.setItem('nyanbin-locale', initialLocale) } catch { /* The normalized in-memory locale still applies. */ }
 }
 init({ initialLocale, fallbackLocale: 'en' })
+
+// Waiting here (not in an {#await} in the layout markup) lets prerendering
+// emit full page content instead of an empty pending branch.
+export const load = async () => {
+	await waitLocale()
+}

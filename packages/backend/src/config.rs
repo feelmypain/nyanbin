@@ -8,6 +8,9 @@ pub const DELETE_TOKEN_BYTES: usize = 32;
 pub const ENVELOPE_HEADER_BYTES: usize = 73;
 pub const ENVELOPE_TAG_BYTES: usize = 16;
 pub const MIN_ENVELOPE_BYTES: usize = ENVELOPE_HEADER_BYTES + ENVELOPE_TAG_BYTES;
+/// Decoded envelopes at or below this size are still accepted during a
+/// storage-pressure brownout (and under the `writes_small_only` switch).
+pub const SMALL_NOTE_BYTES: usize = 65_536;
 
 const DEFAULT_LISTEN_ADDR: &str = "0.0.0.0:8000";
 const DEFAULT_REDIS_URL: &str = "redis://127.0.0.1/";
@@ -22,10 +25,16 @@ const DEFAULT_RESERVATION_TTL_SECONDS: u64 = 120;
 const DEFAULT_REDIS_TIMEOUT_MS: u64 = 2_000;
 const DEFAULT_RATE_LIMIT_REQUESTS: u32 = 30;
 const DEFAULT_RATE_LIMIT_WINDOW_SECONDS: u64 = 60;
-const DEFAULT_RATE_LIMIT_GLOBAL_REQUESTS: u32 = 300;
+const DEFAULT_RATE_LIMIT_GLOBAL_REQUESTS: u32 = 600;
 const DEFAULT_RATE_LIMIT_IPV6_PREFIX_BITS: u8 = 64;
 const DEFAULT_RATE_LIMIT_SHORT_CREATE_REQUESTS: u32 = 10;
 const DEFAULT_RATE_LIMIT_SHORT_RESOLVE_REQUESTS: u32 = 60;
+const DEFAULT_RATE_LIMIT_REVEAL_REQUESTS: u32 = 60;
+const DEFAULT_RATE_LIMIT_INFO_REQUESTS: u32 = 120;
+const DEFAULT_RATE_LIMIT_DELETE_REQUESTS: u32 = 30;
+const DEFAULT_STORAGE_BUDGET_BYTES: u64 = 134_217_728;
+const DEFAULT_BUCKET_BYTES_PER_HOUR: u64 = 67_108_864;
+const DEFAULT_STORAGE_METER_RESYNC_SECONDS: u64 = 3_600;
 const DEFAULT_BRANDING_NAME: &str = "Nyanbin";
 // Empty by default so the frontend falls back to its localized instance description.
 const DEFAULT_BRANDING_DESCRIPTION: &str = "";
@@ -36,6 +45,40 @@ pub struct Branding {
     pub description: String,
     pub logo_url: String,
     pub imprint_url: String,
+    pub abuse_contact: String,
+}
+
+/// Per-operation rate-limit pair: per-client bucket cap and instance-wide cap
+/// for one fixed window.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct OpLimit {
+    pub address: u32,
+    pub global: u32,
+}
+
+#[derive(Clone, Debug)]
+pub struct RateLimits {
+    pub reserve: OpLimit,
+    pub commit: OpLimit,
+    pub reveal: OpLimit,
+    pub info: OpLimit,
+    pub delete: OpLimit,
+    pub short_create: OpLimit,
+    pub short_resolve: OpLimit,
+}
+
+/// Cross-origin access policy for `/api/*`. Credentials are never allowed.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum CorsPolicy {
+    Off,
+    Any,
+    List(Vec<String>),
+}
+
+impl CorsPolicy {
+    pub fn enabled(&self) -> bool {
+        !matches!(self, CorsPolicy::Off)
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -51,13 +94,14 @@ pub struct Config {
     pub default_max_reads: Option<u32>,
     pub reservation_ttl: Duration,
     pub redis_timeout: Duration,
-    pub rate_limit_requests: u32,
+    pub rate_limits: RateLimits,
     pub rate_limit_window: Duration,
-    pub rate_limit_global_requests: u32,
-    pub rate_limit_short_create_requests: u32,
-    pub rate_limit_short_resolve_requests: u32,
     pub rate_limit_ipv6_prefix_bits: u8,
     pub trusted_proxy_cidrs: Vec<IpNet>,
+    pub cors: CorsPolicy,
+    pub storage_budget_bytes: u64,
+    pub bucket_bytes_per_hour: u64,
+    pub meter_resync_interval: Duration,
     pub branding: Branding,
 }
 
@@ -100,11 +144,6 @@ impl Config {
         if !(100..=30_000).contains(&redis_timeout_ms) {
             return Err("NYANBIN_REDIS_TIMEOUT_MS must be between 100 and 30000".into());
         }
-        let rate_limit_requests =
-            parse_env("NYANBIN_RATE_LIMIT_REQUESTS", DEFAULT_RATE_LIMIT_REQUESTS)?;
-        if rate_limit_requests == 0 || rate_limit_requests > 100_000 {
-            return Err("NYANBIN_RATE_LIMIT_REQUESTS must be between 1 and 100000".into());
-        }
         let rate_limit_window_seconds = parse_env(
             "NYANBIN_RATE_LIMIT_WINDOW_SECONDS",
             DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
@@ -112,31 +151,7 @@ impl Config {
         if !(1..=86_400).contains(&rate_limit_window_seconds) {
             return Err("NYANBIN_RATE_LIMIT_WINDOW_SECONDS must be between 1 and 86400".into());
         }
-        let rate_limit_global_requests = parse_env(
-            "NYANBIN_RATE_LIMIT_GLOBAL_REQUESTS",
-            DEFAULT_RATE_LIMIT_GLOBAL_REQUESTS,
-        )?;
-        if rate_limit_global_requests == 0 || rate_limit_global_requests > 10_000_000 {
-            return Err("NYANBIN_RATE_LIMIT_GLOBAL_REQUESTS must be between 1 and 10000000".into());
-        }
-        let rate_limit_short_create_requests = parse_env(
-            "NYANBIN_RATE_LIMIT_SHORT_CREATE_REQUESTS",
-            DEFAULT_RATE_LIMIT_SHORT_CREATE_REQUESTS,
-        )?;
-        if rate_limit_short_create_requests == 0 || rate_limit_short_create_requests > 100_000 {
-            return Err(
-                "NYANBIN_RATE_LIMIT_SHORT_CREATE_REQUESTS must be between 1 and 100000".into(),
-            );
-        }
-        let rate_limit_short_resolve_requests = parse_env(
-            "NYANBIN_RATE_LIMIT_SHORT_RESOLVE_REQUESTS",
-            DEFAULT_RATE_LIMIT_SHORT_RESOLVE_REQUESTS,
-        )?;
-        if rate_limit_short_resolve_requests == 0 || rate_limit_short_resolve_requests > 100_000 {
-            return Err(
-                "NYANBIN_RATE_LIMIT_SHORT_RESOLVE_REQUESTS must be between 1 and 100000".into(),
-            );
-        }
+        let rate_limits = parse_rate_limits()?;
         let rate_limit_ipv6_prefix_bits = parse_env(
             "NYANBIN_RATE_LIMIT_IPV6_PREFIX_BITS",
             DEFAULT_RATE_LIMIT_IPV6_PREFIX_BITS,
@@ -144,6 +159,25 @@ impl Config {
         let rate_limit_ipv6_prefix_bits = validate_ipv6_prefix_bits(rate_limit_ipv6_prefix_bits)?;
         let trusted_proxy_cidrs =
             parse_cidrs(&parse_env_string("NYANBIN_TRUSTED_PROXY_CIDRS", "")?)?;
+        let cors = parse_cors(&parse_env_string("NYANBIN_CORS_ORIGINS", "")?)?;
+        let storage_budget_bytes =
+            parse_env("NYANBIN_STORAGE_BUDGET_BYTES", DEFAULT_STORAGE_BUDGET_BYTES)?;
+        if storage_budget_bytes != 0 && storage_budget_bytes < SMALL_NOTE_BYTES as u64 {
+            return Err(format!(
+                "NYANBIN_STORAGE_BUDGET_BYTES must be 0 (disabled) or at least {SMALL_NOTE_BYTES}"
+            ));
+        }
+        let bucket_bytes_per_hour = parse_env(
+            "NYANBIN_BUCKET_BYTES_PER_HOUR",
+            DEFAULT_BUCKET_BYTES_PER_HOUR,
+        )?;
+        let meter_resync_seconds = parse_env(
+            "NYANBIN_STORAGE_METER_RESYNC_SECONDS",
+            DEFAULT_STORAGE_METER_RESYNC_SECONDS,
+        )?;
+        if !(60..=86_400).contains(&meter_resync_seconds) {
+            return Err("NYANBIN_STORAGE_METER_RESYNC_SECONDS must be between 60 and 86400".into());
+        }
         let branding = Branding {
             name: bounded_text("NYANBIN_BRANDING_NAME", DEFAULT_BRANDING_NAME, 80)?,
             description: bounded_text(
@@ -153,13 +187,17 @@ impl Config {
             )?,
             logo_url: safe_optional_url("NYANBIN_BRANDING_LOGO_URL")?,
             imprint_url: safe_optional_url("NYANBIN_BRANDING_IMPRINT_URL")?,
+            abuse_contact: abuse_contact("NYANBIN_BRANDING_ABUSE_CONTACT")?,
         };
         let redis_prefix = parse_env_string("NYANBIN_REDIS_PREFIX", DEFAULT_REDIS_PREFIX)?;
         if redis_prefix.is_empty()
             || redis_prefix.len() > 128
             || redis_prefix.chars().any(char::is_whitespace)
+            || redis_prefix
+                .chars()
+                .any(|c| matches!(c, '*' | '?' | '[' | ']'))
         {
-            return Err("NYANBIN_REDIS_PREFIX must be 1-128 non-whitespace characters".into());
+            return Err("NYANBIN_REDIS_PREFIX must be 1-128 non-whitespace characters without Redis glob metacharacters (* ? [ ])".into());
         }
         Ok(Self {
             listen_addr: parse_env_string("NYANBIN_LISTEN_ADDR", DEFAULT_LISTEN_ADDR)?
@@ -178,13 +216,14 @@ impl Config {
             default_max_reads,
             reservation_ttl: Duration::from_secs(reservation_ttl_seconds),
             redis_timeout: Duration::from_millis(redis_timeout_ms),
-            rate_limit_requests,
+            rate_limits,
             rate_limit_window: Duration::from_secs(rate_limit_window_seconds),
-            rate_limit_global_requests,
-            rate_limit_short_create_requests,
-            rate_limit_short_resolve_requests,
             rate_limit_ipv6_prefix_bits,
             trusted_proxy_cidrs,
+            cors,
+            storage_budget_bytes,
+            bucket_bytes_per_hour,
+            meter_resync_interval: Duration::from_secs(meter_resync_seconds),
             branding,
         })
     }
@@ -195,6 +234,145 @@ impl Config {
             .div_ceil(3)
             .saturating_add(4096)
     }
+}
+
+fn parse_rate_limits() -> Result<RateLimits, String> {
+    let write_address = bounded_limit("NYANBIN_RATE_LIMIT_REQUESTS", DEFAULT_RATE_LIMIT_REQUESTS)?;
+    let reveal_address = bounded_limit(
+        "NYANBIN_RATE_LIMIT_REVEAL_REQUESTS",
+        DEFAULT_RATE_LIMIT_REVEAL_REQUESTS,
+    )?;
+    let info_address = bounded_limit(
+        "NYANBIN_RATE_LIMIT_INFO_REQUESTS",
+        DEFAULT_RATE_LIMIT_INFO_REQUESTS,
+    )?;
+    let delete_address = bounded_limit(
+        "NYANBIN_RATE_LIMIT_DELETE_REQUESTS",
+        DEFAULT_RATE_LIMIT_DELETE_REQUESTS,
+    )?;
+    let short_create_address = bounded_limit(
+        "NYANBIN_RATE_LIMIT_SHORT_CREATE_REQUESTS",
+        DEFAULT_RATE_LIMIT_SHORT_CREATE_REQUESTS,
+    )?;
+    let short_resolve_address = bounded_limit(
+        "NYANBIN_RATE_LIMIT_SHORT_RESOLVE_REQUESTS",
+        DEFAULT_RATE_LIMIT_SHORT_RESOLVE_REQUESTS,
+    )?;
+    let fallback_global = global_limit(
+        "NYANBIN_RATE_LIMIT_GLOBAL_REQUESTS",
+        DEFAULT_RATE_LIMIT_GLOBAL_REQUESTS,
+    )?;
+    let per_op = |name: &str| -> Result<u32, String> {
+        match env::var(name) {
+            Err(env::VarError::NotPresent) => Ok(fallback_global),
+            Ok(value) if value.trim().is_empty() => Ok(fallback_global),
+            _ => global_limit(name, fallback_global),
+        }
+    };
+    Ok(RateLimits {
+        reserve: OpLimit {
+            address: write_address,
+            global: per_op("NYANBIN_RATE_LIMIT_GLOBAL_RESERVE_REQUESTS")?,
+        },
+        commit: OpLimit {
+            address: write_address,
+            global: per_op("NYANBIN_RATE_LIMIT_GLOBAL_COMMIT_REQUESTS")?,
+        },
+        reveal: OpLimit {
+            address: reveal_address,
+            global: per_op("NYANBIN_RATE_LIMIT_GLOBAL_REVEAL_REQUESTS")?,
+        },
+        info: OpLimit {
+            address: info_address,
+            global: per_op("NYANBIN_RATE_LIMIT_GLOBAL_INFO_REQUESTS")?,
+        },
+        delete: OpLimit {
+            address: delete_address,
+            global: per_op("NYANBIN_RATE_LIMIT_GLOBAL_DELETE_REQUESTS")?,
+        },
+        short_create: OpLimit {
+            address: short_create_address,
+            global: per_op("NYANBIN_RATE_LIMIT_GLOBAL_SHORT_CREATE_REQUESTS")?,
+        },
+        short_resolve: OpLimit {
+            address: short_resolve_address,
+            global: per_op("NYANBIN_RATE_LIMIT_GLOBAL_SHORT_RESOLVE_REQUESTS")?,
+        },
+    })
+}
+
+fn bounded_limit(name: &str, default: u32) -> Result<u32, String> {
+    let value = parse_env(name, default)?;
+    if value == 0 || value > 100_000 {
+        return Err(format!("{name} must be between 1 and 100000"));
+    }
+    Ok(value)
+}
+
+fn global_limit(name: &str, default: u32) -> Result<u32, String> {
+    let value = parse_env(name, default)?;
+    if value == 0 || value > 10_000_000 {
+        return Err(format!("{name} must be between 1 and 10000000"));
+    }
+    Ok(value)
+}
+
+fn parse_cors(value: &str) -> Result<CorsPolicy, String> {
+    let entries: Vec<&str> = value
+        .split(',')
+        .map(str::trim)
+        .filter(|part| !part.is_empty())
+        .collect();
+    if entries.is_empty() {
+        return Ok(CorsPolicy::Off);
+    }
+    if entries.contains(&"*") {
+        if entries.len() != 1 {
+            return Err(
+                "NYANBIN_CORS_ORIGINS must be either '*' or a list of exact origins, not both"
+                    .into(),
+            );
+        }
+        return Ok(CorsPolicy::Any);
+    }
+    let mut origins = Vec::with_capacity(entries.len());
+    for entry in entries {
+        let parsed = url::Url::parse(entry)
+            .map_err(|_| format!("invalid origin in NYANBIN_CORS_ORIGINS: {entry}"))?;
+        let valid = matches!(parsed.scheme(), "http" | "https")
+            && parsed.host_str().is_some()
+            && parsed.username().is_empty()
+            && parsed.password().is_none()
+            && parsed.query().is_none()
+            && parsed.fragment().is_none()
+            && parsed.path() == "/"
+            && !entry.ends_with('/');
+        if !valid {
+            return Err(format!(
+                "NYANBIN_CORS_ORIGINS entries must be exact scheme://host[:port] origins; got: {entry}"
+            ));
+        }
+        let canonical = parsed.origin().ascii_serialization();
+        if !origins.contains(&canonical) {
+            origins.push(canonical);
+        }
+    }
+    Ok(CorsPolicy::List(origins))
+}
+
+fn abuse_contact(name: &str) -> Result<String, String> {
+    let value = bounded_text(name, "", 254)?;
+    if value.is_empty() {
+        return Ok(value);
+    }
+    let valid = value.chars().filter(|c| *c == '@').count() == 1
+        && !value.starts_with('@')
+        && !value.ends_with('@')
+        && !value.chars().any(char::is_whitespace);
+    if !valid {
+        return Err(format!("{name} must be blank or a plain email address"));
+    }
+    Ok(value)
 }
 
 fn parse_env<T>(name: &str, default: T) -> Result<T, String>
@@ -289,5 +467,52 @@ mod tests {
         assert_eq!(validate_ipv6_prefix_bits(64).unwrap(), 64);
         assert_eq!(validate_ipv6_prefix_bits(128).unwrap(), 128);
         assert!(validate_ipv6_prefix_bits(129).is_err());
+    }
+
+    #[test]
+    fn cors_default_is_off() {
+        assert_eq!(parse_cors("").unwrap(), CorsPolicy::Off);
+        assert_eq!(parse_cors("  ").unwrap(), CorsPolicy::Off);
+    }
+
+    #[test]
+    fn cors_wildcard_is_any_and_exclusive() {
+        assert_eq!(parse_cors("*").unwrap(), CorsPolicy::Any);
+        assert!(parse_cors("*,https://a.example").is_err());
+    }
+
+    #[test]
+    fn cors_accepts_exact_origins_only() {
+        assert_eq!(
+            parse_cors("https://a.example, http://b.example:8080").unwrap(),
+            CorsPolicy::List(vec![
+                "https://a.example".into(),
+                "http://b.example:8080".into()
+            ])
+        );
+        assert!(parse_cors("https://a.example/path").is_err());
+        assert!(parse_cors("https://a.example/").is_err());
+        assert!(parse_cors("ftp://a.example").is_err());
+        assert!(parse_cors("https://user:pw@a.example").is_err());
+    }
+
+    #[test]
+    fn cors_canonicalizes_valid_origin_spellings() {
+        assert_eq!(
+            parse_cors("HTTPS://EXAMPLE.COM:443").unwrap(),
+            CorsPolicy::List(vec!["https://example.com".into()])
+        );
+    }
+
+    #[test]
+    fn abuse_contact_must_look_like_email() {
+        unsafe { env::set_var("NYANBIN_TEST_ABUSE_OK", "abuse@example.com") };
+        assert_eq!(
+            abuse_contact("NYANBIN_TEST_ABUSE_OK").unwrap(),
+            "abuse@example.com"
+        );
+        unsafe { env::set_var("NYANBIN_TEST_ABUSE_BAD", "not an email") };
+        assert!(abuse_contact("NYANBIN_TEST_ABUSE_BAD").is_err());
+        assert_eq!(abuse_contact("NYANBIN_TEST_ABUSE_UNSET").unwrap(), "");
     }
 }

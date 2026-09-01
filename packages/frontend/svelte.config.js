@@ -26,5 +26,12 @@ export default {
 		adapter: adapter({
 			fallback: 'index.html',
 		}),
+		prerender: {
+			// The API only exists at runtime; prerendered pages may link to it.
+			handleHttpError: ({ path, message }) => {
+				if (path.startsWith('/api/')) return
+				throw new Error(message)
+			},
+		},
 	},
 }

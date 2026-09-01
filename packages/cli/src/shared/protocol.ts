@@ -253,7 +253,11 @@ function normalizeSecret(secret: Uint8Array | string): Uint8Array<ArrayBuffer> {
     : new Uint8Array(bytes)
 }
 async function passwordFactor(password: string, salt: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> {
-  const material = await globalThis.crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits'])
+  // WebKit rejects a zero-length PBKDF2 import. HMAC-SHA-256 pads both an
+  // empty key and a 64-byte all-zero key to the same block, so this preserves
+  // the protocol output while using a portable non-empty representation.
+  const materialBytes = password === '' ? new Uint8Array(64) : encoder.encode(password)
+  const material = await globalThis.crypto.subtle.importKey('raw', materialBytes, 'PBKDF2', false, ['deriveBits'])
   return new Uint8Array(
     await globalThis.crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: PBKDF2_ITERATIONS }, material, 256)
   )

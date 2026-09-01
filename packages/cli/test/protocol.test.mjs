@@ -68,7 +68,7 @@ test('fixed random bytes produce a deterministic interoperable envelope', async 
     assert.equal(first, second)
     assert.equal(
       first,
-      'ATAxMjM0NTY3ODlhYmNkZWZnaGlqa2xtbm9wcXJzdHV2AAABumDTOAAAAAADAAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaG59CLReEDYJzNc2hlzdB_0V3gCIaZStBCOHhDeE8UFJMF0b9M7D25dhEymWTxJV4-Y7BfzfguwOlQL8-AWOuHfmyQTHJccOSNgByLubWlKjuV1LeT7Il5YM2km9q7iEzy1viKqKX0kWtAVdly4YWkmLjHz9xV5PL3_Eoi-7gfOsq2y8B0wdTkkPGLnqROUty3mBjuupKOi8JliC9ASJg-4d2vjyj20-8'
+      'ATAxMjM0NTY3ODlhYmNkZWZnaGlqa2xtbm9wcXJzdHV2AAABumDTOAAAAAADAAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaG73yTK1MHrPUQ0c0as5YqIcxFYW8vykFnMeQEvcTZMwwycimB1YW3VChQYJ9YwCwM4xGiu7TqKIBAp87alwE9h5Qcsg4VkX7YCgbdEparp1RkztkR_M8g692W1H-gDzc1lklRbD5UIB7YrRY_SXpzXhVcT8t2R20wvGUG53qQuzrRzka5EPjj9fQF-5yFSscBauZNet1lLUyrDF6weIFb2rpOp5ElZrA'
     )
     assert.deepEqual(parseEnvelope(first).lifecycle, lifecycle)
     assert.deepEqual(await decryptPayload(first, { id, lifecycle, secret, password: 'correct horse' }), payload)

@@ -34,9 +34,11 @@
 		"confirm": "Leave without saving"
 	},
 	"footer": {
+		"api": "API",
 		"label": "Footer navigation",
 		"local_only": "Encryption and QR generation happen locally in your browser.",
-		"source": "Source on GitHub"
+		"source": "Source on GitHub",
+		"abuse": "Report abuse"
 	},
 	"formats": {
 		"plain": "Plain text",

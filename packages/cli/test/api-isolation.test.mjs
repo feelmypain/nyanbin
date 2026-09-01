@@ -77,7 +77,7 @@ test('concurrent link operations keep info, reveal, and delete on each link orig
       firstInfoStarted.resolve()
       await releaseFirstInfo.promise
     }
-    if (init.method === 'GET') return json({ protocol: 1, lifecycle })
+    if (init.method === 'GET') return json({ protocol: 1, lifecycle, passwordProtected: false })
     if (parsed.pathname.endsWith('/reveal')) return json({ protocol: 1, envelope: envelopes.get(id) })
     return new Response(null, { status: 204 })
   }

@@ -1,35 +1,18 @@
 use axum::{
     Router,
     body::Body,
-    extract::{DefaultBodyLimit, Request},
-    http::{StatusCode, header::CONTENT_TYPE},
+    extract::{DefaultBodyLimit, Request, State},
+    http::{StatusCode, Uri, header::CONTENT_TYPE},
     middleware::{self, Next},
     response::{IntoResponse, Response},
     routing::{get, post, put},
 };
-use std::{net::SocketAddr, sync::Arc};
-use tower_http::{
-    compression::CompressionLayer,
-    services::{ServeDir, ServeFile},
+use std::{net::SocketAddr, sync::Arc, time::Duration};
+use tower_http::{compression::CompressionLayer, services::ServeDir};
+
+use nyanbin::{
+    AppState, config::Config, cors, csp, error::ApiError, health, note, status, store::Store,
 };
-
-mod config;
-mod csp;
-mod error;
-mod health;
-mod note;
-mod status;
-mod store;
-
-use config::Config;
-use error::ApiError;
-use store::Store;
-
-#[derive(Clone)]
-pub struct AppState {
-    config: Config,
-    store: Store,
-}
 
 #[tokio::main]
 async fn main() {
@@ -53,8 +36,8 @@ async fn run() -> Result<(), String> {
         .map_err(|_| "Valkey readiness check failed".to_string())?;
     let body_limit = config.http_body_limit();
     let listen_addr = config.listen_addr;
-    let frontend_path = config.frontend_path.clone();
     let state = Arc::new(AppState { config, store });
+    spawn_meter_resync(state.clone());
 
     let notes = Router::new()
         .route(
@@ -67,14 +50,20 @@ async fn run() -> Result<(), String> {
         .route(
             "/{id}",
             put(note::commit)
+                .get(note::info)
+                .delete(note::delete_note)
                 .route_layer(middleware::from_fn_with_state(
                     state.clone(),
-                    note::write_rate_limit,
-                ))
-                .get(note::info)
-                .delete(note::delete_note),
+                    note::note_rate_limit,
+                )),
         )
-        .route("/{id}/reveal", post(note::reveal))
+        .route(
+            "/{id}/reveal",
+            post(note::reveal).route_layer(middleware::from_fn_with_state(
+                state.clone(),
+                note::reveal_rate_limit,
+            )),
+        )
         .route(
             "/{id}/short",
             post(note::create_short).route_layer(middleware::from_fn_with_state(
@@ -87,6 +76,7 @@ async fn run() -> Result<(), String> {
         .route("/live", get(health::live))
         .route("/ready", get(health::ready))
         .route("/status", get(status::get_status))
+        .route("/openapi.json", get(status::openapi))
         .route(
             "/short/{code}",
             get(note::resolve_short).route_layer(middleware::from_fn_with_state(
@@ -96,11 +86,9 @@ async fn run() -> Result<(), String> {
         )
         .fallback(api_not_found);
 
-    let index = frontend_path.join("index.html");
-    let static_files = ServeDir::new(frontend_path).not_found_service(ServeFile::new(index));
     let app = Router::new()
         .nest("/api", api)
-        .fallback_service(static_files)
+        .fallback(serve_frontend)
         .layer(DefaultBodyLimit::max(body_limit))
         .layer(
             CompressionLayer::new()
@@ -110,8 +98,10 @@ async fn run() -> Result<(), String> {
                 .zstd(true),
         )
         .layer(middleware::from_fn(normalize_api_errors))
+        .layer(middleware::from_fn_with_state(state.clone(), cors::cors))
         .layer(middleware::from_fn(csp::security_headers))
         .with_state(state);
+
     let listener = tokio::net::TcpListener::bind(listen_addr)
         .await
         .map_err(|error| format!("could not bind listener: {error}"))?;
@@ -127,6 +117,71 @@ async fn run() -> Result<(), String> {
     )
     .await
     .map_err(|error| format!("HTTP server failed: {error}"))
+}
+/// Static frontend resolution: exact file, then the SvelteKit-prerendered
+/// `{path}.html` for extensionless routes, then the SPA shell at 200 so
+/// client-side routes (`/note/{id}`) hydrate instead of surfacing a 404.
+async fn serve_frontend(State(state): State<Arc<AppState>>, request: Request<Body>) -> Response {
+    let root = state.config.frontend_path.clone();
+    let method = request.method().clone();
+    let path = request.uri().path().trim_end_matches('/').to_owned();
+    if let Some(exact) = try_static(&root, request).await {
+        return exact;
+    }
+    let last_segment = path.rsplit('/').next().unwrap_or("");
+    if !path.is_empty() && !last_segment.is_empty() && !last_segment.contains('.') {
+        // Delegate to ServeDir again so its path sanitization applies.
+        if let Ok(uri) = Uri::try_from(format!("{path}.html")) {
+            let rewritten = Request::builder()
+                .method(method.clone())
+                .uri(uri)
+                .body(Body::empty())
+                .expect("static request rebuild cannot fail");
+            if let Some(page) = try_static(&root, rewritten).await {
+                return page;
+            }
+        }
+    }
+    let shell = Request::builder()
+        .method(method)
+        .uri("/index.html")
+        .body(Body::empty())
+        .expect("static request rebuild cannot fail");
+    try_static(&root, shell)
+        .await
+        .unwrap_or_else(|| StatusCode::NOT_FOUND.into_response())
+}
+
+/// Runs one request through `ServeDir`, returning `None` on 404 so callers
+/// can chain fallbacks. Filesystem failures surface as 500 rather than
+/// falling through to a misleading page.
+async fn try_static(root: &std::path::Path, request: Request<Body>) -> Option<Response> {
+    let response = match ServeDir::new(root).try_call(request).await {
+        Ok(response) => response.map(Body::new),
+        Err(_) => return Some(StatusCode::INTERNAL_SERVER_ERROR.into_response()),
+    };
+    (response.status() != StatusCode::NOT_FOUND).then_some(response)
+}
+
+/// Periodically recomputes the storage meter from actual note sizes so
+/// PEXPIREAT evictions cannot leave permanent drift. Skipped when the budget
+/// is disabled.
+fn spawn_meter_resync(state: Arc<AppState>) {
+    if state.config.storage_budget_bytes == 0 {
+        return;
+    }
+    let interval = state.config.meter_resync_interval;
+    tokio::spawn(async move {
+        let mut ticker = tokio::time::interval(interval);
+        ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+        // The first tick fires immediately: correct the meter on startup.
+        loop {
+            ticker.tick().await;
+            // Errors are tolerated; the next tick retries. Never log details.
+            let _ =
+                tokio::time::timeout(Duration::from_secs(300), state.store.resync_meter()).await;
+        }
+    });
 }
 
 async fn api_not_found() -> ApiError {

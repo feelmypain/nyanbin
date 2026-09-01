@@ -1,3 +1,5 @@
+name: nyanbin-stage2-test
+
 services:
   valkey:
     image: valkey/valkey:8.1-alpine
@@ -35,7 +37,81 @@ services:
       valkey:
         condition: service_healthy
     ports:
-      - "3000:8000"
+      - "127.0.0.1:3000:8000"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://127.0.0.1:8000/api/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  # Tight rate limits + CORS allowlist + hourly byte quota, isolated by Redis prefix.
+  # Exercised by test/api/cors.spec.ts and test/api/limits.spec.ts on 127.0.0.1:3001.
+  ops:
+    image: nyanbin:test
+    env_file: .env.dev
+    environment:
+      NYANBIN_REDIS_URL: redis://valkey:6379/
+      NYANBIN_REDIS_PREFIX: "nyanbin:ops:"
+      NYANBIN_RATE_LIMIT_WINDOW_SECONDS: 60
+      NYANBIN_RATE_LIMIT_INFO_REQUESTS: 5
+      NYANBIN_RATE_LIMIT_REVEAL_REQUESTS: 4
+      NYANBIN_RATE_LIMIT_DELETE_REQUESTS: 3
+      NYANBIN_RATE_LIMIT_GLOBAL_REQUESTS: 100000
+      NYANBIN_RATE_LIMIT_GLOBAL_RESERVE_REQUESTS: 100000
+      NYANBIN_RATE_LIMIT_GLOBAL_COMMIT_REQUESTS: 100000
+      NYANBIN_RATE_LIMIT_GLOBAL_REVEAL_REQUESTS: 100000
+      NYANBIN_RATE_LIMIT_GLOBAL_INFO_REQUESTS: 100000
+      NYANBIN_RATE_LIMIT_GLOBAL_DELETE_REQUESTS: 100000
+      NYANBIN_RATE_LIMIT_GLOBAL_SHORT_CREATE_REQUESTS: 100000
+      NYANBIN_RATE_LIMIT_GLOBAL_SHORT_RESOLVE_REQUESTS: 100000
+      NYANBIN_CORS_ORIGINS: https://allowed.example
+      NYANBIN_BUCKET_BYTES_PER_HOUR: 131072
+      NYANBIN_STORAGE_BUDGET_BYTES: 0
+    depends_on:
+      valkey:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3001:8000"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://127.0.0.1:8000/api/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  # Tiny storage budget for pressure/507 semantics and operator kill switches, isolated by Redis prefix.
+  # Exercised by test/api/ops.spec.ts on 127.0.0.1:3002.
+  pressure:
+    image: nyanbin:test
+    env_file: .env.dev
+    environment:
+      NYANBIN_REDIS_URL: redis://valkey:6379/
+      NYANBIN_REDIS_PREFIX: "nyanbin:pressure:"
+      NYANBIN_STORAGE_BUDGET_BYTES: 100000
+      NYANBIN_BUCKET_BYTES_PER_HOUR: 0
+      NYANBIN_RATE_LIMIT_REQUESTS: 10000
+      NYANBIN_RATE_LIMIT_GLOBAL_REQUESTS: 100000
+      NYANBIN_CORS_ORIGINS: ""
+    depends_on:
+      valkey:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3002:8000"
     read_only: true
     tmpfs:
       - /tmp:size=16m,mode=1777

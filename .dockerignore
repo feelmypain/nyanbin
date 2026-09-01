@@ -12,7 +12,7 @@
 **/target
 **/node_modules
 **/dist
-**/bin
+packages/cli/bin
 **/*.tsbuildinfo
 **/build
 **/.svelte

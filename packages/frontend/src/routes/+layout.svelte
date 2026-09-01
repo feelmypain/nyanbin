@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte'
 	import { get } from 'svelte/store'
-	import { locale, t, waitLocale } from 'svelte-intl-precompile'
+	import { locale, t } from 'svelte-intl-precompile'
 	import '../app.css'
 	import { init } from '$lib/stores/status'
 	import Footer from '$lib/views/Footer.svelte'
@@ -16,8 +16,6 @@
 	})
 </script>
 <svelte:head><script src="/theme-init.js"></script><title>Nyanbin — encrypted sharing</title><meta name="description" content="Share encrypted notes and files with a link secret that stays in your browser."/><meta name="referrer" content="no-referrer"/><link rel="icon" href="/favicon.svg"/></svelte:head>
-{#await waitLocale() then _}
-	<a class="skip-link" href="#main">{$t('nav.skip')}</a>
-	<div class="shell"><Header /><main id="main">{@render children?.()}</main><Footer /></div>
-{/await}
+<a class="skip-link" href="#main">{$t('nav.skip')}</a>
+<div class="shell"><Header /><main id="main">{@render children?.()}</main><Footer /></div>
 <style>.shell { width: min(calc(100% - 2 * var(--space-5)), 70rem); margin-inline: auto; } main { min-height: 60vh; } @media (max-width: 30rem) { .shell { width: min(calc(100% - 2 * var(--space-4)), 70rem); } }</style>

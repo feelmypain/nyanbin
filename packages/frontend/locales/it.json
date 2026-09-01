@@ -34,9 +34,11 @@
 		"confirm": "Esci senza salvare"
 	},
 	"footer": {
+		"api": "API",
 		"label": "Navigazione a piè di pagina",
 		"local_only": "La cifratura e la generazione del codice QR avvengono localmente nel browser.",
-		"source": "Codice sorgente su GitHub"
+		"source": "Codice sorgente su GitHub",
+		"abuse": "Segnala un abuso"
 	},
 	"formats": {
 		"plain": "Testo semplice",

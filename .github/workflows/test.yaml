@@ -32,8 +32,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Generated dependency inventory is current
         run: pnpm licenses:generate && git diff --exit-code -- DEPENDENCY_LICENSES.csv
+      - name: OpenAPI spec is valid
+        run: npx --yes @redocly/cli@2.4.0 lint docs/api/openapi.yaml
+      - name: Generated OpenAPI JSON is current
+        run: pnpm run openapi:generate && git diff --exit-code -- packages/backend/openapi.json
       - name: Type and package checks
         run: pnpm run check
+      - name: CLI protocol unit tests
+        run: pnpm --filter nyanbin test
       - name: Rust format
         run: cargo fmt --manifest-path packages/backend/Cargo.toml --check
       - name: Rust lint

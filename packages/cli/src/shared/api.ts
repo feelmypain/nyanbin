@@ -85,6 +85,7 @@ export type Status = {
     description: string
     logoUrl: string
     imprintUrl: string
+    abuseContact: string
   }
 }
 
@@ -119,10 +120,11 @@ function objectAtBoundary(value: unknown, label: string): Record<string, unknown
   return value as Record<string, unknown>
 }
 
-function exactKeys(value: Record<string, unknown>, required: readonly string[], optional: readonly string[] = []): void {
-  const allowed = new Set([...required, ...optional])
-  if (!required.every((key) => Object.hasOwn(value, key)) || !Object.keys(value).every((key) => allowed.has(key))) {
-    throw new NyanbinError('INVALID_RESPONSE', 'server response contains missing or unknown fields')
+function exactKeys(value: Record<string, unknown>, required: readonly string[], _optional: readonly string[] = []): void {
+  // The v1 HTTP contract is additive-only: require every known mandatory
+  // field, but ignore new response fields from a newer compatible server.
+  if (!required.every((key) => Object.hasOwn(value, key))) {
+    throw new NyanbinError('INVALID_RESPONSE', 'server response contains missing required fields')
   }
 }
 
@@ -324,11 +326,12 @@ async function status(client: Readonly<ClientOptions>): Promise<Status> {
     capabilities.formats.some((format) => format !== 'plain' && format !== 'source' && format !== 'markdown')
   ) throw new NyanbinError('INVALID_RESPONSE', 'status formats are invalid')
   const branding = objectAtBoundary(data.branding, 'status branding')
-  exactKeys(branding, ['name', 'description', 'logoUrl', 'imprintUrl'])
+  exactKeys(branding, ['name', 'description', 'logoUrl', 'imprintUrl', 'abuseContact'])
   validateString(branding.name, 'branding name')
   validateString(branding.description, 'branding description')
   validateString(branding.logoUrl, 'branding logoUrl')
   validateString(branding.imprintUrl, 'branding imprintUrl')
+  validateString(branding.abuseContact, 'branding abuseContact')
   return {
     protocol: PROTOCOL_VERSION,
     version: data.version,
@@ -351,6 +354,7 @@ async function status(client: Readonly<ClientOptions>): Promise<Status> {
       description: branding.description,
       logoUrl: branding.logoUrl,
       imprintUrl: branding.imprintUrl,
+      abuseContact: branding.abuseContact,
     },
   }
 }

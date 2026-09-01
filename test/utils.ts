@@ -2,9 +2,99 @@ import { expect, type Page } from '@playwright/test'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { getFileChecksum } from './files'
+import {
+  decodeBase64Url,
+  encryptPayload,
+  generateSecret,
+  hashDeleteToken,
+  PROTOCOL_VERSION,
+  type PrivatePayload,
+} from '../packages/cli/src/shared/shared'
 
 const exec = promisify(execFile)
 export const SERVER = process.env.NYANBIN_E2E_URL ?? 'http://127.0.0.1:3000'
+export const OPS_SERVER = 'http://127.0.0.1:3001'
+export const PRESSURE_SERVER = 'http://127.0.0.1:3002'
+
+// The Playwright webServer only waits for the primary app on :3000; specs targeting the
+// auxiliary compose services poll readiness themselves before exercising the API.
+export async function waitReady(server: string): Promise<void> {
+  await expect
+    .poll(
+      async () => {
+        try {
+          const response = await fetch(`${server}/api/ready`)
+          return response.status
+        } catch {
+          return 0
+        }
+      },
+      { timeout: 60_000, message: `waiting for ${server}/api/ready` },
+    )
+    .toBe(200)
+}
+
+export type ApiReservation = {
+  id: string
+  deleteToken: string
+  lifecycle: { expiresAt: number; maxReads?: number }
+}
+
+export async function reserveNote(
+  server: string,
+  options: { expiresIn?: number; maxReads?: number } = {},
+): Promise<ApiReservation> {
+  const response = await fetch(`${server}/api/notes/reserve`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ expiresIn: options.expiresIn ?? 3600, maxReads: options.maxReads ?? 5 }),
+  })
+  expect(response.status).toBe(201)
+  return (await response.json()) as ApiReservation
+}
+
+// Commits a locally encrypted envelope for a reservation and returns the raw response so
+// callers can assert quota/pressure statuses. `textBytes` pads the plaintext, so the decoded
+// envelope lands within a few hundred bytes above it; the exact decoded size is returned.
+export async function commitNote(
+  server: string,
+  reservation: ApiReservation,
+  options: { textBytes?: number; password?: string } = {},
+): Promise<{ response: Response; envelopeBytes: number }> {
+  const payload: PrivatePayload = {
+    kind: 'text',
+    format: 'plain',
+    text: 'n'.repeat(options.textBytes ?? 64),
+    files: [],
+  }
+  const envelope = await encryptPayload(payload, {
+    id: reservation.id,
+    lifecycle: reservation.lifecycle,
+    secret: generateSecret(),
+    ...(options.password === undefined ? {} : { password: options.password }),
+  })
+  const response = await fetch(`${server}/api/notes/${reservation.id}`, {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      protocol: PROTOCOL_VERSION,
+      envelope,
+      lifecycle: reservation.lifecycle,
+      deleteTokenHash: await hashDeleteToken(reservation.deleteToken),
+      ...(options.password === undefined ? {} : { passwordProtected: true }),
+    }),
+  })
+  return { response, envelopeBytes: decodeBase64Url(envelope).length }
+}
+
+export async function valkeyCli(...args: string[]): Promise<string> {
+  const { stdout } = await exec(
+    'docker',
+    ['compose', '-f', 'docker-compose.dev.yaml', 'exec', '-T', 'valkey', 'valkey-cli', '--raw', ...args],
+    { cwd: process.cwd() },
+  )
+  return stdout.trim()
+}
 
 export type CreateOptions = {
   text?: string

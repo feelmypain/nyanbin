@@ -34,9 +34,11 @@
 		"confirm": "Ohne Speichern verlassen"
 	},
 	"footer": {
+		"api": "API",
 		"label": "Navigation in der Fußzeile",
 		"local_only": "Verschlüsselung und QR-Erstellung erfolgen lokal in deinem Browser.",
-		"source": "Quellcode auf GitHub"
+		"source": "Quellcode auf GitHub",
+		"abuse": "Missbrauch melden"
 	},
 	"formats": {
 		"plain": "Nur Text",

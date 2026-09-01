@@ -22,7 +22,7 @@ test('API uses reserve, commit, passive info, consuming reveal, and body delete 
       calls.push({ url, method: init.method, body: init.body === undefined ? undefined : JSON.parse(init.body) })
       if (url.endsWith('/reserve')) return json({ id, deleteToken, lifecycle })
       if (init.method === 'PUT') return json({ id })
-      if (init.method === 'GET') return json({ protocol: 1, lifecycle: { ...lifecycle, remainingReads: 2 } })
+      if (init.method === 'GET') return json({ protocol: 1, lifecycle: { ...lifecycle, remainingReads: 2 }, passwordProtected: false })
       if (url.endsWith('/reveal')) return json({ protocol: 1, envelope })
       return new Response(null, { status: 204 })
     },
@@ -33,7 +33,7 @@ test('API uses reserve, commit, passive info, consuming reveal, and body delete 
   await api.commit(id, { protocol: 1, envelope, lifecycle, deleteTokenHash: await hashDeleteToken(deleteToken) })
   await api.info(id)
   await api.reveal(id)
-  await api.delete(id, deleteToken)
+  await api.deleteNote(id, deleteToken)
 
   assert.deepEqual(calls.map(({ url, method }) => [new URL(url).pathname, method]), [
     ['/api/notes/reserve', 'POST'],
@@ -55,6 +55,23 @@ test('typed API errors preserve server code and reject malformed responses', asy
 
   const malformed = createAPI({ server: 'https://notes.example', fetch: async () => json({ protocol: 1, envelope: 'not base64url!' }) })
   await assert.rejects(malformed.reveal(id), (error) => error.code === 'INVALID_BASE64URL')
+})
+
+test('clients ignore additive response fields from compatible v1 servers', async () => {
+  const api = createAPI({
+    server: 'https://notes.example',
+    fetch: async () => json({
+      protocol: 1,
+      version: 'future-v1',
+      limits: { maxEnvelopeBytes: 1024, maxExpiresIn: 3600, maxReads: 10, futureLimit: true },
+      defaults: { expiresIn: 600, maxReads: 1 },
+      capabilities: { files: true, passwords: true, formats: ['plain'], futureCapability: true },
+      branding: { name: 'Nyanbin', description: '', logoUrl: '', imprintUrl: '', abuseContact: '', futureBranding: true },
+      futureTopLevel: true,
+    }),
+  })
+  const status = await api.status()
+  assert.equal(status.version, 'future-v1')
 })
 
 test('reserve accepts zero as the uncapped request sentinel but lifecycle maxReads stays positive', async () => {

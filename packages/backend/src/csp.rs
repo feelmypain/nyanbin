@@ -30,10 +30,14 @@ pub async fn security_headers(request: Request<Body>, next: Next) -> Response {
     let is_api = request.uri().path().starts_with("/api/");
     let mut response = next.run(request).await;
     for (name, value) in HEADERS {
-        response.headers_mut().insert(
-            HeaderName::from_static(name),
-            HeaderValue::from_static(value),
-        );
+        let name = HeaderName::from_static(name);
+        // Inner layers (CORS) may have set a deliberate value — e.g. CORP
+        // cross-origin on allowlisted API responses. Defaults never override.
+        if !response.headers().contains_key(&name) {
+            response
+                .headers_mut()
+                .insert(name, HeaderValue::from_static(value));
+        }
     }
     if is_api {
         response

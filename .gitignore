@@ -3,6 +3,7 @@
 !.env.dev
 *.tsbuildinfo
 node_modules/
+.pnpm-store/
 dist/
 bin/
 target/

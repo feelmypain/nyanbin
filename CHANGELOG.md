@@ -4,6 +4,23 @@ All notable changes to Nyanbin are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-09-01
+
+### Added
+
+- **Frozen public API contract.** The v1 HTTP surface is now described by a hand-authored OpenAPI 3.1 document (`docs/api/openapi.yaml`), rendered to canonical JSON at build time, embedded in the binary, and served verbatim at `GET /api/openapi.json`. A prerendered human-readable reference lives at `/docs/api`, and `docs/api/STABILITY.md` states the additive-only compatibility policy: fields are never removed or retyped, paths are never renamed, and the error-code enum is append-only. CI fails if the served contract drifts from the YAML source.
+- **Per-operation rate limiting with `Retry-After`.** Reveal, info, delete, reserve, commit, short-create, and short-resolve are each metered separately per pseudonymous client bucket (IPv6 normalized to the operator-configured prefix, `/64` by default) plus a per-operation global ceiling that holds under address rotation. Every `429 rate_limited` response now carries an integer `Retry-After` header.
+- **Storage occupancy guard.** With Valkey running `noeviction`, the app meters decoded envelope bytes against `NYANBIN_STORAGE_BUDGET_BYTES` (default 128 MiB): at 90% occupancy, commits larger than 64 KiB are refused with the new `507 storage_pressure`; at 98%, all commits are refused. Reads, reveals, and deletes always keep working. The meter self-heals against expiry drift on a `NYANBIN_STORAGE_METER_RESYNC_SECONDS` cadence without overwriting concurrent mutations.
+- **Hourly per-client byte quotas.** Each client bucket may store at most `NYANBIN_BUCKET_BYTES_PER_HOUR` (default 64 MiB) of envelope bytes per hour; overflow returns `429 rate_limited` with `Retry-After` pointing at the hour boundary.
+- **Operator kill switches and `nyanbin-admin`.** Valkey-backed switches (`writes_off`, `writes_small_only`, `short_off`, `resolve_hardened`) flip behavior at runtime without redeploys, surfacing as `503 writes_disabled` / `503 short_disabled` / `507 storage_pressure`. A short-code enumeration tripwire arms `resolve_hardened` automatically on a miss surge. The new `nyanbin-admin` binary ships in the app container: `stats`, `switch`, `revoke`, `block`, `unblock`, and `resync` — all output is aggregate and pseudonymous.
+- **Opt-in CORS.** `NYANBIN_CORS_ORIGINS` enables cross-origin API access for an exact-origin allowlist or `*`; credentials are never allowed.
+- **Abuse contact.** `NYANBIN_BRANDING_ABUSE_CONTACT` publishes an abuse email via `GET /api/status` branding, shown in the footer and API docs.
+
+### Changed
+
+- API error responses are now uniform everywhere: every non-2xx `/api` response, including axum-generated 404/405/413s, carries the `{code, message}` JSON body with a machine-readable append-only `code`.
+- The backend crate is now a library with two binaries (`nyanbin`, `nyanbin-admin`).
+
 ## [1.4.2] - 2026-08-17
 
 ### Fixed

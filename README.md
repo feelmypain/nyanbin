@@ -179,7 +179,7 @@ Configuration is by environment variable. Durations are seconds; `expiresAt` val
 | `NYANBIN_RESERVATION_TTL_SECONDS` | `120` | Lifetime of an uncommitted reservation |
 | `NYANBIN_REDIS_TIMEOUT_MS` | `2000` | Valkey operation timeout |
 | `NYANBIN_RATE_LIMIT_REQUESTS` | `30` | Reserve and commit attempts allowed per client bucket and fixed window |
-| `NYANBIN_RATE_LIMIT_GLOBAL_REQUESTS` | `300` | Global reserve and commit ceiling per fixed window across rotating clients |
+| `NYANBIN_RATE_LIMIT_GLOBAL_REQUESTS` | `600` | Global per-operation ceiling per fixed window across rotating clients |
 | `NYANBIN_RATE_LIMIT_WINDOW_SECONDS` | `60` | Write rate-limit window |
 | `NYANBIN_RATE_LIMIT_IPV6_PREFIX_BITS` | `64` | IPv6 prefix length grouped into one client bucket (`0`–`128`) |
 | `NYANBIN_RATE_LIMIT_SHORT_CREATE_REQUESTS` | `10` | Short-code creation attempts allowed per client bucket and fixed window |
@@ -220,13 +220,14 @@ Save the delete token separately; it is not recoverable from the share URL. `cre
 
 ## API overview
 
-The API is JSON under `/api`. Errors use `{ "code": "...", "message": "..." }`. Unknown fields and malformed canonical encodings are rejected. Clients must follow reserve → encrypt → commit; a one-step create cannot authenticate the server-generated ID.
+The API is JSON under `/api`. Errors use `{ "code": "...", "message": "..." }`. Unknown fields and malformed canonical encodings are rejected. Clients must follow reserve → encrypt → commit; a one-step create cannot authenticate the server-generated ID. Every instance serves a human-readable reference at `/docs/api` and the machine-readable OpenAPI document at `/api/openapi.json`.
 
 | Method and path | Purpose | Success |
 | --- | --- | --- |
 | `GET /api/live` | Process liveness; does not require Valkey | `200` when the process is live |
 | `GET /api/ready` | Dependency readiness | `200` only when Valkey is usable |
 | `GET /api/status` | Protocol, limits/defaults, content capabilities, and safe branding | Status JSON |
+| `GET /api/openapi.json` | Machine-readable OpenAPI specification | OpenAPI JSON |
 | `POST /api/notes/reserve` | Reserve lifecycle and generate capabilities | `201 { id, deleteToken, lifecycle }` |
 | `PUT /api/notes/{id}` | Commit authenticated envelope to its reservation | `201 { id }` |
 | `GET /api/notes/{id}` | Inspect lifecycle without consuming a read | `200 { protocol: 1, lifecycle }` |
@@ -283,6 +284,116 @@ Before exposing an instance:
 12. **Patch the whole delivery chain.** A compromised reverse proxy, image registry, static frontend, or dependency can defeat client-side encryption.
 
 The Compose profile already runs the app as UID/GID `10001`, mounts a read-only root filesystem, drops Linux capabilities, enables `no-new-privileges`, and uses a small `/tmp` tmpfs. Treat these as a baseline, not a complete production security boundary.
+
+## Production hardening
+
+The list above is the minimum. This section describes a full reference profile for a public instance: a CDN/WAF edge (Cloudflare is used as the concrete example), an origin nginx, and the Nyanbin container behind it. Copy-paste nginx configuration lives in [`docs/deployment/edge-hardening.md`](./docs/deployment/edge-hardening.md); the incident playbook lives in [`docs/operations/runbook.md`](./docs/operations/runbook.md).
+
+### Edge TLS and origin authentication
+
+Run the zone in **Full (strict)** TLS mode so the edge validates the origin certificate, and enable **Authenticated Origin Pulls** so the origin only accepts TLS connections that present the Cloudflare origin-pull client certificate:
+
+```nginx
+ssl_client_certificate /etc/nginx/cloudflare-origin-pull-ca.pem;
+ssl_verify_client on;
+```
+
+With `ssl_verify_client on`, a request that reaches the origin directly — even from someone who has discovered the origin IP — is rejected during the TLS handshake. Defend the origin in depth anyway:
+
+- **Firewall allowlist.** Accept 443 only from the published Cloudflare IP ranges; drop everything else at the host or network firewall.
+- **Keep the origin IP unpublished.** No DNS records, certificates with revealing SANs, outbound service banners, or status pages that expose it. If it leaks, rotate it.
+- **Real client IP restoration.** Declare every Cloudflare CIDR with `set_real_ip_from` and set `real_ip_header CF-Connecting-IP;` so nginx and the app see the true client address rather than the edge proxy.
+
+### Edge WAF and rate rules
+
+| Rule | Scope | Rationale |
+| --- | --- | --- |
+| Volumetric per-IP rate rule | `/api/*` | Blunt-force floods are cheapest to absorb at the edge, before they reach nginx or the app |
+| Bot challenge (managed challenge / JS challenge) | Human-facing short-link paths only (`/s/*` HTML pages) | Short codes are 6 digits and enumerable; a challenge raises the cost of scraping |
+| **No** challenge | `/api/notes/*`, `/api/status`, `/api/short/*` | The `nyanbin` CLI and other non-browser clients must pass; a browser challenge breaks them |
+| Cache bypass | `/api/*` | Reveal is consuming and commit is stateful; a cached API response is a correctness and privacy bug |
+
+### Origin nginx
+
+- **Per-IP `limit_req` zones.** A general zone for `/api/` and a stricter zone for `/api/short/`, since short-code resolution is the only guessable surface. See the snippets in `docs/deployment/edge-hardening.md`.
+- **Body size.** The app enforces `NYANBIN_MAX_ENVELOPE_BYTES` on the *decoded* envelope; the JSON body carries base64url plus field overhead. Set `client_max_body_size` to at least `NYANBIN_MAX_ENVELOPE_BYTES × 4/3` plus slack (for the 1 MiB default, `2m` is comfortable).
+- **Header hygiene.** Forward `X-Real-IP`/`X-Forwarded-For` from the restored client address and nothing else; the app ignores forwarded headers from untrusted peers.
+
+### In-app rate limiting
+
+Nyanbin meters every API operation in Valkey using fixed windows with **per-operation, per-client pseudonymous buckets** plus **per-operation global ceilings** that hold even when attackers rotate addresses. Client buckets are derived from the client address (IPv6 clients are normalized to the operator-configured prefix, `/64` by default); raw addresses are not stored as bucket keys. Rejected requests receive `429 rate_limited` with a `Retry-After` header.
+
+| Variable | Default | Purpose |
+| --- | ---: | --- |
+| `NYANBIN_RATE_LIMIT_REVEAL_REQUESTS` | `60` | Reveal attempts per client bucket and window |
+| `NYANBIN_RATE_LIMIT_INFO_REQUESTS` | `120` | Note-info requests per client bucket and window |
+| `NYANBIN_RATE_LIMIT_DELETE_REQUESTS` | `30` | Delete attempts per client bucket and window |
+| `NYANBIN_RATE_LIMIT_GLOBAL_REQUESTS` | `600` | Global per-operation ceiling per window across all clients |
+| `NYANBIN_RATE_LIMIT_GLOBAL_<OP>_REQUESTS` | unset | Optional per-operation global override; `<OP>` is one of `RESERVE`, `COMMIT`, `REVEAL`, `INFO`, `DELETE`, `SHORT_CREATE`, `SHORT_RESOLVE` |
+
+There is no idempotency-key mechanism, by design: reserve is non-idempotent but a lost reserve response is harmless (the unused reservation expires), and a duplicate commit fails safely with `409 reservation_mismatch`.
+
+### CORS
+
+Cross-origin API access is **off by default**. `NYANBIN_CORS_ORIGINS` accepts a comma-separated list of exact origins, or `*` for a fully public API. Credentials are never allowed in CORS responses — the API has no cookies or account sessions to leak, and it must stay that way.
+
+### Storage occupancy guard and byte quotas
+
+Because Valkey runs with `noeviction`, the app brownouts writes before memory pressure turns into hard failures:
+
+| Occupancy of `NYANBIN_STORAGE_BUDGET_BYTES` | Behavior |
+| --- | --- |
+| below 90% | Normal operation |
+| ≥ 90% | Commits with a decoded envelope over 65,536 bytes are refused with `507 storage_pressure`; small notes still work |
+| ≥ 98% | All commits are refused with `507 storage_pressure` |
+
+Independently, each client bucket may store at most `NYANBIN_BUCKET_BYTES_PER_HOUR` envelope bytes per hour; overflow returns `429 rate_limited` with `Retry-After` pointing at the hour boundary.
+
+| Variable | Default | Purpose |
+| --- | ---: | --- |
+| `NYANBIN_STORAGE_BUDGET_BYTES` | `134217728` | Storage budget the occupancy guard measures against; `0` disables the guard |
+| `NYANBIN_BUCKET_BYTES_PER_HOUR` | `67108864` | Hourly per-client stored-byte quota; `0` disables |
+| `NYANBIN_STORAGE_METER_RESYNC_SECONDS` | `3600` | How often the occupancy meter re-synchronizes against actual usage |
+| `NYANBIN_BRANDING_ABUSE_CONTACT` | empty | Abuse-contact email published via `/api/status` branding |
+
+### Kill switches and operator tooling
+
+Operators can flip behavior at runtime through Valkey-backed switches — no redeploy, no restart:
+
+| Switch | Effect |
+| --- | --- |
+| `writes_off` | Reserve and commit return `503 writes_disabled` |
+| `writes_small_only` | Commits with large envelopes return `507 storage_pressure`; small notes still work |
+| `short_off` | Short-code creation and resolution return `503 short_disabled` |
+| `resolve_hardened` | Applies a much tighter global ceiling to short-code resolution |
+
+The `nyanbin-admin` CLI ships inside the app container and is invoked with `docker exec`: `revoke <id> --yes` deletes a reported note, `switch <name> on|off` toggles the switches above, `block <bucket>` bans a pseudonymous client bucket, `unblock <bucket>` lifts the ban, `stats` prints the aggregate counters, and `resync` recomputes the storage meter immediately.
+
+### Trusted proxy configuration
+
+`NYANBIN_TRUSTED_PROXY_CIDRS` must enumerate **only** the reverse proxy that actually fronts the app (for a same-host nginx, its loopback or container-network address). Anything broader lets an attacker spoof `X-Forwarded-For`, impersonate other clients' rate-limit buckets, and launder abuse through fabricated addresses. When the header chain is malformed or the peer is untrusted, the app falls back to the socket peer address — this is the fail-closed choice, not a bug.
+
+### Privacy-safe logging
+
+- Never log request or response bodies, envelopes, passwords, delete tokens, or any URL that could carry a fragment.
+- Truncate note paths in access logs (log `/api/notes/…` rather than the full 32-character ID) so logs cannot be joined against note identifiers.
+- Rate-limit state uses pseudonymous client buckets; keep raw-IP access logs minimal and short-lived.
+- Prefer aggregate counters (requests, rejections, occupancy) over per-request records for monitoring.
+
+### Fail closed
+
+When Valkey is unreachable or a storage operation errors, Nyanbin refuses rather than guesses: writes fail, reveals fail, rate-limit and switch checks fail closed, and `/api/ready` reports `503`. A security boundary that silently degrades into an open one is worse than an outage; design surrounding automation (health checks, alerts, retries) around this behavior instead of fighting it.
+
+### Operator verification checklist
+
+After deploying or changing the edge, verify — don't assume:
+
+1. **Direct origin access fails.** `curl https://203.0.113.10/api/status --resolve example.com:443:203.0.113.10` (or hitting the origin IP directly) must fail the TLS handshake while Authenticated Origin Pulls is on.
+2. **Edge-routed access works.** The same request through the public hostname returns status JSON.
+3. **`Retry-After` is present.** Drive one client bucket over a limit and confirm the `429` carries an integer `Retry-After` header.
+4. **Switches work without redeploy.** Toggle `writes_off` with `nyanbin-admin`, observe `503 writes_disabled` on reserve, toggle back, observe recovery.
+5. **Zero-knowledge network audit.** With browser dev tools open through a full create → share → reveal cycle, confirm no request ever contains a URL fragment, password, plaintext, or raw delete token (only its SHA-256 verifier appears, at commit), and that no third-party request is made.
+6. **No API caching.** Confirm edge cache rules bypass `/api/*`; a second reveal of a burn-after-reading note must return `404 note_not_found`, not a cached envelope.
 
 ## Testing
 

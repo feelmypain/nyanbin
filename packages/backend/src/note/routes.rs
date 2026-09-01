@@ -10,19 +10,22 @@ use sha2::{Digest, Sha256};
 use std::{
     net::{IpAddr, Ipv6Addr, SocketAddr},
     sync::Arc,
-    time::Duration,
 };
 
-use super::{
-    CommitRequest, CreateResponse, DeleteRequest, InfoLifecycle, InfoResponse, Lifecycle,
-    ReserveRequest, ReserveResponse, RevealResponse, ShortRequest, ShortResolveResponse,
-    ShortResponse, generate_delete_token, generate_id, generate_short_code, sha256_hex,
-    validate_commit, validate_delete_token, validate_id, validate_reserve, validate_short_code,
-};
 use crate::{
     AppState,
+    config::{OpLimit, SMALL_NOTE_BYTES},
     error::{ApiError, json_rejection},
-    store::{CommitResult, DeleteResult, ReserveResult, ShortCreateResult},
+    note::{
+        CommitRequest, CreateResponse, DeleteRequest, InfoLifecycle, InfoResponse, ReserveRequest,
+        ReserveResponse, RevealResponse, ShortRequest, ShortResolveResponse, ShortResponse,
+        generate_delete_token, generate_id, generate_short_code, sha256_hex, validate_commit,
+        validate_delete_token, validate_id, validate_reserve, validate_short_code,
+    },
+    store::{
+        CommitQuota, CommitResult, DeleteResult, RateCheck, RateDecision, ReserveResult,
+        ShortCreateResult,
+    },
 };
 
 const MAX_ID_ATTEMPTS: usize = 16;
@@ -33,7 +36,7 @@ pub async fn reserve(
 ) -> Result<impl IntoResponse, ApiError> {
     let Json(request) = payload.map_err(json_rejection)?;
     let max_reads = validate_reserve(&request, &state.config)?;
-    let expires_in = Duration::from_secs(request.expires_in);
+    let expires_in = std::time::Duration::from_secs(request.expires_in);
     let random = SystemRandom::new();
     let (delete_token_bytes, delete_token) = generate_delete_token(&random)?;
     let delete_hash = sha256_hex(&delete_token_bytes);
@@ -57,8 +60,8 @@ pub async fn reserve(
                     StatusCode::CREATED,
                     Json(ReserveResponse {
                         id,
-                        delete_token,
-                        lifecycle: Lifecycle {
+                        delete_token: delete_token.clone(),
+                        lifecycle: crate::note::Lifecycle {
                             expires_at,
                             max_reads,
                         },
@@ -71,18 +74,32 @@ pub async fn reserve(
     Err(ApiError::new(
         StatusCode::SERVICE_UNAVAILABLE,
         "id_space_exhausted",
-        "Could not reserve a note ID",
+        "Could not allocate a note ID",
     ))
 }
 
 pub async fn commit(
     State(state): State<Arc<AppState>>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
     Path(id): Path<String>,
+    headers: HeaderMap,
     payload: Result<Json<CommitRequest>, JsonRejection>,
 ) -> Result<impl IntoResponse, ApiError> {
     validate_id(&id)?;
     let Json(request) = payload.map_err(json_rejection)?;
     validate_commit(&id, &request, &state.config)?;
+    // Canonical unpadded base64url: decoded size is exactly len * 3 / 4.
+    let envelope_bytes = (request.envelope.len() as u64) * 3 / 4;
+    let budget = state.config.storage_budget_bytes;
+    let quota = CommitQuota {
+        envelope_bytes,
+        budget_bytes: budget,
+        soft_bytes: budget / 10 * 9,
+        hard_bytes: budget / 50 * 49,
+        small_bytes: SMALL_NOTE_BYTES as u64,
+        bucket_quota: state.config.bucket_bytes_per_hour,
+        client_bucket: request_bucket(&state, peer, &headers),
+    };
     match state
         .store
         .commit(
@@ -91,6 +108,7 @@ pub async fn commit(
             &request.delete_token_hash,
             &request.envelope,
             request.password_protected,
+            &quota,
         )
         .await
         .map_err(|_| ApiError::storage())?
@@ -111,6 +129,8 @@ pub async fn commit(
             "reservation_mismatch",
             "A note already exists for this reservation",
         )),
+        CommitResult::Pressure => Err(ApiError::storage_pressure()),
+        CommitResult::QuotaExceeded { retry_after } => Err(ApiError::rate_limited(retry_after)),
     }
 }
 
@@ -241,36 +261,114 @@ pub async fn resolve_short(
     Ok(Json(ShortResolveResponse { id }))
 }
 
+/// Reserve: per-client write bucket, per-op global cap, and the `writes_off`
+/// kill switch.
 pub async fn write_rate_limit(
     State(state): State<Arc<AppState>>,
     ConnectInfo(peer): ConnectInfo<SocketAddr>,
     request: Request,
     next: Next,
 ) -> Result<Response, ApiError> {
-    let Some(operation) = metered_write_operation(request.method()) else {
+    if *request.method() != Method::POST {
         return Err(unsupported_rate_limit_operation());
-    };
-    let limit = state.config.rate_limit_requests;
-    enforce_rate_limit(&state, peer, request.headers(), operation, limit).await?;
+    }
+    let limit = state.config.rate_limits.reserve;
+    enforce(
+        &state,
+        peer,
+        request.headers(),
+        "reserve",
+        limit,
+        Some("writes_off"),
+        None,
+    )
+    .await?;
     Ok(next.run(request).await)
 }
 
+/// Commit, info, and delete share the `/notes/{id}` route, so one middleware
+/// dispatches on the method: commits are writes (own bucket plus the
+/// `writes_off` switch), info and delete are reads.
+pub async fn note_rate_limit(
+    State(state): State<Arc<AppState>>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    request: Request,
+    next: Next,
+) -> Result<Response, ApiError> {
+    let (operation, limit, switch) = match *request.method() {
+        Method::PUT => (
+            "commit",
+            state.config.rate_limits.commit,
+            Some("writes_off"),
+        ),
+        Method::GET | Method::HEAD => ("info", state.config.rate_limits.info, None),
+        Method::DELETE => ("delete", state.config.rate_limits.delete, None),
+        _ => return Err(unsupported_rate_limit_operation()),
+    };
+    enforce(
+        &state,
+        peer,
+        request.headers(),
+        operation,
+        limit,
+        switch,
+        None,
+    )
+    .await?;
+    Ok(next.run(request).await)
+}
+
+/// Consuming reveals get their own bucket: reading a note must never be
+/// starved by write floods, and vice versa.
+pub async fn reveal_rate_limit(
+    State(state): State<Arc<AppState>>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    request: Request,
+    next: Next,
+) -> Result<Response, ApiError> {
+    if *request.method() != Method::POST {
+        return Err(unsupported_rate_limit_operation());
+    }
+    let limit = state.config.rate_limits.reveal;
+    enforce(&state, peer, request.headers(), "reveal", limit, None, None).await?;
+    Ok(next.run(request).await)
+}
+
+/// Short create/resolve: `short_off` kill switch; resolve additionally
+/// tightens its global ceiling to a tenth while the enumeration tripwire
+/// (`resolve_hardened`) is armed.
 pub async fn short_rate_limit(
     State(state): State<Arc<AppState>>,
     ConnectInfo(peer): ConnectInfo<SocketAddr>,
     request: Request,
     next: Next,
 ) -> Result<Response, ApiError> {
-    let (operation, limit) = match *request.method() {
-        Method::POST => ("short_create", state.config.rate_limit_short_create_requests),
-        Method::GET => (
-            "short_resolve",
-            state.config.rate_limit_short_resolve_requests,
-        ),
+    let (operation, limit, hardened) = match *request.method() {
+        Method::POST => ("short_create", state.config.rate_limits.short_create, None),
+        Method::GET | Method::HEAD => {
+            let limit = state.config.rate_limits.short_resolve;
+            ("short_resolve", limit, Some(hardened_ceiling(limit.global)))
+        }
         _ => return Err(unsupported_rate_limit_operation()),
     };
-    enforce_rate_limit(&state, peer, request.headers(), operation, limit).await?;
+    enforce(
+        &state,
+        peer,
+        request.headers(),
+        operation,
+        limit,
+        Some("short_off"),
+        hardened,
+    )
+    .await?;
     Ok(next.run(request).await)
+}
+
+/// Global ceiling for short-resolve while the enumeration tripwire is armed:
+/// a tenth of the configured cap, but never zero (which would mean unlimited
+/// in the limiter script).
+fn hardened_ceiling(global: u32) -> u32 {
+    (global / 10).max(1)
 }
 
 fn unsupported_rate_limit_operation() -> ApiError {
@@ -281,45 +379,46 @@ fn unsupported_rate_limit_operation() -> ApiError {
     )
 }
 
-async fn enforce_rate_limit(
+async fn enforce(
     state: &AppState,
     peer: SocketAddr,
     headers: &HeaderMap,
     operation: &'static str,
-    address_limit: u32,
+    limit: OpLimit,
+    disable_switch: Option<&'static str>,
+    hardened_global: Option<u32>,
 ) -> Result<(), ApiError> {
-    let ip = client_ip(peer.ip(), headers, &state.config.trusted_proxy_cidrs);
-    let bucket = pseudonymous_bucket(normalize_client_ip(
-        ip,
-        state.config.rate_limit_ipv6_prefix_bits,
-    ));
-    let allowed = state
+    let bucket = request_bucket(state, peer, headers);
+    let decision = state
         .store
-        .rate_limit(
+        .rate_limit(RateCheck {
             operation,
-            &bucket,
-            state.config.rate_limit_window,
-            address_limit,
-            state.config.rate_limit_global_requests,
-        )
+            bucket: &bucket,
+            window: state.config.rate_limit_window,
+            address_limit: limit.address,
+            global_limit: limit.global,
+            disable_switch,
+            hardened_global,
+        })
         .await
         .map_err(|_| ApiError::storage())?;
-    if !allowed {
-        return Err(ApiError::new(
-            StatusCode::TOO_MANY_REQUESTS,
-            "rate_limited",
-            "Too many requests for this operation; try again later",
-        ));
+    match decision {
+        RateDecision::Allowed => Ok(()),
+        RateDecision::Limited { retry_after } => Err(ApiError::rate_limited(retry_after)),
+        RateDecision::Disabled => Err(match disable_switch {
+            Some("short_off") => ApiError::short_disabled(),
+            _ => ApiError::writes_disabled(),
+        }),
     }
-    Ok(())
 }
 
-fn metered_write_operation(method: &Method) -> Option<&'static str> {
-    match *method {
-        Method::POST => Some("reserve"),
-        Method::PUT => Some("commit"),
-        _ => None,
-    }
+/// Pseudonymous per-client bucket shared by rate limits and byte quotas.
+pub fn request_bucket(state: &AppState, peer: SocketAddr, headers: &HeaderMap) -> String {
+    let ip = client_ip(peer.ip(), headers, &state.config.trusted_proxy_cidrs);
+    pseudonymous_bucket(normalize_client_ip(
+        ip,
+        state.config.rate_limit_ipv6_prefix_bits,
+    ))
 }
 
 fn client_ip(peer: IpAddr, headers: &HeaderMap, trusted: &[ipnet::IpNet]) -> IpAddr {
@@ -440,10 +539,11 @@ mod tests {
         let trusted = [ipnet::IpNet::from_str("10.0.0.0/8").unwrap()];
         assert_eq!(client_ip(peer, &headers, &trusted), peer);
     }
+
     #[test]
-    fn reservations_and_commits_are_metered_writes() {
-        assert_eq!(metered_write_operation(&Method::POST), Some("reserve"));
-        assert_eq!(metered_write_operation(&Method::PUT), Some("commit"));
-        assert_eq!(metered_write_operation(&Method::GET), None);
+    fn hardened_resolve_ceiling_is_a_tenth_with_floor_one() {
+        assert_eq!(hardened_ceiling(600), 60);
+        assert_eq!(hardened_ceiling(5), 1);
+        assert_eq!(hardened_ceiling(0), 1);
     }
 }

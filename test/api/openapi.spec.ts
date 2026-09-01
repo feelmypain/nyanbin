@@ -134,7 +134,9 @@ test('every response across a full note lifecycle validates against its schema',
   ] as const) {
     const response = await fetch(`${SERVER}${path}`)
     expect(response.status).toBe(200)
-    expectValid(name, await response.json())
+    const body = await response.json()
+    expectValid(name, body)
+    if (path === '/api/status') expect(body).toMatchObject({ branding: { abuseContact: '' } })
   }
 
   const reserveResponse = await fetch(`${SERVER}/api/notes/reserve`, {
@@ -277,5 +279,14 @@ test('the human-readable API reference documents every path in the contract', as
   const html = (await response.text()).replaceAll('&#123;', '{').replaceAll('&#125;', '}')
   const paths = Object.keys(document.paths)
   expect(paths.length).toBeGreaterThanOrEqual(9)
+  expect(html).not.toContain('abuseContact')
   for (const path of paths) expect(html, `reference page must mention ${path}`).toContain(path)
+})
+
+test('public pages do not render an unconfigured reporting channel', async ({ page }) => {
+  for (const path of ['/', '/docs/api']) {
+    await page.goto(path)
+    await expect(page.locator('a[href^="mailto:"]')).toHaveCount(0)
+    await expect(page.getByText(/report abuse/i)).toHaveCount(0)
+  }
 })

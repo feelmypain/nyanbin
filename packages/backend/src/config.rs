@@ -45,7 +45,6 @@ pub struct Branding {
     pub description: String,
     pub logo_url: String,
     pub imprint_url: String,
-    pub abuse_contact: String,
 }
 
 /// Per-operation rate-limit pair: per-client bucket cap and instance-wide cap
@@ -187,7 +186,6 @@ impl Config {
             )?,
             logo_url: safe_optional_url("NYANBIN_BRANDING_LOGO_URL")?,
             imprint_url: safe_optional_url("NYANBIN_BRANDING_IMPRINT_URL")?,
-            abuse_contact: abuse_contact("NYANBIN_BRANDING_ABUSE_CONTACT")?,
         };
         let redis_prefix = parse_env_string("NYANBIN_REDIS_PREFIX", DEFAULT_REDIS_PREFIX)?;
         if redis_prefix.is_empty()
@@ -360,21 +358,6 @@ fn parse_cors(value: &str) -> Result<CorsPolicy, String> {
     Ok(CorsPolicy::List(origins))
 }
 
-fn abuse_contact(name: &str) -> Result<String, String> {
-    let value = bounded_text(name, "", 254)?;
-    if value.is_empty() {
-        return Ok(value);
-    }
-    let valid = value.chars().filter(|c| *c == '@').count() == 1
-        && !value.starts_with('@')
-        && !value.ends_with('@')
-        && !value.chars().any(char::is_whitespace);
-    if !valid {
-        return Err(format!("{name} must be blank or a plain email address"));
-    }
-    Ok(value)
-}
-
 fn parse_env<T>(name: &str, default: T) -> Result<T, String>
 where
     T: FromStr + Copy,
@@ -502,17 +485,5 @@ mod tests {
             parse_cors("HTTPS://EXAMPLE.COM:443").unwrap(),
             CorsPolicy::List(vec!["https://example.com".into()])
         );
-    }
-
-    #[test]
-    fn abuse_contact_must_look_like_email() {
-        unsafe { env::set_var("NYANBIN_TEST_ABUSE_OK", "abuse@example.com") };
-        assert_eq!(
-            abuse_contact("NYANBIN_TEST_ABUSE_OK").unwrap(),
-            "abuse@example.com"
-        );
-        unsafe { env::set_var("NYANBIN_TEST_ABUSE_BAD", "not an email") };
-        assert!(abuse_contact("NYANBIN_TEST_ABUSE_BAD").is_err());
-        assert_eq!(abuse_contact("NYANBIN_TEST_ABUSE_UNSET").unwrap(), "");
     }
 }

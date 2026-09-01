@@ -37,8 +37,7 @@
 		"api": "API",
 		"label": "フッターナビゲーション",
 		"local_only": "暗号化とQRコードの生成は、ブラウザ内で行われます。",
-		"source": "GitHub のソースコード",
-		"abuse": "不正利用を報告"
+		"source": "GitHub のソースコード"
 	},
 	"formats": {
 		"plain": "プレーンテキスト",

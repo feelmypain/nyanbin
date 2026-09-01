@@ -37,8 +37,7 @@
 		"api": "API",
 		"label": "Navigace v zápatí",
 		"local_only": "Šifrování i vytváření QR kódu probíhá přímo ve vašem prohlížeči.",
-		"source": "Zdrojový kód na GitHubu",
-		"abuse": "Nahlásit zneužití"
+		"source": "Zdrojový kód na GitHubu"
 	},
 	"formats": {
 		"plain": "Prostý text",

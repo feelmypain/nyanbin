@@ -21,6 +21,7 @@ type SchemaObject = {
 	maxLength?: number
 	pattern?: string
 	default?: unknown
+	'x-docs-hidden'?: boolean
 }
 
 type ParameterObject = {
@@ -120,6 +121,7 @@ function schemaRows(schema: SchemaObject, depth = 0, seen: readonly string[] = [
 	const rows: SchemaRow[] = []
 	const required = resolved.required ?? []
 	for (const [name, property] of Object.entries(resolved.properties ?? {})) {
+		if (property['x-docs-hidden']) continue
 		const target = resolve(property)
 		const description = [singleLine(property.description ?? target.description), constraintNotes(target)]
 			.filter(Boolean)

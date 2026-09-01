@@ -1,7 +1,5 @@
 <script lang="ts">
 	import { apiInfo, errorCodes, operations, type SchemaDoc } from '$lib/api-docs'
-	import { status } from '$lib/stores/status'
-	let abuseContact = $derived($status.state === 'ready' ? $status.value.branding.abuseContact : '')
 </script>
 
 <svelte:head><title>API reference — Nyanbin</title><meta name="description" content="Human-readable reference for the Nyanbin zero-knowledge note API." /></svelte:head>
@@ -109,10 +107,6 @@
 				</tbody>
 			</table>
 		</div>
-		<p class="notice">
-			Report abuse: include the note link WITHOUT the part after # and never include passwords.{#if abuseContact}&nbsp;Contact:
-				<a href="mailto:{abuseContact}">{abuseContact}</a>.{/if}
-		</p>
 	</section>
 </article>
 

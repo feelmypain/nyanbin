@@ -1133,7 +1133,8 @@
               },
               "abuseContact": {
                 "type": "string",
-                "description": "Abuse contact email address; may be empty."
+                "description": "Reserved compatibility field; always empty.",
+                "x-docs-hidden": true
               }
             }
           }

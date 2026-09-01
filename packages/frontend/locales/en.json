@@ -37,8 +37,7 @@
 		"api": "API",
 		"label": "Footer navigation",
 		"local_only": "Encryption and QR generation happen locally in your browser.",
-		"source": "Source on GitHub",
-		"abuse": "Report abuse"
+		"source": "Source on GitHub"
 	},
 	"formats": {
 		"plain": "Plain text",

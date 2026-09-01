@@ -4,6 +4,12 @@ All notable changes to Nyanbin are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.5.5] - 2026-09-01
+
+### Removed
+
+- Remove the unconfigured public reporting CTA while retaining operator-side revocation controls; the reserved v1 status field remains empty for compatibility.
+
 ## [1.5.4] - 2026-09-01
 
 ### Fixed
@@ -43,7 +49,6 @@ All notable changes to Nyanbin are documented here. The format follows [Keep a C
 - **Hourly per-client byte quotas.** Each client bucket may store at most `NYANBIN_BUCKET_BYTES_PER_HOUR` (default 64 MiB) of envelope bytes per hour; overflow returns `429 rate_limited` with `Retry-After` pointing at the hour boundary.
 - **Operator kill switches and `nyanbin-admin`.** Valkey-backed switches (`writes_off`, `writes_small_only`, `short_off`, `resolve_hardened`) flip behavior at runtime without redeploys, surfacing as `503 writes_disabled` / `503 short_disabled` / `507 storage_pressure`. A short-code enumeration tripwire arms `resolve_hardened` automatically on a miss surge. The new `nyanbin-admin` binary ships in the app container: `stats`, `switch`, `revoke`, `block`, `unblock`, and `resync` — all output is aggregate and pseudonymous.
 - **Opt-in CORS.** `NYANBIN_CORS_ORIGINS` enables cross-origin API access for an exact-origin allowlist or `*`; credentials are never allowed.
-- **Abuse contact.** `NYANBIN_BRANDING_ABUSE_CONTACT` publishes an abuse email via `GET /api/status` branding, shown in the footer and API docs.
 
 ### Changed
 

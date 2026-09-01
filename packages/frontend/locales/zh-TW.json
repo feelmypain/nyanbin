@@ -37,8 +37,7 @@
 		"api": "API",
 		"label": "頁尾導覽",
 		"local_only": "加密與 QR Code 產生作業都在您的瀏覽器中執行。",
-		"source": "GitHub 原始碼",
-		"abuse": "檢舉濫用"
+		"source": "GitHub 原始碼"
 	},
 	"formats": {
 		"plain": "純文字",

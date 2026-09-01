@@ -37,8 +37,7 @@
 		"api": "API",
 		"label": "Navigazione a piè di pagina",
 		"local_only": "La cifratura e la generazione del codice QR avvengono localmente nel browser.",
-		"source": "Codice sorgente su GitHub",
-		"abuse": "Segnala un abuso"
+		"source": "Codice sorgente su GitHub"
 	},
 	"formats": {
 		"plain": "Testo semplice",

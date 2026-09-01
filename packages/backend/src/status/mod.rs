@@ -44,7 +44,8 @@ pub struct Branding {
     description: String,
     logo_url: String,
     imprint_url: String,
-    abuse_contact: String,
+    #[serde(rename = "abuseContact")]
+    reserved_empty: &'static str,
 }
 
 #[derive(Serialize)]
@@ -81,7 +82,7 @@ pub async fn get_status(State(state): State<Arc<AppState>>) -> Json<Status> {
             description: state.config.branding.description.clone(),
             logo_url: state.config.branding.logo_url.clone(),
             imprint_url: state.config.branding.imprint_url.clone(),
-            abuse_contact: state.config.branding.abuse_contact.clone(),
+            reserved_empty: "",
         },
     })
 }
@@ -126,5 +127,6 @@ mod tests {
                 .iter()
                 .any(|v| v == "abuseContact")
         );
+        assert_eq!(branding["properties"]["abuseContact"]["type"], "string");
     }
 }

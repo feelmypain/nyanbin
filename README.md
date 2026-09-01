@@ -197,7 +197,7 @@ Both reserve and commit are metered before JSON body decoding with per-client an
 The package and executable are both named `nyanbin` and require Node.js 22 or newer. Versioned packages are published as GitHub release assets; the CLI is not currently published in the npm registry. The default server is the official instance `https://nyan.ist`; point at a self-hosted instance with `--server` or `NYANBIN_SERVER`:
 
 ```sh
-NYANBIN_VERSION=1.5.4
+NYANBIN_VERSION=1.5.5
 curl --fail --location --output "nyanbin-${NYANBIN_VERSION}.tgz" \
   "https://github.com/feelmypain/nyanbin/releases/download/v${NYANBIN_VERSION}/nyanbin-${NYANBIN_VERSION}.tgz"
 npm install --global "./nyanbin-${NYANBIN_VERSION}.tgz"
@@ -357,7 +357,6 @@ Independently, each client bucket may store at most `NYANBIN_BUCKET_BYTES_PER_HO
 | `NYANBIN_STORAGE_BUDGET_BYTES` | `134217728` | Storage budget the occupancy guard measures against; `0` disables the guard |
 | `NYANBIN_BUCKET_BYTES_PER_HOUR` | `67108864` | Hourly per-client stored-byte quota; `0` disables |
 | `NYANBIN_STORAGE_METER_RESYNC_SECONDS` | `3600` | How often the occupancy meter re-synchronizes against actual usage |
-| `NYANBIN_BRANDING_ABUSE_CONTACT` | empty | Abuse-contact email published via `/api/status` branding |
 
 ### Kill switches and operator tooling
 

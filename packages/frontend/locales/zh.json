@@ -37,8 +37,7 @@
 		"api": "API",
 		"label": "页脚导航",
 		"local_only": "加密和二维码生成均在您的浏览器中本地完成。",
-		"source": "GitHub 源代码",
-		"abuse": "举报滥用"
+		"source": "GitHub 源代码"
 	},
 	"formats": {
 		"plain": "纯文本",

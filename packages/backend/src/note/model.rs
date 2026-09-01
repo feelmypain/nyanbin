@@ -182,16 +182,10 @@ pub fn validate_commit(id: &str, request: &CommitRequest, config: &Config) -> Re
 }
 
 fn validate_envelope(id: &str, request: &CommitRequest, config: &Config) -> Result<(), ApiError> {
-    if request.envelope.len() > config.max_envelope_bytes.saturating_mul(4).div_ceil(3) {
-        return Err(invalid_envelope());
-    }
     let bytes = URL_SAFE_NO_PAD
         .decode(request.envelope.as_bytes())
         .map_err(|_| invalid_envelope())?;
-    if bytes.len() < MIN_ENVELOPE_BYTES
-        || bytes.len() > config.max_envelope_bytes
-        || URL_SAFE_NO_PAD.encode(&bytes) != request.envelope
-    {
+    if bytes.len() < MIN_ENVELOPE_BYTES {
         return Err(invalid_envelope());
     }
     if bytes[0] != PROTOCOL_VERSION || &bytes[1..33] != id.as_bytes() {
@@ -207,6 +201,9 @@ fn validate_envelope(id: &str, request: &CommitRequest, config: &Config) -> Resu
             "reservation_mismatch",
             "Envelope header does not match the reserved lifecycle",
         ));
+    }
+    if bytes.len() > config.max_envelope_bytes {
+        return Err(ApiError::payload_too_large());
     }
     Ok(())
 }

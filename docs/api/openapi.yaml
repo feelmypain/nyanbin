@@ -37,10 +37,10 @@ info:
     ## The envelope is opaque
 
     The `envelope` field is canonical base64url produced only by the published
-    protocol implementation (npm package `nyanbin`, export
-    `./shared/protocol`). Clients **must not** send plaintext or ad-hoc
-    ciphertext; the server validates canonical envelope framing but by design
-    cannot inspect the contents.
+    protocol implementation (versioned GitHub release package
+    `nyanbin-<version>.tgz`, export `./shared/protocol`). Clients **must not**
+    send plaintext or ad-hoc ciphertext; the server validates canonical envelope
+    framing but by design cannot inspect the contents.
 
     ## Reading is consuming
 
@@ -259,8 +259,9 @@ paths:
         raw token.
 
         The envelope is opaque canonical base64url produced by the published
-        protocol implementation (npm package `nyanbin`, export
-        `./shared/protocol`). Never send plaintext.
+        protocol implementation (versioned GitHub release package
+        `nyanbin-<version>.tgz`, export `./shared/protocol`). Never send
+        plaintext.
 
         Commit is safe against duplicate delivery: a second commit to the same
         ID yields `409 reservation_mismatch`, so at most one envelope is ever
@@ -718,8 +719,9 @@ components:
           pattern: '^[A-Za-z0-9_-]+$'
           description: >
             Opaque canonical base64url envelope produced by the published
-            protocol implementation (npm package `nyanbin`, export
-            `./shared/protocol`). Never plaintext.
+            protocol implementation (versioned GitHub release package
+            `nyanbin-<version>.tgz`, export `./shared/protocol`). Never
+            plaintext.
         lifecycle:
           $ref: '#/components/schemas/Lifecycle'
         deleteTokenHash:

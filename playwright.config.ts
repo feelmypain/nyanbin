@@ -26,7 +26,7 @@ export default defineConfig({
     command: 'pnpm run docker:up',
     url: 'http://127.0.0.1:3000/api/ready',
     reuseExistingServer: process.env.PLAYWRIGHT_REUSE_SERVER === '1' || !process.env.CI,
-    timeout: 180_000,
+    timeout: 420_000,
     stdout: 'pipe',
     stderr: 'pipe',
   },

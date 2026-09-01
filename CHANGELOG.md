@@ -4,6 +4,16 @@ All notable changes to Nyanbin are documented here. The format follows [Keep a C
 
 ## [Unreleased]
 
+## [1.5.3] - 2026-09-01
+
+### Fixed
+
+- Return `409 reservation_mismatch` when a client repeats an already successful commit, instead of misclassifying it as a missing reservation.
+- Return `413 payload_too_large` for a canonical envelope one decoded byte above the configured limit while preserving `400 invalid_envelope` for malformed framing.
+- Document the versioned GitHub release artifact as the supported CLI installation source while npm publication credentials are unavailable, and verify the public artifact anonymously during tagged releases.
+- Exclude liveness, readiness, status, and OpenAPI metadata endpoints from reference edge and origin throttles so application traffic cannot create false health failures.
+- Keep rejection-counter ordering accepted by the CI-pinned Rust 1.95 Clippy toolchain and allow seven minutes for Playwright's managed server startup so a cold multi-stage Docker build cannot exhaust the readiness deadline.
+
 ## [1.5.2] - 2026-09-01
 
 ### Fixed

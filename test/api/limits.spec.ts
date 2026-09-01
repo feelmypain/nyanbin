@@ -12,6 +12,7 @@ const REVEAL_LIMIT = 4
 const DELETE_LIMIT = 3
 const BYTE_QUOTA = 131_072
 const WINDOW_SECONDS = 60
+const GLOBAL_SHORT_CREATE_LIMIT = 2
 
 function expectRetryAfter(response: Response, max: number): void {
   const retryAfter = response.headers.get('retry-after')
@@ -84,6 +85,30 @@ test(`delete bucket admits ${DELETE_LIMIT} attempts per window, then 429`, async
     body: JSON.stringify({ deleteToken: forgedToken }),
   })
   await expectRateLimited(limited, WINDOW_SECONDS)
+})
+
+test(`short-create global ceiling admits ${GLOBAL_SHORT_CREATE_LIMIT} requests, then 429`, async () => {
+  // The per-client short-create limit is 10000 on this isolated service, so
+  // the third request can only be rejected by the operation's global ceiling.
+  for (let attempt = 1; attempt <= GLOBAL_SHORT_CREATE_LIMIT + 1; attempt += 1) {
+    const reservation = await reserveNote(OPS_SERVER, { maxReads: 0 })
+    const { response: commit } = await commitNote(OPS_SERVER, reservation, {
+      textBytes: 64,
+      password: 'isolated-global-ceiling',
+    })
+    expect(commit.status).toBe(201)
+
+    const response = await fetch(`${OPS_SERVER}/api/notes/${reservation.id}/short`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ deleteToken: reservation.deleteToken }),
+    })
+    if (attempt <= GLOBAL_SHORT_CREATE_LIMIT) {
+      expect(response.status).toBe(201)
+    } else {
+      await expectRateLimited(response, WINDOW_SECONDS)
+    }
+  }
 })
 
 // Last on purpose: exhausting the hourly byte quota blocks every later commit on this

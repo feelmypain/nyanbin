@@ -9,8 +9,8 @@ HTTP API, described by [`openapi.yaml`](./openapi.yaml) and served as JSON at
 - **Wire protocol** (`protocol: 1` in requests, responses, and
   `GET /api/status`) governs **cryptographic compatibility**: envelope
   framing, key derivation, and everything the client-side protocol
-  implementation (npm package `nyanbin`, export `./shared/protocol`)
-  produces and consumes.
+  implementation (versioned GitHub release package `nyanbin-<version>.tgz`,
+  export `./shared/protocol`) produces and consumes.
 - **HTTP surface** (`info.version` in the OpenAPI document, currently `1`)
   governs **transport compatibility**: paths, methods, request/response
   fields, status codes, and error codes.

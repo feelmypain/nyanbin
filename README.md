@@ -194,10 +194,11 @@ Both reserve and commit are metered before JSON body decoding with per-client an
 
 ## CLI
 
-The package and executable are both named `nyanbin` and require Node.js 22 or newer. The default server is the official instance `https://nyan.ist`; point at a self-hosted instance with `--server` or `NYANBIN_SERVER`:
+The package and executable are both named `nyanbin` and require Node.js 22 or newer. Versioned packages are published as GitHub release assets; the CLI is not currently published in the npm registry. The default server is the official instance `https://nyan.ist`; point at a self-hosted instance with `--server` or `NYANBIN_SERVER`:
 
 ```sh
-npm install --global nyanbin
+NYANBIN_VERSION=1.5.3
+npm install --global "https://github.com/feelmypain/nyanbin/releases/download/v${NYANBIN_VERSION}/nyanbin-${NYANBIN_VERSION}.tgz"
 export NYANBIN_SERVER=https://paste.example
 
 nyanbin info
@@ -308,14 +309,14 @@ With `ssl_verify_client on`, a request that reaches the origin directly — even
 
 | Rule | Scope | Rationale |
 | --- | --- | --- |
-| Volumetric per-IP rate rule | `/api/*` | Blunt-force floods are cheapest to absorb at the edge, before they reach nginx or the app |
+| Volumetric per-IP rate rule | `/api/notes/*` and `/api/short/*` | Blunt-force floods are cheapest to absorb at the edge, before they reach nginx or the app; this includes every note write endpoint |
 | Bot challenge (managed challenge / JS challenge) | Human-facing short-link paths only (`/s/*` HTML pages) | Short codes are 6 digits and enumerable; a challenge raises the cost of scraping |
-| **No** challenge | `/api/notes/*`, `/api/status`, `/api/short/*` | The `nyanbin` CLI and other non-browser clients must pass; a browser challenge breaks them |
+| **No** rate rule or challenge | `/api/live`, `/api/ready`, `/api/status`, `/api/openapi.json` | Health and metadata must remain observable during client throttling; a browser challenge also breaks CLI and non-browser clients |
 | Cache bypass | `/api/*` | Reveal is consuming and commit is stateful; a cached API response is a correctness and privacy bug |
 
 ### Origin nginx
 
-- **Per-IP `limit_req` zones.** A general zone for `/api/` and a stricter zone for `/api/short/`, since short-code resolution is the only guessable surface. See the snippets in `docs/deployment/edge-hardening.md`.
+- **Per-IP `limit_req` zones.** A general zone for note API operations and a stricter zone for `/api/short/`, since short-code resolution is the only guessable surface. Route `/api/live`, `/api/ready`, `/api/status`, and `/api/openapi.json` through exact unthrottled locations so application traffic cannot create false probe failures. See the snippets in `docs/deployment/edge-hardening.md`.
 - **Body size.** The app enforces `NYANBIN_MAX_ENVELOPE_BYTES` on the *decoded* envelope; the JSON body carries base64url plus field overhead. Set `client_max_body_size` to at least `NYANBIN_MAX_ENVELOPE_BYTES × 4/3` plus slack (for the 1 MiB default, `2m` is comfortable).
 - **Header hygiene.** Forward `X-Real-IP`/`X-Forwarded-For` from the restored client address and nothing else; the app ignores forwarded headers from untrusted peers.
 

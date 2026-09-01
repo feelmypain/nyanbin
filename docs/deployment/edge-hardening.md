@@ -52,6 +52,17 @@ server {
     # 2m leaves comfortable slack. Scale this with your envelope limit.
     client_max_body_size 2m;
 
+    # --- Unthrottled health and metadata ---
+    # Exact matching keeps every note and short-link operation under the
+    # abuse-sensitive locations below.
+    location ~ ^/api/(?:live|ready|status|openapi\.json)$ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
     # --- Stricter zone for short-code resolution ---
     location /api/short/ {
         limit_req zone=nyanbin_short burst=10 nodelay;
@@ -64,7 +75,7 @@ server {
         proxy_set_header X-Forwarded-Proto https;
     }
 
-    # --- General API ---
+    # --- General note API and unknown API routes ---
     location /api/ {
         limit_req zone=nyanbin_api burst=60 nodelay;
         limit_req_status 429;
@@ -112,8 +123,8 @@ Keep the origin IP (e.g. `203.0.113.10`) out of DNS, certificates with revealing
 | --- | --- | --- |
 | SSL/TLS mode | **Full (strict)** | The edge validates the origin certificate; anything weaker allows on-path substitution of the origin |
 | Authenticated Origin Pulls | **Enabled zone-wide** | Pairs with `ssl_verify_client on` at the origin; both halves are required |
-| Rate limiting rule | Per-IP rule on `/api/*`; start near 300 requests/minute per IP and tune from the app's own 429 rates | Absorb volumetric floods at the edge before they consume origin capacity |
-| Bot Fight Mode / challenges | Scope challenges to human-facing short-link pages (`/s/*`) **only**; never challenge `/api/notes/*` or other `/api/*` paths | The `nyanbin` CLI and non-browser clients cannot solve a browser challenge; a zone-wide challenge silently breaks them |
+| Rate limiting rule | Per-IP rule on `/api/notes/*` and `/api/short/*`; start near 300 requests/minute per IP and tune from the app's own 429 rates | Absorb volumetric floods without throttling `/api/live`, `/api/ready`, `/api/status`, or `/api/openapi.json`; all note write endpoints remain covered |
+| Bot Fight Mode / challenges | Scope challenges to human-facing short-link pages (`/s/*`) **only**; never challenge any `/api/*` path | The `nyanbin` CLI and non-browser clients cannot solve a browser challenge; a zone-wide challenge silently breaks them |
 | Cache rules | **Bypass cache for `/api/*`** | Reveal is consuming and commit is stateful; a cached API response is a correctness and privacy failure |
 | Always Use HTTPS | Enabled | No plaintext window for the share URL path portion |
 

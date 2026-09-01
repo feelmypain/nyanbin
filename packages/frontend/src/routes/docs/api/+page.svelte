@@ -48,8 +48,8 @@
 		</p>
 		<p>
 			The machine-readable specification is served at <a href="/api/openapi.json">/api/openapi.json</a>.
-			A reference implementation of the client protocol ships in the
-			<a href="https://www.npmjs.com/package/nyanbin" rel="noreferrer">nyanbin</a> npm package.
+			A reference implementation of the client protocol ships in each versioned
+			<a href="https://github.com/feelmypain/nyanbin/releases" rel="noreferrer">GitHub release</a> package.
 		</p>
 	</section>
 

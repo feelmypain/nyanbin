@@ -60,7 +60,7 @@ export async function commitNote(
   server: string,
   reservation: ApiReservation,
   options: { textBytes?: number; password?: string } = {},
-): Promise<{ response: Response; envelopeBytes: number }> {
+): Promise<{ response: Response; envelopeBytes: number; requestBody: string }> {
   const payload: PrivatePayload = {
     kind: 'text',
     format: 'plain',
@@ -73,18 +73,19 @@ export async function commitNote(
     secret: generateSecret(),
     ...(options.password === undefined ? {} : { password: options.password }),
   })
+  const requestBody = JSON.stringify({
+    protocol: PROTOCOL_VERSION,
+    envelope,
+    lifecycle: reservation.lifecycle,
+    deleteTokenHash: await hashDeleteToken(reservation.deleteToken),
+    ...(options.password === undefined ? {} : { passwordProtected: true }),
+  })
   const response = await fetch(`${server}/api/notes/${reservation.id}`, {
     method: 'PUT',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      protocol: PROTOCOL_VERSION,
-      envelope,
-      lifecycle: reservation.lifecycle,
-      deleteTokenHash: await hashDeleteToken(reservation.deleteToken),
-      ...(options.password === undefined ? {} : { passwordProtected: true }),
-    }),
+    body: requestBody,
   })
-  return { response, envelopeBytes: decodeBase64Url(envelope).length }
+  return { response, envelopeBytes: decodeBase64Url(envelope).length, requestBody }
 }
 
 export async function valkeyCli(...args: string[]): Promise<string> {

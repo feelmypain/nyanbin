@@ -29,8 +29,8 @@ local function bump(name)
   redis.call('INCR', key)
   redis.call('EXPIRE', key, 7200)
 end
-if redis.call('EXISTS', KEYS[1]) == 0 then return {'missing'} end
 if redis.call('EXISTS', KEYS[2]) ~= 0 then return {'collision'} end
+if redis.call('EXISTS', KEYS[1]) == 0 then return {'missing'} end
 local values = redis.call('HMGET', KEYS[1], 'expires_at', 'max_reads', 'delete_hash')
 if values[1] ~= ARGV[1] or values[2] ~= ARGV[2] or values[3] ~= ARGV[3] then return {'mismatch'} end
 local now_ms = tonumber(now[1]) * 1000 + math.floor(tonumber(now[2]) / 1000)
@@ -865,7 +865,7 @@ impl Store {
                 }
             }
         }
-        merged.sort_by(|a, b| b.1.cmp(&a.1));
+        merged.sort_by_key(|entry| std::cmp::Reverse(entry.1));
         merged.truncate(limit);
         Ok(merged)
     }

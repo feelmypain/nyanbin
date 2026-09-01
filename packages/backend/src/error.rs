@@ -34,6 +34,14 @@ impl ApiError {
         Self::new(StatusCode::BAD_REQUEST, "invalid_request", message)
     }
 
+    pub const fn payload_too_large() -> Self {
+        Self::new(
+            StatusCode::PAYLOAD_TOO_LARGE,
+            "payload_too_large",
+            "Request body is too large",
+        )
+    }
+
     pub const fn storage() -> Self {
         Self::new(
             StatusCode::SERVICE_UNAVAILABLE,
@@ -103,11 +111,7 @@ impl IntoResponse for ApiError {
 
 pub fn json_rejection(rejection: axum::extract::rejection::JsonRejection) -> ApiError {
     if rejection.status() == StatusCode::PAYLOAD_TOO_LARGE {
-        ApiError::new(
-            StatusCode::PAYLOAD_TOO_LARGE,
-            "payload_too_large",
-            "Request body is too large",
-        )
+        ApiError::payload_too_large()
     } else {
         ApiError::new(
             StatusCode::BAD_REQUEST,
